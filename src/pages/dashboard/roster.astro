@@ -11,9 +11,23 @@
   </head>
   <body>
 
+    <!-- MOBILE TOPBAR -->
+    <div class="mobile-topbar">
+      <div class="mobile-brand">
+        <i class="fa-solid fa-paw"></i>
+        <span>JRTXCTF</span>
+      </div>
+      <button class="hamburger" id="hamburger" onclick="openDrawer()">
+        <i class="fa-solid fa-bars"></i>
+      </button>
+    </div>
+
+    <!-- DRAWER OVERLAY -->
+    <div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+
     <!-- SIDEBAR -->
     <div class="layout">
-      <aside class="sidebar">
+      <aside class="sidebar" id="sidebar">
         <div class="sidebar-brand">
           <i class="fa-solid fa-paw"></i>
           <span>JRTXCTF</span>
@@ -45,6 +59,12 @@
             <p class="page-sub" id="rosterCount">Loading athletes...</p>
           </div>
           <div class="header-actions">
+            <button class="btn-secondary-action" id="importBtn">
+              <i class="fa-solid fa-file-arrow-up"></i> Import CSV
+            </button>
+            <button class="btn-secondary-action" id="addAthleteBtn">
+              <i class="fa-solid fa-user-plus"></i> Add Athlete
+            </button>
             <button class="btn-export" id="exportBtn">
               <i class="fa-solid fa-download"></i> Export CSV
             </button>
@@ -52,7 +72,11 @@
         </div>
 
         <!-- FILTERS -->
-        <div class="filters">
+        <button class="filters-toggle" id="filtersToggle" onclick="toggleFilters()">
+          <i class="fa-solid fa-sliders"></i> Filters & Search
+          <i class="fa-solid fa-chevron-down" id="filtersChevron"></i>
+        </button>
+        <div class="filters" id="filtersPanel">
           <div class="filter-group">
             <label>Season</label>
             <select id="filterSeason">
@@ -88,12 +112,32 @@
           </div>
         </div>
 
-        <!-- CARDS -->
-        <div class="card-grid" id="cardGrid">
-          <div class="loading-state">
-            <i class="fa-solid fa-paw fa-spin"></i>
-            <p>Loading roster...</p>
-          </div>
+        </div><!-- end filtersPanel -->
+
+        <!-- TABLE -->
+        <div class="table-wrap">
+          <table class="roster-table" id="rosterTable">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Grade</th>
+                <th>Team</th>
+                <th>Season(s)</th>
+                <th>Event</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Parent</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="rosterBody">
+              <tr>
+                <td colspan="9" class="loading-cell">
+                  <i class="fa-solid fa-paw fa-spin"></i> Loading roster...
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
 
         <div class="empty-state hidden" id="emptyState">
@@ -101,6 +145,244 @@
           <p>No athletes match your filters.</p>
         </div>
       </main>
+    </div>
+
+    <!-- ADD ATHLETE MODAL -->
+    <div class="modal-overlay hidden" id="addModalOverlay">
+      <div class="modal modal-add">
+        <button class="modal-close" onclick="document.getElementById('addModalOverlay').classList.add('hidden')">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+        <h2 class="modal-title">Add Athlete</h2>
+        <p class="modal-sub-title">Manually add an athlete to the roster.</p>
+
+        <div class="add-form" id="addForm">
+          <div class="form-row">
+            <div class="form-group">
+              <label>First Name *</label>
+              <input type="text" id="add_firstName" placeholder="First name" />
+            </div>
+            <div class="form-group">
+              <label>Last Name *</label>
+              <input type="text" id="add_lastName" placeholder="Last name" />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Grade *</label>
+              <select id="add_grade">
+                <option value="">Select...</option>
+                <option value="9">9th</option>
+                <option value="10">10th</option>
+                <option value="11">11th</option>
+                <option value="12">12th</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Team *</label>
+              <select id="add_team">
+                <option value="">Select...</option>
+                <option value="Boys">Boys</option>
+                <option value="Girls">Girls</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Season(s) *</label>
+            <div class="check-row">
+              <label class="check-label"><input type="checkbox" name="add_season" value="Cross Country" /> Cross Country</label>
+              <label class="check-label"><input type="checkbox" name="add_season" value="Indoor Track & Field" /> Indoor T&F</label>
+              <label class="check-label"><input type="checkbox" name="add_season" value="Outdoor Track & Field" /> Outdoor T&F</label>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Event Group</label>
+            <select id="add_eventGroup">
+              <option value="">Select...</option>
+              <option value="Sprints">Sprints</option>
+              <option value="Distance">Distance</option>
+              <option value="Throws">Throws</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Athlete Email *</label>
+              <input type="email" id="add_email" placeholder="athlete@example.com" />
+            </div>
+            <div class="form-group">
+              <label>Athlete Phone *</label>
+              <input type="tel" id="add_phone" placeholder="(555) 555-5555" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Parent / Guardian Name *</label>
+            <input type="text" id="add_parent1Name" placeholder="Full name" />
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Parent Phone *</label>
+              <input type="tel" id="add_parent1Phone" placeholder="(555) 555-5555" />
+            </div>
+            <div class="form-group">
+              <label>Parent Email *</label>
+              <input type="email" id="add_parent1Email" placeholder="parent@example.com" />
+            </div>
+          </div>
+
+          <div class="add-error hidden" id="addError"></div>
+
+          <div class="add-actions">
+            <button class="btn-cancel" onclick="document.getElementById('addModalOverlay').classList.add('hidden')">Cancel</button>
+            <button class="btn-save" id="saveAthleteBtn">
+              <i class="fa-solid fa-check"></i> Save Athlete
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- EDIT ATHLETE MODAL -->
+    <div class="modal-overlay hidden" id="editModalOverlay">
+      <div class="modal modal-add">
+        <button class="modal-close" onclick="document.getElementById('editModalOverlay').classList.add('hidden')">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+        <h2 class="modal-title">Edit Athlete</h2>
+        <p class="modal-sub-title">Update athlete information.</p>
+
+        <input type="hidden" id="edit_id" />
+        <div class="add-form" id="editForm">
+          <div class="form-row">
+            <div class="form-group">
+              <label>First Name *</label>
+              <input type="text" id="edit_firstName" placeholder="First name" />
+            </div>
+            <div class="form-group">
+              <label>Last Name *</label>
+              <input type="text" id="edit_lastName" placeholder="Last name" />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Grade *</label>
+              <select id="edit_grade">
+                <option value="">Select...</option>
+                <option value="9">9th</option>
+                <option value="10">10th</option>
+                <option value="11">11th</option>
+                <option value="12">12th</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Team *</label>
+              <select id="edit_team">
+                <option value="">Select...</option>
+                <option value="Boys">Boys</option>
+                <option value="Girls">Girls</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Season(s) *</label>
+            <div class="check-row">
+              <label class="check-label"><input type="checkbox" name="edit_season" value="Cross Country" /> Cross Country</label>
+              <label class="check-label"><input type="checkbox" name="edit_season" value="Indoor Track & Field" /> Indoor T&F</label>
+              <label class="check-label"><input type="checkbox" name="edit_season" value="Outdoor Track & Field" /> Outdoor T&F</label>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Event Group</label>
+            <select id="edit_eventGroup">
+              <option value="">Select...</option>
+              <option value="Sprints">Sprints</option>
+              <option value="Distance">Distance</option>
+              <option value="Throws">Throws</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Athlete Email *</label>
+              <input type="email" id="edit_email" placeholder="athlete@example.com" />
+            </div>
+            <div class="form-group">
+              <label>Athlete Phone *</label>
+              <input type="tel" id="edit_phone" placeholder="(555) 555-5555" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Parent / Guardian Name *</label>
+            <input type="text" id="edit_parent1Name" placeholder="Full name" />
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Parent Phone *</label>
+              <input type="tel" id="edit_parent1Phone" placeholder="(555) 555-5555" />
+            </div>
+            <div class="form-group">
+              <label>Parent Email *</label>
+              <input type="email" id="edit_parent1Email" placeholder="parent@example.com" />
+            </div>
+          </div>
+
+          <div class="add-error hidden" id="editError"></div>
+
+          <div class="add-actions">
+            <button class="btn-cancel" onclick="document.getElementById('editModalOverlay').classList.add('hidden')">Cancel</button>
+            <button class="btn-save" id="updateAthleteBtn">
+              <i class="fa-solid fa-floppy-disk"></i> Save Changes
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- IMPORT CSV MODAL -->
+    <div class="modal-overlay hidden" id="importModalOverlay">
+      <div class="modal modal-import">
+        <button class="modal-close" onclick="document.getElementById('importModalOverlay').classList.add('hidden')">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+        <h2 class="modal-title">Import CSV</h2>
+        <p class="modal-sub-title">Upload a CSV file to bulk add athletes to the roster.</p>
+
+        <div class="import-template">
+          <i class="fa-solid fa-file-csv"></i>
+          <div>
+            <p class="template-label">Need the template?</p>
+            <button class="btn-template" id="downloadTemplateBtn">Download CSV Template</button>
+          </div>
+        </div>
+
+        <div class="upload-area" id="uploadArea">
+          <i class="fa-solid fa-cloud-arrow-up"></i>
+          <p>Drag & drop your CSV here, or</p>
+          <label class="btn-browse">
+            Browse file
+            <input type="file" id="csvFileInput" accept=".csv" style="display:none;" />
+          </label>
+        </div>
+
+        <div class="import-preview hidden" id="importPreview">
+          <div class="preview-header">
+            <span id="previewCount"></span>
+            <button class="btn-clear-import" onclick="clearImport()">
+              <i class="fa-solid fa-xmark"></i> Clear
+            </button>
+          </div>
+          <div class="preview-table-wrap">
+            <table class="preview-table" id="previewTable"></table>
+          </div>
+        </div>
+
+        <div class="import-error hidden" id="importError"></div>
+
+        <div class="add-actions">
+          <button class="btn-cancel" onclick="document.getElementById('importModalOverlay').classList.add('hidden')">Cancel</button>
+          <button class="btn-save hidden" id="importSaveBtn">
+            <i class="fa-solid fa-file-arrow-up"></i> Import Athletes
+          </button>
+        </div>
+      </div>
     </div>
 
     <!-- ATHLETE DETAIL MODAL -->
@@ -148,6 +430,24 @@
         document.querySelectorAll('.filter-group').forEach(f => f.style.display = 'none');
         return;
       }
+
+      // ── Drawer ───────────────────────────────────────────────────────────────
+      window.openDrawer = () => {
+        document.getElementById('sidebar').classList.add('open');
+        document.getElementById('drawerOverlay').classList.add('visible');
+        document.body.style.overflow = 'hidden';
+      };
+      window.closeDrawer = () => {
+        document.getElementById('sidebar').classList.remove('open');
+        document.getElementById('drawerOverlay').classList.remove('visible');
+        document.body.style.overflow = '';
+      };
+      window.toggleFilters = () => {
+        const panel   = document.getElementById('filtersPanel');
+        const chevron = document.getElementById('filtersChevron');
+        const isOpen  = panel.classList.toggle('filters-open');
+        chevron.style.transform = isOpen ? 'rotate(180deg)' : '';
+      };
 
       // ── Sign out ─────────────────────────────────────────────────────────────
       document.getElementById('signoutBtn').addEventListener('click', async () => {
@@ -201,37 +501,47 @@
       [filterSeason, filterTeam, filterEvent].forEach(el => el.addEventListener('change', applyFilters));
       searchInput.addEventListener('input', applyFilters);
 
-      // ── Render cards ──────────────────────────────────────────────────────────
+      // ── Render table ──────────────────────────────────────────────────────────
       function renderCards(athletes) {
-        const grid      = document.getElementById('cardGrid');
-        const empty     = document.getElementById('emptyState');
-        const countEl   = document.getElementById('rosterCount');
+        const tbody   = document.getElementById('rosterBody');
+        const empty   = document.getElementById('emptyState');
+        const countEl = document.getElementById('rosterCount');
 
         countEl.textContent = `${athletes.length} athlete${athletes.length !== 1 ? 's' : ''}`;
 
         if (athletes.length === 0) {
-          grid.innerHTML = '';
+          tbody.innerHTML = '';
           empty.classList.remove('hidden');
           return;
         }
 
         empty.classList.add('hidden');
-        grid.innerHTML = athletes.map(a => `
-          <div class="athlete-card" onclick="openModal('${a.id}')">
-            <div class="card-header">
-              <div class="athlete-avatar">${a.first_name[0]}${a.last_name[0]}</div>
-              <div class="card-tags">
-                <span class="tag tag-team ${a.team === 'Boys' ? 'boys' : 'girls'}">${a.team}</span>
-                ${a.event_group ? `<span class="tag tag-event">${a.event_group}</span>` : ''}
+        tbody.innerHTML = athletes.map(a => `
+          <tr>
+            <td>
+              <div class="name-cell">
+                <div class="athlete-avatar">${a.first_name[0]}${a.last_name[0]}</div>
+                <span class="athlete-name-link" onclick="openModal('${a.id}')">${a.last_name}, ${a.first_name}</span>
               </div>
-            </div>
-            <div class="card-body">
-              <h3 class="athlete-name">${a.first_name} ${a.last_name}</h3>
-              <p class="athlete-meta">Grade ${a.grade} &nbsp;·&nbsp; ${(a.season || []).join(', ')}</p>
-              <p class="athlete-contact"><i class="fa-solid fa-envelope"></i> ${a.email}</p>
-              <p class="athlete-contact"><i class="fa-solid fa-phone"></i> ${a.phone}</p>
-            </div>
-          </div>
+            </td>
+            <td>${a.grade}</td>
+            <td><span class="tag tag-team ${a.team === 'Boys' ? 'boys' : 'girls'}">${a.team}</span></td>
+            <td class="season-cell">${(a.season || []).map(s => s.replace(' Track & Field', ' T&F')).join(', ') || '—'}</td>
+            <td>${a.event_group ? `<span class="tag tag-event">${a.event_group}</span>` : '—'}</td>
+            <td class="contact-cell">${a.email}</td>
+            <td class="contact-cell">${a.phone}</td>
+            <td class="contact-cell">${a.parent1_name}</td>
+            <td>
+              <div class="row-actions">
+                <button class="btn-row-view" onclick="openModal('${a.id}')" title="View details">
+                  <i class="fa-solid fa-eye"></i>
+                </button>
+                <button class="btn-row-edit" onclick="openEditModal('${a.id}')" title="Edit athlete">
+                  <i class="fa-solid fa-pen"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
         `).join('');
       }
 
@@ -300,6 +610,329 @@
         document.getElementById('modalOverlay').classList.add('hidden');
         document.body.style.overflow = '';
       };
+
+      // ── Add Athlete button ────────────────────────────────────────────────────
+      document.getElementById('addAthleteBtn').addEventListener('click', () => {
+        document.getElementById('addModalOverlay').classList.remove('hidden');
+      });
+
+      // ── Save athlete ──────────────────────────────────────────────────────────
+      document.getElementById('saveAthleteBtn').addEventListener('click', async () => {
+        const btn       = document.getElementById('saveAthleteBtn');
+        const errorEl   = document.getElementById('addError');
+        errorEl.classList.add('hidden');
+        errorEl.textContent = '';
+
+        const firstName    = document.getElementById('add_firstName').value.trim();
+        const lastName     = document.getElementById('add_lastName').value.trim();
+        const grade        = parseInt(document.getElementById('add_grade').value);
+        const team         = document.getElementById('add_team').value;
+        const email        = document.getElementById('add_email').value.trim();
+        const phone        = document.getElementById('add_phone').value.trim();
+        const parent1Name  = document.getElementById('add_parent1Name').value.trim();
+        const parent1Phone = document.getElementById('add_parent1Phone').value.trim();
+        const parent1Email = document.getElementById('add_parent1Email').value.trim();
+        const eventGroup   = document.getElementById('add_eventGroup').value || null;
+        const season       = [...document.querySelectorAll('input[name="add_season"]:checked')].map(i => i.value);
+
+        if (!firstName || !lastName || !grade || !team || !email || !phone || !parent1Name || !parent1Phone || !parent1Email) {
+          errorEl.textContent = 'Please fill in all required fields.';
+          errorEl.classList.remove('hidden');
+          return;
+        }
+        if (season.length === 0) {
+          errorEl.textContent = 'Please select at least one season.';
+          errorEl.classList.remove('hidden');
+          return;
+        }
+
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+
+        const { error } = await supabase.from('registrations').insert([{
+          athlete_type: 'New Athlete',
+          first_name: firstName, last_name: lastName,
+          grade, team, email, phone,
+          season, event_group: eventGroup,
+          parent1_name: parent1Name, parent1_phone: parent1Phone, parent1_email: parent1Email,
+          middle_school: 'Other', is_specialty: false, has_activities: false,
+        }]);
+
+        if (error) {
+          errorEl.textContent = error.message;
+          errorEl.classList.remove('hidden');
+          btn.disabled = false;
+          btn.innerHTML = '<i class="fa-solid fa-check"></i> Save Athlete';
+          return;
+        }
+
+        // Refresh roster
+        const { data: refreshed } = await supabase.from('registrations').select('*').order('last_name');
+        allAthletes = refreshed || [];
+        renderCards(allAthletes);
+        document.getElementById('addModalOverlay').classList.add('hidden');
+
+        // Reset form
+        document.getElementById('addForm').querySelectorAll('input[type="text"], input[type="email"], input[type="tel"], select').forEach(el => el.value = '');
+        document.querySelectorAll('input[name="add_season"]').forEach(c => c.checked = false);
+
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-check"></i> Save Athlete';
+      });
+
+      // ── Import CSV ────────────────────────────────────────────────────────────
+      const CSV_COLUMNS = [
+        'first_name','last_name','grade','team','season','event_group',
+        'email','phone','parent1_name','parent1_phone','parent1_email',
+      ];
+
+      const CSV_TEMPLATE_HEADERS = [
+        'first_name','last_name','grade','team',
+        'season (semicolon separated)','event_group',
+        'email','phone','parent1_name','parent1_phone','parent1_email',
+      ];
+
+      document.getElementById('importBtn').addEventListener('click', () => {
+        document.getElementById('importModalOverlay').classList.remove('hidden');
+      });
+
+      document.getElementById('downloadTemplateBtn').addEventListener('click', () => {
+        const exampleRow = ['Jane','Smith','10','Girls','Cross Country; Outdoor Track & Field','Distance','jane@example.com','(555) 555-5555','Bob Smith','(555) 555-5556','bob@example.com'];
+        const csv = [CSV_TEMPLATE_HEADERS, exampleRow]
+          .map(row => row.map(v => `"${v}"`).join(','))
+          .join('
+');
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url  = URL.createObjectURL(blob);
+        const a    = document.createElement('a');
+        a.href = url; a.download = 'jrtxctf-import-template.csv'; a.click();
+        URL.revokeObjectURL(url);
+      });
+
+      // Drag and drop
+      const uploadArea = document.getElementById('uploadArea');
+      uploadArea.addEventListener('dragover', e => { e.preventDefault(); uploadArea.classList.add('drag-over'); });
+      uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('drag-over'));
+      uploadArea.addEventListener('drop', e => {
+        e.preventDefault();
+        uploadArea.classList.remove('drag-over');
+        const file = e.dataTransfer.files[0];
+        if (file) parseCSV(file);
+      });
+
+      document.getElementById('csvFileInput').addEventListener('change', e => {
+        const file = e.target.files[0];
+        if (file) parseCSV(file);
+      });
+
+      let parsedAthletes = [];
+
+      function parseCSV(file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const lines  = e.target.result.split('
+').filter(l => l.trim());
+          const headers = lines[0].split(',').map(h => h.replace(/"/g, '').trim().toLowerCase());
+          const rows    = lines.slice(1);
+          const errorEl = document.getElementById('importError');
+          errorEl.classList.add('hidden');
+
+          parsedAthletes = rows.map((row, i) => {
+            const vals = row.match(/(".*?"|[^,]+)/g) || [];
+            const clean = vals.map(v => v.replace(/^"|"$/g, '').trim());
+            const obj = {};
+            headers.forEach((h, idx) => { obj[h] = clean[idx] || ''; });
+
+            // Normalise season column
+            const seasonRaw = obj['season (semicolon separated)'] || obj['season'] || '';
+            const season = seasonRaw.split(';').map(s => s.trim()).filter(Boolean);
+
+            return {
+              athlete_type:  'New Athlete',
+              first_name:    obj.first_name,
+              last_name:     obj.last_name,
+              grade:         parseInt(obj.grade) || null,
+              team:          obj.team,
+              season,
+              event_group:   obj.event_group || null,
+              email:         obj.email,
+              phone:         obj.phone,
+              parent1_name:  obj.parent1_name,
+              parent1_phone: obj.parent1_phone,
+              parent1_email: obj.parent1_email,
+              middle_school: 'Other',
+              is_specialty:  false,
+              has_activities: false,
+            };
+          }).filter(a => a.first_name && a.last_name);
+
+          if (parsedAthletes.length === 0) {
+            errorEl.textContent = 'No valid rows found. Check your CSV format matches the template.';
+            errorEl.classList.remove('hidden');
+            return;
+          }
+
+          showPreview(parsedAthletes);
+        };
+        reader.readAsText(file);
+      }
+
+      function showPreview(athletes) {
+        const preview   = document.getElementById('importPreview');
+        const countEl   = document.getElementById('previewCount');
+        const table     = document.getElementById('previewTable');
+        const saveBtn   = document.getElementById('importSaveBtn');
+
+        countEl.textContent = `${athletes.length} athlete${athletes.length !== 1 ? 's' : ''} ready to import`;
+
+        table.innerHTML = `
+          <thead><tr>
+            <th>Name</th><th>Grade</th><th>Team</th><th>Season(s)</th><th>Event</th><th>Email</th>
+          </tr></thead>
+          <tbody>
+            ${athletes.map(a => `
+              <tr>
+                <td>${a.first_name} ${a.last_name}</td>
+                <td>${a.grade || '—'}</td>
+                <td>${a.team || '—'}</td>
+                <td>${(a.season || []).join(', ') || '—'}</td>
+                <td>${a.event_group || '—'}</td>
+                <td>${a.email || '—'}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        `;
+
+        preview.classList.remove('hidden');
+        saveBtn.classList.remove('hidden');
+        document.getElementById('uploadArea').classList.add('hidden');
+      }
+
+      window.clearImport = () => {
+        parsedAthletes = [];
+        document.getElementById('importPreview').classList.add('hidden');
+        document.getElementById('importSaveBtn').classList.add('hidden');
+        document.getElementById('uploadArea').classList.remove('hidden');
+        document.getElementById('csvFileInput').value = '';
+        document.getElementById('importError').classList.add('hidden');
+      };
+
+      document.getElementById('importSaveBtn').addEventListener('click', async () => {
+        const btn     = document.getElementById('importSaveBtn');
+        const errorEl = document.getElementById('importError');
+        errorEl.classList.add('hidden');
+
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Importing...';
+
+        const { error } = await supabase.from('registrations').insert(parsedAthletes);
+
+        if (error) {
+          errorEl.textContent = 'Import failed: ' + error.message;
+          errorEl.classList.remove('hidden');
+          btn.disabled = false;
+          btn.innerHTML = '<i class="fa-solid fa-file-arrow-up"></i> Import Athletes';
+          return;
+        }
+
+        // Refresh roster
+        const { data: refreshed } = await supabase.from('registrations').select('*').order('last_name');
+        allAthletes = refreshed || [];
+        renderCards(allAthletes);
+        document.getElementById('importModalOverlay').classList.add('hidden');
+        clearImport();
+
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-file-arrow-up"></i> Import Athletes';
+      });
+
+      // ── Edit athlete ─────────────────────────────────────────────────────────
+      window.openEditModal = (id) => {
+        const a = allAthletes.find(x => x.id === id);
+        if (!a) return;
+
+        document.getElementById('edit_id').value         = a.id;
+        document.getElementById('edit_firstName').value  = a.first_name || '';
+        document.getElementById('edit_lastName').value   = a.last_name  || '';
+        document.getElementById('edit_grade').value      = a.grade      || '';
+        document.getElementById('edit_team').value       = a.team       || '';
+        document.getElementById('edit_email').value      = a.email      || '';
+        document.getElementById('edit_phone').value      = a.phone      || '';
+        document.getElementById('edit_parent1Name').value  = a.parent1_name  || '';
+        document.getElementById('edit_parent1Phone').value = a.parent1_phone || '';
+        document.getElementById('edit_parent1Email').value = a.parent1_email || '';
+        document.getElementById('edit_eventGroup').value   = a.event_group   || '';
+
+        // Season checkboxes
+        document.querySelectorAll('input[name="edit_season"]').forEach(cb => {
+          cb.checked = (a.season || []).includes(cb.value);
+        });
+
+        document.getElementById('editModalOverlay').classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+      };
+
+      document.getElementById('updateAthleteBtn').addEventListener('click', async () => {
+        const btn     = document.getElementById('updateAthleteBtn');
+        const errorEl = document.getElementById('editError');
+        errorEl.classList.add('hidden');
+        errorEl.textContent = '';
+
+        const id           = document.getElementById('edit_id').value;
+        const firstName    = document.getElementById('edit_firstName').value.trim();
+        const lastName     = document.getElementById('edit_lastName').value.trim();
+        const grade        = parseInt(document.getElementById('edit_grade').value);
+        const team         = document.getElementById('edit_team').value;
+        const email        = document.getElementById('edit_email').value.trim();
+        const phone        = document.getElementById('edit_phone').value.trim();
+        const parent1Name  = document.getElementById('edit_parent1Name').value.trim();
+        const parent1Phone = document.getElementById('edit_parent1Phone').value.trim();
+        const parent1Email = document.getElementById('edit_parent1Email').value.trim();
+        const eventGroup   = document.getElementById('edit_eventGroup').value || null;
+        const season       = [...document.querySelectorAll('input[name="edit_season"]:checked')].map(i => i.value);
+
+        if (!firstName || !lastName || !grade || !team || !email || !phone || !parent1Name || !parent1Phone || !parent1Email) {
+          errorEl.textContent = 'Please fill in all required fields.';
+          errorEl.classList.remove('hidden');
+          return;
+        }
+        if (season.length === 0) {
+          errorEl.textContent = 'Please select at least one season.';
+          errorEl.classList.remove('hidden');
+          return;
+        }
+
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+
+        const { error } = await supabase
+          .from('registrations')
+          .update({
+            first_name: firstName, last_name: lastName,
+            grade, team, email, phone,
+            season, event_group: eventGroup,
+            parent1_name: parent1Name, parent1_phone: parent1Phone, parent1_email: parent1Email,
+          })
+          .eq('id', id);
+
+        if (error) {
+          errorEl.textContent = error.message;
+          errorEl.classList.remove('hidden');
+          btn.disabled = false;
+          btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Save Changes';
+          return;
+        }
+
+        // Refresh roster
+        const { data: refreshed } = await supabase.from('registrations').select('*').order('last_name');
+        allAthletes = refreshed || [];
+        renderCards(allAthletes);
+        document.getElementById('editModalOverlay').classList.add('hidden');
+        document.body.style.overflow = '';
+
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Save Changes';
+      });
 
       // ── Export CSV ────────────────────────────────────────────────────────────
       document.getElementById('exportBtn').addEventListener('click', () => {
@@ -555,87 +1188,93 @@
   }
   .search-wrap input { width: 100%; padding-left: 2.2rem; }
 
-  /* ── Card grid ──────────────────────────────────────────────────────────── */
-  .card-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 1.25rem;
-  }
-
-  .athlete-card {
+  /* ── Roster table ───────────────────────────────────────────────────────── */
+  .table-wrap {
     background: var(--white);
     border: 1px solid var(--border);
     border-radius: 12px;
-    padding: 1.25rem;
-    cursor: pointer;
-    transition: all 0.15s ease;
+    overflow: hidden;
+    overflow-x: auto;
   }
 
-  .athlete-card:hover {
-    border-color: var(--navy);
-    box-shadow: 0 4px 16px rgba(0,51,160,0.1);
-    transform: translateY(-2px);
+  .roster-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+    white-space: nowrap;
   }
 
-  .card-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 1rem;
+  .roster-table thead {
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .roster-table th {
+    padding: 0.75rem 1rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--muted);
+    text-align: left;
+  }
+
+  .roster-table td {
+    padding: 0.65rem 1rem;
+    border-bottom: 1px solid var(--bg);
+    color: var(--text);
+    vertical-align: middle;
+  }
+
+  .roster-table tbody tr:last-child td { border-bottom: none; }
+
+  .roster-table tbody tr:hover { background: #f8fafc; }
+
+  .name-cell {
+    display: flex; align-items: center; gap: 0.65rem;
   }
 
   .athlete-avatar {
-    width: 40px;
-    height: 40px;
-    background: var(--navy);
-    color: white;
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.85rem;
-    font-weight: 700;
-    letter-spacing: 0.5px;
+    width: 30px; height: 30px;
+    background: var(--navy); color: white;
+    border-radius: 7px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.7rem; font-weight: 700; flex-shrink: 0;
   }
 
-  .card-tags { display: flex; gap: 0.4rem; flex-wrap: wrap; justify-content: flex-end; }
+  .athlete-name-link {
+    font-weight: 600; color: var(--navy);
+    cursor: pointer; white-space: nowrap;
+  }
+  .athlete-name-link:hover { text-decoration: underline; }
+
+  .contact-cell { color: var(--muted); font-size: 0.82rem; }
+  .season-cell  { color: var(--muted); font-size: 0.82rem; max-width: 180px; white-space: normal; }
 
   .tag {
-    font-size: 0.7rem;
-    font-weight: 600;
-    padding: 0.2rem 0.5rem;
-    border-radius: 4px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+    font-size: 0.7rem; font-weight: 600;
+    padding: 0.2rem 0.5rem; border-radius: 4px;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    white-space: nowrap;
   }
-
   .tag-team.boys  { background: #dbeafe; color: #1d4ed8; }
   .tag-team.girls { background: #fce7f3; color: #be185d; }
   .tag-event      { background: #fff7ed; color: var(--orange); }
 
-  .athlete-name {
-    font-size: 1rem;
-    font-weight: 700;
-    color: var(--text);
-    margin-bottom: 0.2rem;
-  }
+  .row-actions { display: flex; gap: 0.4rem; }
 
-  .athlete-meta {
-    font-size: 0.8rem;
-    color: var(--muted);
-    margin-bottom: 0.75rem;
+  .btn-row-view, .btn-row-edit {
+    width: 30px; height: 30px;
+    border-radius: 6px; border: 1.5px solid var(--border);
+    background: var(--bg); cursor: pointer;
+    font-size: 0.75rem; color: var(--muted);
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.12s ease;
   }
+  .btn-row-view:hover { border-color: var(--navy); color: var(--navy); background: #eff6ff; }
+  .btn-row-edit:hover { border-color: var(--orange); color: var(--orange); background: #fff7ed; }
 
-  .athlete-contact {
-    font-size: 0.8rem;
-    color: var(--muted);
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-    margin-bottom: 0.2rem;
-  }
-
-  .athlete-contact i { width: 12px; color: var(--navy); opacity: 0.5; }
+  .loading-cell { text-align: center; color: var(--muted); padding: 3rem; }
 
   /* ── States ─────────────────────────────────────────────────────────────── */
   .loading-state, .empty-state, .access-denied, .error-state {
@@ -758,5 +1397,240 @@
     background: var(--bg);
     padding: 0.75rem;
     border-radius: 8px;
+  }
+
+  /* ── Header action buttons ──────────────────────────────────────────────── */
+  .btn-secondary-action {
+    display: flex; align-items: center; gap: 0.5rem;
+    padding: 0.6rem 1.25rem;
+    background: var(--white);
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.875rem; font-weight: 600; font-family: var(--font);
+    color: var(--text); cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .btn-secondary-action:hover { border-color: var(--navy); color: var(--navy); }
+
+  /* ── Add athlete modal form ─────────────────────────────────────────────── */
+  .modal-add  { max-width: 560px; }
+  .modal-import { max-width: 640px; }
+  .modal-title { font-size: 1.25rem; font-weight: 700; color: var(--text); margin-bottom: 0.25rem; }
+  .modal-sub-title { color: var(--muted); font-size: 0.875rem; margin-bottom: 1.5rem; }
+
+  .add-form .form-row {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;
+  }
+  .add-form .form-group { display: flex; flex-direction: column; gap: 0.35rem; margin-bottom: 1rem; }
+  .add-form label {
+    font-size: 0.75rem; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.5px; color: var(--muted);
+  }
+  .add-form input, .add-form select {
+    padding: 0.65rem 0.85rem;
+    border: 1.5px solid var(--border); border-radius: 7px;
+    font-size: 0.875rem; font-family: var(--font); color: var(--text);
+    background: var(--white); outline: none; transition: border-color 0.15s;
+  }
+  .add-form input:focus, .add-form select:focus { border-color: var(--orange); }
+
+  .check-row { display: flex; gap: 1.25rem; flex-wrap: wrap; margin-top: 0.25rem; }
+  .check-label {
+    display: flex; align-items: center; gap: 0.4rem;
+    font-size: 0.875rem; font-weight: 500; color: var(--text);
+    text-transform: none; letter-spacing: normal; cursor: pointer;
+  }
+  .check-label input { width: auto; accent-color: var(--orange); }
+
+  .add-error {
+    background: #fee2e2; color: #dc2626; border-radius: 7px;
+    padding: 0.6rem 0.85rem; font-size: 0.85rem; margin-bottom: 1rem;
+  }
+
+  .add-actions {
+    display: flex; justify-content: flex-end; gap: 0.75rem;
+    padding-top: 1rem; border-top: 1px solid var(--border); margin-top: 0.5rem;
+  }
+
+  .btn-cancel {
+    padding: 0.6rem 1.25rem; background: transparent;
+    border: 1.5px solid var(--border); border-radius: 7px;
+    font-size: 0.875rem; font-weight: 600; font-family: var(--font);
+    color: var(--muted); cursor: pointer; transition: all 0.15s;
+  }
+  .btn-cancel:hover { border-color: var(--text); color: var(--text); }
+
+  .btn-save {
+    display: flex; align-items: center; gap: 0.5rem;
+    padding: 0.6rem 1.5rem; background: var(--navy);
+    border: none; border-radius: 7px;
+    font-size: 0.875rem; font-weight: 600; font-family: var(--font);
+    color: white; cursor: pointer; transition: background 0.15s;
+  }
+  .btn-save:hover { background: var(--navy-dark); }
+  .btn-save:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  /* ── Import modal ───────────────────────────────────────────────────────── */
+  .import-template {
+    display: flex; align-items: center; gap: 1rem;
+    background: #eff6ff; border: 1px solid #bfdbfe;
+    border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1.25rem;
+  }
+  .import-template i { font-size: 1.5rem; color: #2563eb; }
+  .template-label { font-size: 0.8rem; color: var(--muted); margin-bottom: 0.25rem; }
+  .btn-template {
+    font-size: 0.82rem; font-weight: 600; color: #2563eb;
+    background: none; border: none; cursor: pointer; padding: 0;
+    font-family: var(--font); text-decoration: underline;
+  }
+
+  .upload-area {
+    border: 2px dashed var(--border); border-radius: 10px;
+    padding: 2.5rem; text-align: center;
+    display: flex; flex-direction: column; align-items: center; gap: 0.75rem;
+    color: var(--muted); font-size: 0.875rem; margin-bottom: 1.25rem;
+    transition: all 0.15s;
+  }
+  .upload-area.drag-over { border-color: var(--orange); background: #fff7ed; color: var(--orange); }
+  .upload-area i { font-size: 2rem; opacity: 0.5; }
+  .btn-browse {
+    padding: 0.5rem 1.25rem; background: var(--navy); color: white;
+    border-radius: 6px; font-size: 0.82rem; font-weight: 600;
+    cursor: pointer; font-family: var(--font);
+  }
+
+  .import-preview { margin-bottom: 1rem; }
+  .preview-header {
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 0.875rem; font-weight: 600; color: var(--text);
+    margin-bottom: 0.75rem;
+  }
+  .btn-clear-import {
+    display: flex; align-items: center; gap: 0.3rem;
+    font-size: 0.78rem; color: var(--muted); background: none;
+    border: none; cursor: pointer; font-family: var(--font);
+  }
+  .preview-table-wrap { max-height: 240px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; }
+  .preview-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+  .preview-table th {
+    padding: 0.5rem 0.75rem; background: var(--bg); text-align: left;
+    font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.5px; color: var(--muted); position: sticky; top: 0;
+  }
+  .preview-table td { padding: 0.5rem 0.75rem; border-top: 1px solid var(--bg); color: var(--text); }
+
+  .import-error {
+    background: #fee2e2; color: #dc2626; border-radius: 7px;
+    padding: 0.6rem 0.85rem; font-size: 0.85rem; margin-bottom: 1rem;
+  }
+
+  /* ── Mobile ─────────────────────────────────────────────────────────────── */
+  .mobile-topbar {
+    display: none;
+    position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+    background: var(--navy);
+    padding: 0 1.25rem;
+    height: 56px;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .mobile-brand {
+    display: flex; align-items: center; gap: 0.5rem;
+    color: white; font-size: 0.9rem; font-weight: 700; letter-spacing: 1.5px;
+  }
+  .mobile-brand i { color: var(--orange); }
+  .hamburger {
+    background: none; border: none; color: white;
+    font-size: 1.2rem; cursor: pointer; padding: 0.5rem;
+  }
+
+  .drawer-overlay {
+    display: none;
+    position: fixed; inset: 0; z-index: 299;
+    background: rgba(15,23,42,0.5);
+    backdrop-filter: blur(2px);
+  }
+  .drawer-overlay.visible { display: block; }
+
+  .filters-toggle {
+    display: none;
+    width: 100%; padding: 0.75rem 1rem;
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: 10px; font-size: 0.875rem; font-weight: 600;
+    font-family: var(--font); color: var(--text); cursor: pointer;
+    align-items: center; justify-content: space-between;
+    margin-bottom: 0.75rem;
+  }
+  .filters-toggle i:last-child { transition: transform 0.2s ease; }
+
+  .filters { transition: all 0.2s ease; }
+
+  @media (max-width: 768px) {
+    .mobile-topbar { display: flex; }
+
+    .sidebar {
+      transform: translateX(-100%);
+      transition: transform 0.25s cubic-bezier(0.4,0,0.2,1);
+      z-index: 300;
+      top: 0;
+    }
+    .sidebar.open { transform: translateX(0); }
+
+    .main {
+      margin-left: 0;
+      padding: 1.25rem;
+      padding-top: calc(56px + 1.25rem);
+      max-width: 100vw;
+    }
+
+    .page-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.75rem;
+    }
+
+    .header-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem;
+      width: 100%;
+    }
+
+    .btn-export, .btn-secondary-action {
+      justify-content: center;
+      font-size: 0.8rem;
+      padding: 0.6rem 0.75rem;
+    }
+
+    .filters {
+      display: none;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    .filters.filters-open { display: flex; }
+    .filters-toggle { display: flex; }
+
+    .filter-group { min-width: unset; width: 100%; }
+
+    .table-wrap { border-radius: 10px; }
+    .roster-table { font-size: 0.8rem; }
+    .roster-table th, .roster-table td { padding: 0.6rem 0.75rem; }
+    .contact-cell { display: none; }  /* hide email/phone/parent on small screens */
+
+    .modal {
+      max-width: 100%;
+      max-height: 95vh;
+      border-radius: 16px 16px 0 0;
+      margin-top: auto;
+    }
+    .modal-overlay {
+      align-items: flex-end;
+      padding: 0;
+    }
+    .modal-add, .modal-import { max-width: 100%; }
+
+    .add-form .form-row {
+      grid-template-columns: 1fr;
+    }
   }
 </style>

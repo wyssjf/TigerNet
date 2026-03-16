@@ -11,9 +11,23 @@
   </head>
   <body>
 
+    <!-- MOBILE TOPBAR -->
+    <div class="mobile-topbar">
+      <div class="mobile-brand">
+        <i class="fa-solid fa-paw"></i>
+        <span>JRTXCTF</span>
+      </div>
+      <button class="hamburger" id="hamburger" onclick="openDrawer()">
+        <i class="fa-solid fa-bars"></i>
+      </button>
+    </div>
+
+    <!-- DRAWER OVERLAY -->
+    <div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+
     <div class="layout">
       <!-- SIDEBAR (same as roster) -->
-      <aside class="sidebar">
+      <aside class="sidebar" id="sidebar">
         <div class="sidebar-brand">
           <i class="fa-solid fa-paw"></i>
           <span>JRTXCTF</span>
@@ -109,6 +123,11 @@
       </main>
     </div>
 
+    <!-- MOBILE FLOATING SAVE BUTTON -->
+    <button class="save-all-float" id="saveAllFloatBtn" style="display:none;">
+      <i class="fa-solid fa-floppy-disk"></i> Save
+    </button>
+
     <script type="module">
       import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
@@ -133,6 +152,18 @@
       const isManager = profile?.role === 'manager';
 
       document.getElementById('userEmail').textContent = session.user.email;
+
+      // ── Drawer ───────────────────────────────────────────────────────────────
+      window.openDrawer = () => {
+        document.getElementById('sidebar').classList.add('open');
+        document.getElementById('drawerOverlay').classList.add('visible');
+        document.body.style.overflow = 'hidden';
+      };
+      window.closeDrawer = () => {
+        document.getElementById('sidebar').classList.remove('open');
+        document.getElementById('drawerOverlay').classList.remove('visible');
+        document.body.style.overflow = '';
+      };
 
       // ── Sign out ─────────────────────────────────────────────────────────────
       document.getElementById('signoutBtn').addEventListener('click', async () => {
@@ -298,7 +329,22 @@
 
         btn.disabled = false;
         btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Save All';
+        const floatBtn = document.getElementById('saveAllFloatBtn');
+        if (floatBtn) { floatBtn.disabled = false; floatBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Save'; }
       });
+
+      // Wire floating mobile save button
+      const floatBtn = document.getElementById('saveAllFloatBtn');
+      if (floatBtn) {
+        // Show on mobile
+        if (window.innerWidth <= 768) floatBtn.style.display = 'flex';
+        window.addEventListener('resize', () => {
+          floatBtn.style.display = window.innerWidth <= 768 ? 'flex' : 'none';
+        });
+        floatBtn.addEventListener('click', () => {
+          document.getElementById('saveAllBtn').click();
+        });
+      }
 
       // ── Summary ───────────────────────────────────────────────────────────────
       function updateSummary(filtered) {
@@ -582,4 +628,103 @@
   }
   .btn-save-all:hover    { background: #002280; }
   .btn-save-all:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  /* ── Mobile ─────────────────────────────────────────────────────────────── */
+  .mobile-topbar {
+    display: none;
+    position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+    background: var(--navy); padding: 0 1.25rem; height: 56px;
+    align-items: center; justify-content: space-between;
+  }
+  .mobile-brand {
+    display: flex; align-items: center; gap: 0.5rem;
+    color: white; font-size: 0.9rem; font-weight: 700; letter-spacing: 1.5px;
+  }
+  .mobile-brand i { color: var(--orange); }
+  .hamburger {
+    background: none; border: none; color: white;
+    font-size: 1.2rem; cursor: pointer; padding: 0.5rem;
+  }
+  .drawer-overlay {
+    display: none; position: fixed; inset: 0; z-index: 299;
+    background: rgba(15,23,42,0.5); backdrop-filter: blur(2px);
+  }
+  .drawer-overlay.visible { display: block; }
+
+  @media (max-width: 768px) {
+    .mobile-topbar { display: flex; }
+
+    .sidebar {
+      transform: translateX(-100%);
+      transition: transform 0.25s cubic-bezier(0.4,0,0.2,1);
+      z-index: 300; top: 0;
+    }
+    .sidebar.open { transform: translateX(0); }
+
+    .main {
+      margin-left: 0;
+      padding: 1.25rem;
+      padding-top: calc(56px + 1.25rem);
+    }
+
+    .page-header {
+      flex-direction: column; align-items: flex-start; gap: 0.75rem;
+    }
+
+    .header-actions {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 0.5rem; width: 100%;
+    }
+
+    .date-picker, .filter-wrap select {
+      width: 100%;
+    }
+
+    /* Summary bar wraps on mobile */
+    .summary-bar { flex-wrap: wrap; }
+    .summary-item { min-width: 80px; flex: 1; }
+
+    /* Replace table with card-per-athlete layout on mobile */
+    .attendance-table thead { display: none; }
+    .attendance-table, .attendance-table tbody,
+    .attendance-table tr, .attendance-table td { display: block; width: 100%; }
+
+    .attendance-table tr {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      margin-bottom: 0.75rem;
+      padding: 0.75rem 1rem;
+    }
+    .attendance-table tr.has-pending { background: #fffbeb; }
+
+    .attendance-table td {
+      padding: 0.35rem 0;
+      border-bottom: none;
+    }
+
+    /* Status buttons get bigger touch targets */
+    .status-btn {
+      width: 38px; height: 38px;
+      font-size: 0.85rem;
+    }
+
+    /* Notes input full width */
+    .notes-input { border: 1.5px solid var(--border); background: var(--bg); }
+
+    /* Save all col as floating button */
+    #saveAllCol { display: none !important; }
+    .save-all-float {
+      position: fixed; bottom: 1.5rem; right: 1.5rem;
+      background: var(--navy); color: white;
+      border: none; border-radius: 50px;
+      padding: 0.85rem 1.5rem;
+      font-size: 0.9rem; font-weight: 700;
+      font-family: var(--font); cursor: pointer;
+      box-shadow: 0 4px 20px rgba(0,51,160,0.3);
+      display: flex; align-items: center; gap: 0.5rem;
+      z-index: 100;
+    }
+    .save-all-float:disabled { opacity: 0.6; }
+  }
 </style>
