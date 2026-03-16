@@ -420,14 +420,15 @@
 
       // Managers can't see the roster list
       if (profile?.role === 'manager') {
-        document.getElementById('cardGrid').innerHTML = `
-          <div class="access-denied">
+        document.getElementById('rosterBody').innerHTML = `
+          <tr><td colspan="9" class="loading-cell">
             <i class="fa-solid fa-lock"></i>
-            <p>Managers do not have access to the full roster view.</p>
-          </div>`;
+            Managers do not have access to the full roster view.
+          </td></tr>`;
         document.getElementById('rosterCount').textContent = '';
         document.getElementById('exportBtn').style.display = 'none';
-        document.querySelectorAll('.filter-group').forEach(f => f.style.display = 'none');
+        document.getElementById('addAthleteBtn').style.display = 'none';
+        document.getElementById('importBtn').style.display = 'none';
         return;
       }
 
@@ -464,7 +465,7 @@
         .order('last_name', { ascending: true });
 
       if (error) {
-        document.getElementById('cardGrid').innerHTML = `<div class="error-state">Failed to load roster: ${error.message}</div>`;
+        document.getElementById('rosterBody').innerHTML = `<tr><td colspan="9" class="loading-cell">Failed to load roster: ${error.message}</td></tr>`;
         return;
       }
 
