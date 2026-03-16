@@ -53,6 +53,7 @@
 
       <!-- MAIN -->
       <main class="main">
+        <div class="main-inner">
         <div class="page-header">
           <div>
             <h1>Roster</h1>
@@ -144,6 +145,7 @@
           <i class="fa-solid fa-filter-circle-xmark"></i>
           <p>No athletes match your filters.</p>
         </div>
+        </div><!-- end main-inner -->
       </main>
     </div>
 
@@ -235,101 +237,6 @@
             <button class="btn-cancel" onclick="document.getElementById('addModalOverlay').classList.add('hidden')">Cancel</button>
             <button class="btn-save" id="saveAthleteBtn">
               <i class="fa-solid fa-check"></i> Save Athlete
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- EDIT ATHLETE MODAL -->
-    <div class="modal-overlay hidden" id="editModalOverlay">
-      <div class="modal modal-add">
-        <button class="modal-close" onclick="document.getElementById('editModalOverlay').classList.add('hidden')">
-          <i class="fa-solid fa-xmark"></i>
-        </button>
-        <h2 class="modal-title">Edit Athlete</h2>
-        <p class="modal-sub-title">Update athlete information.</p>
-
-        <input type="hidden" id="edit_id" />
-        <div class="add-form" id="editForm">
-          <div class="form-row">
-            <div class="form-group">
-              <label>First Name *</label>
-              <input type="text" id="edit_firstName" placeholder="First name" />
-            </div>
-            <div class="form-group">
-              <label>Last Name *</label>
-              <input type="text" id="edit_lastName" placeholder="Last name" />
-            </div>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label>Grade *</label>
-              <select id="edit_grade">
-                <option value="">Select...</option>
-                <option value="9">9th</option>
-                <option value="10">10th</option>
-                <option value="11">11th</option>
-                <option value="12">12th</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label>Team *</label>
-              <select id="edit_team">
-                <option value="">Select...</option>
-                <option value="Boys">Boys</option>
-                <option value="Girls">Girls</option>
-              </select>
-            </div>
-          </div>
-          <div class="form-group">
-            <label>Season(s) *</label>
-            <div class="check-row">
-              <label class="check-label"><input type="checkbox" name="edit_season" value="Cross Country" /> Cross Country</label>
-              <label class="check-label"><input type="checkbox" name="edit_season" value="Indoor Track & Field" /> Indoor T&F</label>
-              <label class="check-label"><input type="checkbox" name="edit_season" value="Outdoor Track & Field" /> Outdoor T&F</label>
-            </div>
-          </div>
-          <div class="form-group">
-            <label>Event Group</label>
-            <select id="edit_eventGroup">
-              <option value="">Select...</option>
-              <option value="Sprints">Sprints</option>
-              <option value="Distance">Distance</option>
-              <option value="Throws">Throws</option>
-            </select>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label>Athlete Email *</label>
-              <input type="email" id="edit_email" placeholder="athlete@example.com" />
-            </div>
-            <div class="form-group">
-              <label>Athlete Phone *</label>
-              <input type="tel" id="edit_phone" placeholder="(555) 555-5555" />
-            </div>
-          </div>
-          <div class="form-group">
-            <label>Parent / Guardian Name *</label>
-            <input type="text" id="edit_parent1Name" placeholder="Full name" />
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label>Parent Phone *</label>
-              <input type="tel" id="edit_parent1Phone" placeholder="(555) 555-5555" />
-            </div>
-            <div class="form-group">
-              <label>Parent Email *</label>
-              <input type="email" id="edit_parent1Email" placeholder="parent@example.com" />
-            </div>
-          </div>
-
-          <div class="add-error hidden" id="editError"></div>
-
-          <div class="add-actions">
-            <button class="btn-cancel" onclick="document.getElementById('editModalOverlay').classList.add('hidden')">Cancel</button>
-            <button class="btn-save" id="updateAthleteBtn">
-              <i class="fa-solid fa-floppy-disk"></i> Save Changes
             </button>
           </div>
         </div>
@@ -534,11 +441,8 @@
             <td class="contact-cell">${a.parent1_name}</td>
             <td>
               <div class="row-actions">
-                <button class="btn-row-view" onclick="openModal('${a.id}')" title="View details">
-                  <i class="fa-solid fa-eye"></i>
-                </button>
-                <button class="btn-row-edit" onclick="openEditModal('${a.id}')" title="Edit athlete">
-                  <i class="fa-solid fa-pen"></i>
+                <button class="btn-row-view" onclick="openModal('${a.id}')" title="View & edit">
+                  <i class="fa-solid fa-pen-to-square"></i>
                 </button>
               </div>
             </td>
@@ -546,14 +450,13 @@
         `).join('');
       }
 
-      // ── Modal ─────────────────────────────────────────────────────────────────
+      // ── Modal (view + edit combined) ─────────────────────────────────────────
+      let currentEditId = null;
+
       window.openModal = (id) => {
         const a = allAthletes.find(x => x.id === id);
         if (!a) return;
-
-        const seasons = (a.season || []).join(', ') || '—';
-        const activities = (a.activities || []).join(', ') || 'None';
-        const addons = (a.sprint_addons || []).join(', ') || '';
+        currentEditId = id;
 
         document.getElementById('modalContent').innerHTML = `
           <div class="modal-header">
@@ -564,44 +467,163 @@
             </div>
           </div>
 
-          <div class="modal-sections">
-            <div class="modal-section">
-              <h4>Contact</h4>
-              <div class="detail-row"><span>Email</span><span>${a.email}</span></div>
-              <div class="detail-row"><span>Phone</span><span>${a.phone}</span></div>
-              <div class="detail-row"><span>Birthday</span><span>${a.birthday}</span></div>
+          <div id="viewMode">
+            <div class="modal-sections">
+              <div class="modal-section">
+                <h4>Contact</h4>
+                <div class="detail-row"><span>Email</span><span>${a.email}</span></div>
+                <div class="detail-row"><span>Phone</span><span>${a.phone}</span></div>
+                ${a.birthday ? `<div class="detail-row"><span>Birthday</span><span>${a.birthday}</span></div>` : ''}
+              </div>
+              <div class="modal-section">
+                <h4>Athletics</h4>
+                <div class="detail-row"><span>Season(s)</span><span>${(a.season||[]).join(', ')||'—'}</span></div>
+                <div class="detail-row"><span>Event Group</span><span>${a.event_group||'—'}</span></div>
+                ${(a.sprint_addons||[]).length ? `<div class="detail-row"><span>Also</span><span>${a.sprint_addons.join(', ')}</span></div>` : ''}
+                ${(a.activities||[]).length ? `<div class="detail-row"><span>Prior Activities</span><span>${a.activities.join(', ')}</span></div>` : ''}
+              </div>
+              <div class="modal-section">
+                <h4>Academic</h4>
+                <div class="detail-row"><span>Middle School</span><span>${a.middle_school === 'Other' ? a.other_middle_school : a.middle_school}</span></div>
+                <div class="detail-row"><span>Specialty</span><span>${a.is_specialty ? a.specialty_program : 'No'}</span></div>
+              </div>
+              <div class="modal-section">
+                <h4>Parent / Guardian</h4>
+                <div class="detail-row"><span>${a.parent1_name}</span><span>${a.parent1_phone} &nbsp;·&nbsp; ${a.parent1_email}</span></div>
+                ${a.parent2_name ? `<div class="detail-row"><span>${a.parent2_name}</span><span>${a.parent2_phone} &nbsp;·&nbsp; ${a.parent2_email}</span></div>` : ''}
+              </div>
+              ${a.notes ? `<div class="modal-section"><h4>Notes</h4><p class="notes-text">${a.notes}</p></div>` : ''}
             </div>
-
-            <div class="modal-section">
-              <h4>Athletics</h4>
-              <div class="detail-row"><span>Season(s)</span><span>${seasons}</span></div>
-              <div class="detail-row"><span>Event Group</span><span>${a.event_group || '—'}</span></div>
-              ${addons ? `<div class="detail-row"><span>Also</span><span>${addons}</span></div>` : ''}
-              <div class="detail-row"><span>Prior Activities</span><span>${activities}</span></div>
+            <div class="add-actions" style="margin-top:1.5rem;">
+              <button class="btn-cancel" onclick="closeModalDirect()">Close</button>
+              <button class="btn-save" onclick="switchToEdit()">
+                <i class="fa-solid fa-pen"></i> Edit Athlete
+              </button>
             </div>
+          </div>
 
-            <div class="modal-section">
-              <h4>Academic</h4>
-              <div class="detail-row"><span>Middle School</span><span>${a.middle_school === 'Other' ? a.other_middle_school : a.middle_school}</span></div>
-              <div class="detail-row"><span>Specialty</span><span>${a.is_specialty ? a.specialty_program : 'No'}</span></div>
+          <div id="editMode" style="display:none;">
+            <div class="add-form">
+              <div class="form-row">
+                <div class="form-group"><label>First Name *</label><input type="text" id="me_firstName" value="${a.first_name}" /></div>
+                <div class="form-group"><label>Last Name *</label><input type="text" id="me_lastName" value="${a.last_name}" /></div>
+              </div>
+              <div class="form-row">
+                <div class="form-group"><label>Grade *</label>
+                  <select id="me_grade">
+                    <option value="9" ${a.grade==9?'selected':''}>9th</option>
+                    <option value="10" ${a.grade==10?'selected':''}>10th</option>
+                    <option value="11" ${a.grade==11?'selected':''}>11th</option>
+                    <option value="12" ${a.grade==12?'selected':''}>12th</option>
+                  </select>
+                </div>
+                <div class="form-group"><label>Team *</label>
+                  <select id="me_team">
+                    <option value="Boys" ${a.team==='Boys'?'selected':''}>Boys</option>
+                    <option value="Girls" ${a.team==='Girls'?'selected':''}>Girls</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-group"><label>Season(s) *</label>
+                <div class="check-row">
+                  <label class="check-label"><input type="checkbox" name="me_season" value="Cross Country" ${(a.season||[]).includes('Cross Country')?'checked':''}/> Cross Country</label>
+                  <label class="check-label"><input type="checkbox" name="me_season" value="Indoor Track & Field" ${(a.season||[]).includes('Indoor Track & Field')?'checked':''}/> Indoor T&F</label>
+                  <label class="check-label"><input type="checkbox" name="me_season" value="Outdoor Track & Field" ${(a.season||[]).includes('Outdoor Track & Field')?'checked':''}/> Outdoor T&F</label>
+                </div>
+              </div>
+              <div class="form-group"><label>Event Group</label>
+                <select id="me_eventGroup">
+                  <option value="">Select...</option>
+                  <option value="Sprints" ${a.event_group==='Sprints'?'selected':''}>Sprints</option>
+                  <option value="Distance" ${a.event_group==='Distance'?'selected':''}>Distance</option>
+                  <option value="Throws" ${a.event_group==='Throws'?'selected':''}>Throws</option>
+                </select>
+              </div>
+              <div class="form-row">
+                <div class="form-group"><label>Athlete Email *</label><input type="email" id="me_email" value="${a.email}" /></div>
+                <div class="form-group"><label>Athlete Phone *</label><input type="tel" id="me_phone" value="${a.phone}" /></div>
+              </div>
+              <div class="form-group"><label>Parent Name *</label><input type="text" id="me_parent1Name" value="${a.parent1_name}" /></div>
+              <div class="form-row">
+                <div class="form-group"><label>Parent Phone *</label><input type="tel" id="me_parent1Phone" value="${a.parent1_phone}" /></div>
+                <div class="form-group"><label>Parent Email *</label><input type="email" id="me_parent1Email" value="${a.parent1_email}" /></div>
+              </div>
+              <div class="add-error hidden" id="meError"></div>
+              <div class="add-actions">
+                <button class="btn-cancel" onclick="switchToView()"><i class="fa-solid fa-arrow-left"></i> Back</button>
+                <button class="btn-save" id="meSaveBtn" onclick="saveModalEdit()">
+                  <i class="fa-solid fa-floppy-disk"></i> Save Changes
+                </button>
+              </div>
             </div>
-
-            <div class="modal-section">
-              <h4>Parent / Guardian</h4>
-              <div class="detail-row"><span>${a.parent1_name}</span><span>${a.parent1_phone} &nbsp;·&nbsp; ${a.parent1_email}</span></div>
-              ${a.parent2_name ? `<div class="detail-row"><span>${a.parent2_name}</span><span>${a.parent2_phone} &nbsp;·&nbsp; ${a.parent2_email}</span></div>` : ''}
-            </div>
-
-            ${a.notes ? `
-            <div class="modal-section">
-              <h4>Notes</h4>
-              <p class="notes-text">${a.notes}</p>
-            </div>` : ''}
           </div>
         `;
 
         document.getElementById('modalOverlay').classList.remove('hidden');
         document.body.style.overflow = 'hidden';
+      };
+
+      window.switchToEdit = () => {
+        document.getElementById('viewMode').style.display = 'none';
+        document.getElementById('editMode').style.display = 'block';
+      };
+      window.switchToView = () => {
+        document.getElementById('viewMode').style.display = 'block';
+        document.getElementById('editMode').style.display = 'none';
+      };
+
+      window.saveModalEdit = async () => {
+        const btn     = document.getElementById('meSaveBtn');
+        const errorEl = document.getElementById('meError');
+        errorEl.classList.add('hidden');
+
+        const firstName    = document.getElementById('me_firstName').value.trim();
+        const lastName     = document.getElementById('me_lastName').value.trim();
+        const grade        = parseInt(document.getElementById('me_grade').value);
+        const team         = document.getElementById('me_team').value;
+        const email        = document.getElementById('me_email').value.trim();
+        const phone        = document.getElementById('me_phone').value.trim();
+        const parent1Name  = document.getElementById('me_parent1Name').value.trim();
+        const parent1Phone = document.getElementById('me_parent1Phone').value.trim();
+        const parent1Email = document.getElementById('me_parent1Email').value.trim();
+        const eventGroup   = document.getElementById('me_eventGroup').value || null;
+        const season       = [...document.querySelectorAll('input[name="me_season"]:checked')].map(i => i.value);
+
+        if (!firstName || !lastName || !grade || !team || !email || !phone || !parent1Name || !parent1Phone || !parent1Email) {
+          errorEl.textContent = 'Please fill in all required fields.';
+          errorEl.classList.remove('hidden');
+          return;
+        }
+        if (!season.length) {
+          errorEl.textContent = 'Please select at least one season.';
+          errorEl.classList.remove('hidden');
+          return;
+        }
+
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+
+        const { error } = await supabase
+          .from('registrations')
+          .update({ first_name: firstName, last_name: lastName, grade, team, email, phone,
+            season, event_group: eventGroup,
+            parent1_name: parent1Name, parent1_phone: parent1Phone, parent1_email: parent1Email })
+          .eq('id', currentEditId);
+
+        if (error) {
+          errorEl.textContent = error.message;
+          errorEl.classList.remove('hidden');
+          btn.disabled = false;
+          btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Save Changes';
+          return;
+        }
+
+        const { data: refreshed } = await supabase.from('registrations').select('*').order('last_name');
+        allAthletes = refreshed || [];
+        renderCards(allAthletes);
+        closeModalDirect();
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Save Changes';
       };
 
       window.closeModal = (e) => {
@@ -845,94 +867,6 @@
         btn.innerHTML = '<i class="fa-solid fa-file-arrow-up"></i> Import Athletes';
       });
 
-      // ── Edit athlete ─────────────────────────────────────────────────────────
-      window.openEditModal = (id) => {
-        const a = allAthletes.find(x => x.id === id);
-        if (!a) return;
-
-        document.getElementById('edit_id').value         = a.id;
-        document.getElementById('edit_firstName').value  = a.first_name || '';
-        document.getElementById('edit_lastName').value   = a.last_name  || '';
-        document.getElementById('edit_grade').value      = a.grade      || '';
-        document.getElementById('edit_team').value       = a.team       || '';
-        document.getElementById('edit_email').value      = a.email      || '';
-        document.getElementById('edit_phone').value      = a.phone      || '';
-        document.getElementById('edit_parent1Name').value  = a.parent1_name  || '';
-        document.getElementById('edit_parent1Phone').value = a.parent1_phone || '';
-        document.getElementById('edit_parent1Email').value = a.parent1_email || '';
-        document.getElementById('edit_eventGroup').value   = a.event_group   || '';
-
-        // Season checkboxes
-        document.querySelectorAll('input[name="edit_season"]').forEach(cb => {
-          cb.checked = (a.season || []).includes(cb.value);
-        });
-
-        document.getElementById('editModalOverlay').classList.remove('hidden');
-        document.body.style.overflow = 'hidden';
-      };
-
-      document.getElementById('updateAthleteBtn').addEventListener('click', async () => {
-        const btn     = document.getElementById('updateAthleteBtn');
-        const errorEl = document.getElementById('editError');
-        errorEl.classList.add('hidden');
-        errorEl.textContent = '';
-
-        const id           = document.getElementById('edit_id').value;
-        const firstName    = document.getElementById('edit_firstName').value.trim();
-        const lastName     = document.getElementById('edit_lastName').value.trim();
-        const grade        = parseInt(document.getElementById('edit_grade').value);
-        const team         = document.getElementById('edit_team').value;
-        const email        = document.getElementById('edit_email').value.trim();
-        const phone        = document.getElementById('edit_phone').value.trim();
-        const parent1Name  = document.getElementById('edit_parent1Name').value.trim();
-        const parent1Phone = document.getElementById('edit_parent1Phone').value.trim();
-        const parent1Email = document.getElementById('edit_parent1Email').value.trim();
-        const eventGroup   = document.getElementById('edit_eventGroup').value || null;
-        const season       = [...document.querySelectorAll('input[name="edit_season"]:checked')].map(i => i.value);
-
-        if (!firstName || !lastName || !grade || !team || !email || !phone || !parent1Name || !parent1Phone || !parent1Email) {
-          errorEl.textContent = 'Please fill in all required fields.';
-          errorEl.classList.remove('hidden');
-          return;
-        }
-        if (season.length === 0) {
-          errorEl.textContent = 'Please select at least one season.';
-          errorEl.classList.remove('hidden');
-          return;
-        }
-
-        btn.disabled = true;
-        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
-
-        const { error } = await supabase
-          .from('registrations')
-          .update({
-            first_name: firstName, last_name: lastName,
-            grade, team, email, phone,
-            season, event_group: eventGroup,
-            parent1_name: parent1Name, parent1_phone: parent1Phone, parent1_email: parent1Email,
-          })
-          .eq('id', id);
-
-        if (error) {
-          errorEl.textContent = error.message;
-          errorEl.classList.remove('hidden');
-          btn.disabled = false;
-          btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Save Changes';
-          return;
-        }
-
-        // Refresh roster
-        const { data: refreshed } = await supabase.from('registrations').select('*').order('last_name');
-        allAthletes = refreshed || [];
-        renderCards(allAthletes);
-        document.getElementById('editModalOverlay').classList.add('hidden');
-        document.body.style.overflow = '';
-
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Save Changes';
-      });
-
       // ── Export CSV ────────────────────────────────────────────────────────────
       document.getElementById('exportBtn').addEventListener('click', () => {
         const headers = [
@@ -1002,7 +936,8 @@
   /* ── Layout ─────────────────────────────────────────────────────────────── */
   .layout {
     display: flex;
-    min-height: 100vh;
+    height: 100vh;
+    overflow: hidden;
   }
 
   /* ── Sidebar ────────────────────────────────────────────────────────────── */
@@ -1091,8 +1026,22 @@
   .main {
     margin-left: var(--sidebar-w);
     flex: 1;
-    padding: 2rem 2.5rem;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
     max-width: calc(100vw - var(--sidebar-w));
+  }
+  .main-inner {
+    flex: 1;
+    overflow-y: auto;
+    padding: 2rem 2.5rem;
+    display: flex;
+    flex-direction: column;
+  }
+  .table-wrap {
+    flex: 1;
+    overflow: auto;
+    min-height: 0;
   }
 
   .page-header {
@@ -1192,8 +1141,8 @@
     background: var(--white);
     border: 1px solid var(--border);
     border-radius: 12px;
-    overflow: hidden;
-    overflow-x: auto;
+    overflow: auto;
+    min-height: 0;
   }
 
   .roster-table {
@@ -1262,7 +1211,7 @@
 
   .row-actions { display: flex; gap: 0.4rem; }
 
-  .btn-row-view, .btn-row-edit {
+  .btn-row-view {
     width: 30px; height: 30px;
     border-radius: 6px; border: 1.5px solid var(--border);
     background: var(--bg); cursor: pointer;
@@ -1271,7 +1220,6 @@
     transition: all 0.12s ease;
   }
   .btn-row-view:hover { border-color: var(--navy); color: var(--navy); background: #eff6ff; }
-  .btn-row-edit:hover { border-color: var(--orange); color: var(--orange); background: #fff7ed; }
 
   .loading-cell { text-align: center; color: var(--muted); padding: 3rem; }
 
@@ -1577,9 +1525,11 @@
 
     .main {
       margin-left: 0;
+      max-width: 100vw;
+    }
+    .main-inner {
       padding: 1.25rem;
       padding-top: calc(56px + 1.25rem);
-      max-width: 100vw;
     }
 
     .page-header {
