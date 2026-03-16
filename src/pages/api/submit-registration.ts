@@ -1,4 +1,4 @@
-const supabaseUrl = 'https://kbewlrudpdqmvdsblien.supabase.co';
+const supabaseUrl = 'https://kbewlrudpdqmvdsbljen.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiZXdscnVkcGRxbXZkc2JsamVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM2ODkxNDQsImV4cCI6MjA4OTI2NTE0NH0.RYeII_T640_x4AVrThyYgy3nJcHfHc6iUVkWy2R9GgI';
 
 export const POST = async ({ request }) => {
