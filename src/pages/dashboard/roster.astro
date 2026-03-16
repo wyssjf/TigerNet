@@ -1,0 +1,758 @@
+---
+// src/pages/dashboard/roster.astro
+---
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>JRTXCTF | Roster</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+  </head>
+  <body>
+
+    <!-- SIDEBAR -->
+    <div class="layout">
+      <aside class="sidebar">
+        <div class="sidebar-brand">
+          <i class="fa-solid fa-paw"></i>
+          <span>JRTXCTF</span>
+        </div>
+        <nav class="sidebar-nav">
+          <a href="/dashboard/roster" class="nav-item active">
+            <i class="fa-solid fa-users"></i> Roster
+          </a>
+          <a href="/dashboard/attendance" class="nav-item">
+            <i class="fa-solid fa-clipboard-check"></i> Attendance
+          </a>
+        </nav>
+        <div class="sidebar-footer">
+          <div class="user-info">
+            <i class="fa-solid fa-circle-user"></i>
+            <span id="userEmail">Loading...</span>
+          </div>
+          <button class="btn-signout" id="signoutBtn">
+            <i class="fa-solid fa-right-from-bracket"></i> Sign Out
+          </button>
+        </div>
+      </aside>
+
+      <!-- MAIN -->
+      <main class="main">
+        <div class="page-header">
+          <div>
+            <h1>Roster</h1>
+            <p class="page-sub" id="rosterCount">Loading athletes...</p>
+          </div>
+          <div class="header-actions">
+            <button class="btn-export" id="exportBtn">
+              <i class="fa-solid fa-download"></i> Export CSV
+            </button>
+          </div>
+        </div>
+
+        <!-- FILTERS -->
+        <div class="filters">
+          <div class="filter-group">
+            <label>Season</label>
+            <select id="filterSeason">
+              <option value="">All Seasons</option>
+              <option value="Cross Country">Cross Country</option>
+              <option value="Indoor Track & Field">Indoor T&F</option>
+              <option value="Outdoor Track & Field">Outdoor T&F</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label>Team</label>
+            <select id="filterTeam">
+              <option value="">All Teams</option>
+              <option value="Boys">Boys</option>
+              <option value="Girls">Girls</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label>Event Group</label>
+            <select id="filterEvent">
+              <option value="">All Events</option>
+              <option value="Sprints">Sprints</option>
+              <option value="Distance">Distance</option>
+              <option value="Throws">Throws</option>
+            </select>
+          </div>
+          <div class="filter-group search-group">
+            <label>Search</label>
+            <div class="search-wrap">
+              <i class="fa-solid fa-magnifying-glass"></i>
+              <input type="text" id="searchInput" placeholder="Name, email..." />
+            </div>
+          </div>
+        </div>
+
+        <!-- CARDS -->
+        <div class="card-grid" id="cardGrid">
+          <div class="loading-state">
+            <i class="fa-solid fa-paw fa-spin"></i>
+            <p>Loading roster...</p>
+          </div>
+        </div>
+
+        <div class="empty-state hidden" id="emptyState">
+          <i class="fa-solid fa-filter-circle-xmark"></i>
+          <p>No athletes match your filters.</p>
+        </div>
+      </main>
+    </div>
+
+    <!-- ATHLETE DETAIL MODAL -->
+    <div class="modal-overlay hidden" id="modalOverlay" onclick="closeModal(event)">
+      <div class="modal" id="modal">
+        <button class="modal-close" onclick="closeModalDirect()">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+        <div id="modalContent"></div>
+      </div>
+    </div>
+
+    <script type="module">
+      import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+      const supabase = createClient(
+        'https://kbewlrudpdqmvdsbljen.supabase.co',
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiZXdscnVkcGRxbXZkc2JsamVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM2ODkxNDQsImV4cCI6MjA4OTI2NTE0NH0.RYeII_T640_x4AVrThyYgy3nJcHfHc6iUVkWy2R9GgI'
+      );
+
+      // ── Auth guard ───────────────────────────────────────────────────────────
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { window.location.href = '/dashboard'; }
+
+      // Get profile to check role
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', session.user.id)
+        .single();
+
+      document.getElementById('userEmail').textContent = session.user.email;
+
+      // Managers can't see the roster list
+      if (profile?.role === 'manager') {
+        document.getElementById('cardGrid').innerHTML = `
+          <div class="access-denied">
+            <i class="fa-solid fa-lock"></i>
+            <p>Managers do not have access to the full roster view.</p>
+          </div>`;
+        document.getElementById('rosterCount').textContent = '';
+        document.getElementById('exportBtn').style.display = 'none';
+        document.querySelectorAll('.filter-group').forEach(f => f.style.display = 'none');
+        return;
+      }
+
+      // ── Sign out ─────────────────────────────────────────────────────────────
+      document.getElementById('signoutBtn').addEventListener('click', async () => {
+        await supabase.auth.signOut();
+        window.location.href = '/dashboard';
+      });
+
+      // ── Load athletes ─────────────────────────────────────────────────────────
+      let allAthletes = [];
+
+      const { data: athletes, error } = await supabase
+        .from('registrations')
+        .select('*')
+        .order('last_name', { ascending: true });
+
+      if (error) {
+        document.getElementById('cardGrid').innerHTML = `<div class="error-state">Failed to load roster: ${error.message}</div>`;
+        return;
+      }
+
+      allAthletes = athletes || [];
+      renderCards(allAthletes);
+
+      // ── Filters ───────────────────────────────────────────────────────────────
+      const filterSeason = document.getElementById('filterSeason');
+      const filterTeam   = document.getElementById('filterTeam');
+      const filterEvent  = document.getElementById('filterEvent');
+      const searchInput  = document.getElementById('searchInput');
+
+      function applyFilters() {
+        const season = filterSeason.value;
+        const team   = filterTeam.value;
+        const event  = filterEvent.value;
+        const search = searchInput.value.toLowerCase();
+
+        const filtered = allAthletes.filter(a => {
+          if (season && !a.season?.includes(season)) return false;
+          if (team   && a.team !== team)              return false;
+          if (event  && a.event_group !== event)      return false;
+          if (search) {
+            const name  = `${a.first_name} ${a.last_name}`.toLowerCase();
+            const email = (a.email || '').toLowerCase();
+            if (!name.includes(search) && !email.includes(search)) return false;
+          }
+          return true;
+        });
+
+        renderCards(filtered);
+      }
+
+      [filterSeason, filterTeam, filterEvent].forEach(el => el.addEventListener('change', applyFilters));
+      searchInput.addEventListener('input', applyFilters);
+
+      // ── Render cards ──────────────────────────────────────────────────────────
+      function renderCards(athletes) {
+        const grid      = document.getElementById('cardGrid');
+        const empty     = document.getElementById('emptyState');
+        const countEl   = document.getElementById('rosterCount');
+
+        countEl.textContent = `${athletes.length} athlete${athletes.length !== 1 ? 's' : ''}`;
+
+        if (athletes.length === 0) {
+          grid.innerHTML = '';
+          empty.classList.remove('hidden');
+          return;
+        }
+
+        empty.classList.add('hidden');
+        grid.innerHTML = athletes.map(a => `
+          <div class="athlete-card" onclick="openModal('${a.id}')">
+            <div class="card-header">
+              <div class="athlete-avatar">${a.first_name[0]}${a.last_name[0]}</div>
+              <div class="card-tags">
+                <span class="tag tag-team ${a.team === 'Boys' ? 'boys' : 'girls'}">${a.team}</span>
+                ${a.event_group ? `<span class="tag tag-event">${a.event_group}</span>` : ''}
+              </div>
+            </div>
+            <div class="card-body">
+              <h3 class="athlete-name">${a.first_name} ${a.last_name}</h3>
+              <p class="athlete-meta">Grade ${a.grade} &nbsp;·&nbsp; ${(a.season || []).join(', ')}</p>
+              <p class="athlete-contact"><i class="fa-solid fa-envelope"></i> ${a.email}</p>
+              <p class="athlete-contact"><i class="fa-solid fa-phone"></i> ${a.phone}</p>
+            </div>
+          </div>
+        `).join('');
+      }
+
+      // ── Modal ─────────────────────────────────────────────────────────────────
+      window.openModal = (id) => {
+        const a = allAthletes.find(x => x.id === id);
+        if (!a) return;
+
+        const seasons = (a.season || []).join(', ') || '—';
+        const activities = (a.activities || []).join(', ') || 'None';
+        const addons = (a.sprint_addons || []).join(', ') || '';
+
+        document.getElementById('modalContent').innerHTML = `
+          <div class="modal-header">
+            <div class="modal-avatar">${a.first_name[0]}${a.last_name[0]}</div>
+            <div>
+              <h2>${a.first_name} ${a.last_name}</h2>
+              <p class="modal-sub">Grade ${a.grade} &nbsp;·&nbsp; ${a.team} Team &nbsp;·&nbsp; ${a.athlete_type}</p>
+            </div>
+          </div>
+
+          <div class="modal-sections">
+            <div class="modal-section">
+              <h4>Contact</h4>
+              <div class="detail-row"><span>Email</span><span>${a.email}</span></div>
+              <div class="detail-row"><span>Phone</span><span>${a.phone}</span></div>
+              <div class="detail-row"><span>Birthday</span><span>${a.birthday}</span></div>
+            </div>
+
+            <div class="modal-section">
+              <h4>Athletics</h4>
+              <div class="detail-row"><span>Season(s)</span><span>${seasons}</span></div>
+              <div class="detail-row"><span>Event Group</span><span>${a.event_group || '—'}</span></div>
+              ${addons ? `<div class="detail-row"><span>Also</span><span>${addons}</span></div>` : ''}
+              <div class="detail-row"><span>Prior Activities</span><span>${activities}</span></div>
+            </div>
+
+            <div class="modal-section">
+              <h4>Academic</h4>
+              <div class="detail-row"><span>Middle School</span><span>${a.middle_school === 'Other' ? a.other_middle_school : a.middle_school}</span></div>
+              <div class="detail-row"><span>Specialty</span><span>${a.is_specialty ? a.specialty_program : 'No'}</span></div>
+            </div>
+
+            <div class="modal-section">
+              <h4>Parent / Guardian</h4>
+              <div class="detail-row"><span>${a.parent1_name}</span><span>${a.parent1_phone} &nbsp;·&nbsp; ${a.parent1_email}</span></div>
+              ${a.parent2_name ? `<div class="detail-row"><span>${a.parent2_name}</span><span>${a.parent2_phone} &nbsp;·&nbsp; ${a.parent2_email}</span></div>` : ''}
+            </div>
+
+            ${a.notes ? `
+            <div class="modal-section">
+              <h4>Notes</h4>
+              <p class="notes-text">${a.notes}</p>
+            </div>` : ''}
+          </div>
+        `;
+
+        document.getElementById('modalOverlay').classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+      };
+
+      window.closeModal = (e) => {
+        if (e.target === document.getElementById('modalOverlay')) closeModalDirect();
+      };
+      window.closeModalDirect = () => {
+        document.getElementById('modalOverlay').classList.add('hidden');
+        document.body.style.overflow = '';
+      };
+
+      // ── Export CSV ────────────────────────────────────────────────────────────
+      document.getElementById('exportBtn').addEventListener('click', () => {
+        const headers = [
+          'Last Name','First Name','Grade','Birthday','Team','Season','Event Group',
+          'Sprint Addons','Email','Phone','Middle School','Specialty Program',
+          'Prior Activities','Parent 1 Name','Parent 1 Phone','Parent 1 Email',
+          'Parent 2 Name','Parent 2 Phone','Parent 2 Email','Notes','Registered'
+        ];
+
+        const rows = allAthletes.map(a => [
+          a.last_name, a.first_name, a.grade, a.birthday, a.team,
+          (a.season || []).join('; '),
+          a.event_group || '',
+          (a.sprint_addons || []).join('; '),
+          a.email, a.phone,
+          a.middle_school === 'Other' ? a.other_middle_school : a.middle_school,
+          a.specialty_program || '',
+          (a.activities || []).join('; '),
+          a.parent1_name, a.parent1_phone, a.parent1_email,
+          a.parent2_name || '', a.parent2_phone || '', a.parent2_email || '',
+          a.notes || '',
+          new Date(a.created_at).toLocaleDateString()
+        ]);
+
+        const csv = [headers, ...rows]
+          .map(row => row.map(v => `"${String(v).replace(/"/g, '""')}"`).join(','))
+          .join('\n');
+
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url  = URL.createObjectURL(blob);
+        const a    = document.createElement('a');
+        a.href     = url;
+        a.download = `jrtxctf-roster-${new Date().toISOString().split('T')[0]}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+      });
+    </script>
+  </body>
+</html>
+
+<style>
+  :root {
+    --navy:      #0033A0;
+    --navy-dark: #002280;
+    --orange:    #FF6700;
+    --text:      #0f172a;
+    --muted:     #64748b;
+    --border:    #e2e8f0;
+    --bg:        #f1f5f9;
+    --white:     #ffffff;
+    --sidebar-w: 220px;
+    --font:      'DM Sans', system-ui, sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Layout ─────────────────────────────────────────────────────────────── */
+  .layout {
+    display: flex;
+    min-height: 100vh;
+  }
+
+  /* ── Sidebar ────────────────────────────────────────────────────────────── */
+  .sidebar {
+    width: var(--sidebar-w);
+    background: var(--navy);
+    display: flex;
+    flex-direction: column;
+    padding: 1.5rem 1rem;
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    z-index: 100;
+  }
+
+  .sidebar-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    color: white;
+    font-size: 0.95rem;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    padding: 0 0.5rem 1.5rem;
+    border-bottom: 1px solid rgba(255,255,255,0.15);
+    margin-bottom: 1.5rem;
+  }
+
+  .sidebar-brand i { color: var(--orange); font-size: 1.2rem; }
+
+  .sidebar-nav { display: flex; flex-direction: column; gap: 0.25rem; flex: 1; }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.65rem 0.75rem;
+    border-radius: 8px;
+    color: rgba(255,255,255,0.65);
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.15s ease;
+  }
+
+  .nav-item:hover { background: rgba(255,255,255,0.1); color: white; }
+  .nav-item.active { background: rgba(255,255,255,0.15); color: white; }
+  .nav-item i { width: 16px; text-align: center; }
+
+  .sidebar-footer {
+    border-top: 1px solid rgba(255,255,255,0.15);
+    padding-top: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .user-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: rgba(255,255,255,0.6);
+    font-size: 0.78rem;
+    overflow: hidden;
+  }
+
+  .user-info span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  .btn-signout {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 6px;
+    color: rgba(255,255,255,0.7);
+    font-size: 0.82rem;
+    font-family: var(--font);
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .btn-signout:hover { background: rgba(255,255,255,0.15); color: white; }
+
+  /* ── Main ───────────────────────────────────────────────────────────────── */
+  .main {
+    margin-left: var(--sidebar-w);
+    flex: 1;
+    padding: 2rem 2.5rem;
+    max-width: calc(100vw - var(--sidebar-w));
+  }
+
+  .page-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 1.75rem;
+  }
+
+  h1 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.02em;
+  }
+
+  .page-sub { color: var(--muted); font-size: 0.9rem; margin-top: 0.2rem; }
+
+  .header-actions { display: flex; gap: 0.75rem; }
+
+  .btn-export {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1.25rem;
+    background: var(--white);
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    font-family: var(--font);
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .btn-export:hover { border-color: var(--navy); color: var(--navy); }
+
+  /* ── Filters ────────────────────────────────────────────────────────────── */
+  .filters {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.75rem;
+    padding: 1.25rem;
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+  }
+
+  .filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    min-width: 150px;
+  }
+
+  .search-group { flex: 1; min-width: 200px; }
+
+  .filter-group label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--muted);
+  }
+
+  .filter-group select,
+  .filter-group input {
+    padding: 0.55rem 0.75rem;
+    border: 1.5px solid var(--border);
+    border-radius: 7px;
+    font-size: 0.875rem;
+    font-family: var(--font);
+    color: var(--text);
+    background: var(--bg);
+    outline: none;
+    transition: border-color 0.15s ease;
+  }
+
+  .filter-group select:focus,
+  .filter-group input:focus { border-color: var(--orange); }
+
+  .search-wrap { position: relative; }
+  .search-wrap i {
+    position: absolute;
+    left: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+    font-size: 0.8rem;
+  }
+  .search-wrap input { width: 100%; padding-left: 2.2rem; }
+
+  /* ── Card grid ──────────────────────────────────────────────────────────── */
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.25rem;
+  }
+
+  .athlete-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .athlete-card:hover {
+    border-color: var(--navy);
+    box-shadow: 0 4px 16px rgba(0,51,160,0.1);
+    transform: translateY(-2px);
+  }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+  }
+
+  .athlete-avatar {
+    width: 40px;
+    height: 40px;
+    background: var(--navy);
+    color: white;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+
+  .card-tags { display: flex; gap: 0.4rem; flex-wrap: wrap; justify-content: flex-end; }
+
+  .tag {
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .tag-team.boys  { background: #dbeafe; color: #1d4ed8; }
+  .tag-team.girls { background: #fce7f3; color: #be185d; }
+  .tag-event      { background: #fff7ed; color: var(--orange); }
+
+  .athlete-name {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 0.2rem;
+  }
+
+  .athlete-meta {
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-bottom: 0.75rem;
+  }
+
+  .athlete-contact {
+    font-size: 0.8rem;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-bottom: 0.2rem;
+  }
+
+  .athlete-contact i { width: 12px; color: var(--navy); opacity: 0.5; }
+
+  /* ── States ─────────────────────────────────────────────────────────────── */
+  .loading-state, .empty-state, .access-denied, .error-state {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    padding: 4rem;
+    color: var(--muted);
+    font-size: 0.95rem;
+  }
+
+  .loading-state i, .empty-state i, .access-denied i { font-size: 2rem; opacity: 0.4; }
+  .hidden { display: none !important; }
+
+  /* ── Modal ──────────────────────────────────────────────────────────────── */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15,23,42,0.5);
+    backdrop-filter: blur(4px);
+    z-index: 999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+  }
+
+  .modal {
+    background: var(--white);
+    border-radius: 16px;
+    padding: 2rem;
+    width: 100%;
+    max-width: 580px;
+    max-height: 85vh;
+    overflow-y: auto;
+    position: relative;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+  }
+
+  .modal-close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: var(--bg);
+    border: none;
+    border-radius: 6px;
+    width: 32px;
+    height: 32px;
+    cursor: pointer;
+    color: var(--muted);
+    font-size: 0.9rem;
+    transition: all 0.15s;
+  }
+
+  .modal-close:hover { background: var(--border); color: var(--text); }
+
+  .modal-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .modal-avatar {
+    width: 52px;
+    height: 52px;
+    background: var(--navy);
+    color: white;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  .modal-header h2 {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.02em;
+  }
+
+  .modal-sub { color: var(--muted); font-size: 0.85rem; margin-top: 0.2rem; }
+
+  .modal-sections { display: flex; flex-direction: column; gap: 1.5rem; }
+
+  .modal-section h4 {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--orange);
+    margin-bottom: 0.75rem;
+  }
+
+  .detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1rem;
+    padding: 0.4rem 0;
+    border-bottom: 1px solid var(--bg);
+    font-size: 0.875rem;
+  }
+
+  .detail-row span:first-child { color: var(--muted); flex-shrink: 0; }
+  .detail-row span:last-child  { color: var(--text); font-weight: 500; text-align: right; }
+
+  .notes-text {
+    font-size: 0.875rem;
+    color: var(--text);
+    line-height: 1.6;
+    background: var(--bg);
+    padding: 0.75rem;
+    border-radius: 8px;
+  }
+</style>
