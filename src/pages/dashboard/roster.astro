@@ -701,8 +701,7 @@
         const exampleRow = ['Jane','Smith','10','Girls','Cross Country; Outdoor Track & Field','Distance','jane@example.com','(555) 555-5555','Bob Smith','(555) 555-5556','bob@example.com'];
         const csv = [CSV_TEMPLATE_HEADERS, exampleRow]
           .map(row => row.map(v => `"${v}"`).join(','))
-          .join('
-');
+          .join('\n');
         const blob = new Blob([csv], { type: 'text/csv' });
         const url  = URL.createObjectURL(blob);
         const a    = document.createElement('a');
@@ -731,8 +730,7 @@
       function parseCSV(file) {
         const reader = new FileReader();
         reader.onload = (e) => {
-          const lines  = e.target.result.split('
-').filter(l => l.trim());
+          const lines  = e.target.result.split('\n').filter(l => l.trim());
           const headers = lines[0].split(',').map(h => h.replace(/"/g, '').trim().toLowerCase());
           const rows    = lines.slice(1);
           const errorEl = document.getElementById('importError');
