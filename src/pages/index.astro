@@ -1,0 +1,1484 @@
+---
+import type { AthleteRegistration } from '../types/database';
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>JRTXCTF | Athlete Registration</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+  </head>
+  <body>
+    <!-- ─── LOADER ──────────────────────────────────────────────────────────── -->
+    <div id="loader" class="loader-overlay">
+      <div class="loader-inner">
+        <div class="paw-trail" id="pawTrail"></div>
+        <p class="loader-label" id="loaderLabel">Lacing up...</p>
+      </div>
+    </div>
+
+    <!-- ─── THANK YOU SCREEN ─────────────────────────────────────────────────── -->
+    <div id="thankYouScreen" class="thankyou-overlay" style="display:none;">
+      <canvas id="confettiCanvas"></canvas>
+      <div class="thankyou-card">
+        <div class="ty-paw-burst" id="tyPawBurst"></div>
+        <div class="ty-brand">
+          <i class="fa-solid fa-paw ty-paw-logo"></i>
+          <span class="ty-brand-text">JRTXCTF</span>
+        </div>
+        <h2 class="ty-title">You're on the roster.</h2>
+        <p class="ty-sub">Registration received. Coach will be in touch with next steps before the first practice.</p>
+        <div class="ty-email-prompt">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="ty-email-icon">
+            <rect x="2" y="4" width="20" height="16" rx="3" stroke="currentColor" stroke-width="1.75"/>
+            <path d="M2 8 L12 14 L22 8" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
+          </svg>
+          <p>Check your email for a confirmation from the program.</p>
+        </div>
+        <div class="ty-divider"></div>
+        <p class="ty-footnote">JRTXCTF &nbsp;/&nbsp; <span id="ty-season"></span></p>
+      </div>
+    </div>
+
+    <div class="bg-mesh"></div>
+
+    <div class="page-wrapper">
+      <main class="glass-card">
+        
+        <header class="app-header">
+          <div class="brand-badge">JRTXCTF / / TIGER NET</div>
+          <h1>Athlete Registration</h1>
+          
+          <div class="progress-container">
+            <div class="progress-bar">
+              <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="phase-indicators" id="phaseIndicators">
+              <span class="active">Start</span>
+              <span>Athlete</span>
+              <span>School</span>
+              <span>Sports</span>
+              <span>Family</span>
+              <span>Notes</span>
+            </div>
+          </div>
+        </header>
+
+        <div class="form-viewport">
+          <form action="/api/submit-registration" method="POST" id="dossierForm" class="app-form">
+            
+            <!-- PHASE 1 -->
+            <div class="form-step active" id="phase1">
+              <h2 class="step-title">Welcome</h2>
+              <p class="step-desc">Select your athlete status to begin.</p>
+              
+              <div class="status-grid">
+                <label class="status-card">
+                  <input type="radio" name="type" value="New Athlete" required class="hidden-radio" />
+                  <div class="card-content">
+                    <div class="status-icon">
+                      <!-- Tiger paw SVG -->
+                      <i class="fa-solid fa-paw paw-icon"></i>
+                    </div>
+                    <h3>New Athlete</h3>
+                    <p class="subtext">First season with us</p>
+                  </div>
+                </label>
+                
+                <label class="status-card">
+                  <input type="radio" name="type" value="Returning Athlete" required class="hidden-radio" />
+                  <div class="card-content">
+                    <div class="status-icon">
+                      <!-- Two paws SVG for returning athlete -->
+                      <span class="paw-icon paw-double-wrap">
+                        <i class="fa-solid fa-paw paw-small"></i>
+                        <i class="fa-solid fa-paw paw-large"></i>
+                      </span>
+                    </div>
+                    <h3>Returning Athlete</h3>
+                    <p class="subtext">Back for another season</p>
+                  </div>
+                </label>
+              </div>
+
+              <!-- Radio validation error -->
+              <div class="field-error" id="typeError" aria-live="polite"></div>
+
+              <div id="welcomeMessage" class="welcome-msg collapsible">
+              </div>
+
+              <!-- Season selection (revealed after athlete type chosen) -->
+              <div id="seasonSection" class="collapsible">
+                <div class="section-divider"></div>
+                <h3 class="subsection-title">Season</h3>
+                <p class="step-desc" style="margin-bottom:1.25rem;">Which season(s) are you registering for? Select all that apply.</p>
+                <div class="status-grid three-col">
+                  <label class="status-card">
+                    <input type="checkbox" name="season[]" value="Cross Country" class="hidden-check" />
+                    <div class="card-content card-sm">
+                      <div class="status-icon">
+<i class="fa-solid fa-leaf season-icon"></i>
+                      </div>
+                      <div class="card-text">
+                        <h3>Cross Country</h3>
+                        <p class="subtext">Fall season</p>
+                      </div>
+                    </div>
+                  </label>
+                  <label class="status-card">
+                    <input type="checkbox" name="season[]" value="Indoor Track & Field" class="hidden-check" />
+                    <div class="card-content card-sm">
+                      <div class="status-icon">
+<i class="fa-solid fa-snowflake season-icon"></i>
+                      </div>
+                      <div class="card-text">
+                        <h3>Indoor T&amp;F</h3>
+                        <p class="subtext">Winter season</p>
+                      </div>
+                    </div>
+                  </label>
+                  <label class="status-card">
+                    <input type="checkbox" name="season[]" value="Outdoor Track & Field" class="hidden-check" />
+                    <div class="card-content card-sm">
+                      <div class="status-icon">
+<i class="fa-solid fa-sun season-icon"></i>
+                      </div>
+                      <div class="card-text">
+                        <h3>Outdoor T&amp;F</h3>
+                        <p class="subtext">Spring season</p>
+                      </div>
+                    </div>
+                  </label>
+                </div>
+                <div class="field-error" id="seasonError" aria-live="polite"></div>
+              </div>
+
+              <!-- Event group (revealed after non-XC season chosen) -->
+              <div id="eventGroupSection" class="collapsible">
+                <div class="section-divider"></div>
+                <h3 class="subsection-title" id="eventGroupTitle">Event Group</h3>
+                <p class="step-desc" id="eventGroupDesc" style="margin-bottom:1.25rem;">Which event group are you interested in?</p>
+                <div class="status-grid three-col" id="eventGroupGrid">
+                  <label class="status-card">
+                    <input type="radio" name="eventGroup" value="Sprints" class="hidden-radio" />
+                    <div class="card-content card-sm">
+                      <div class="status-icon">
+<i class="fa-solid fa-bolt event-icon"></i>
+                      </div>
+                      <div class="card-text">
+                        <h3>Sprints</h3>
+                      </div>
+                    </div>
+                  </label>
+                  <label class="status-card">
+                    <input type="radio" name="eventGroup" value="Distance" class="hidden-radio" />
+                    <div class="card-content card-sm">
+                      <div class="status-icon">
+<i class="fa-solid fa-route event-icon"></i>
+                      </div>
+                      <div class="card-text">
+                        <h3>Distance</h3>
+                      </div>
+                    </div>
+                  </label>
+                  <label class="status-card">
+                    <input type="radio" name="eventGroup" value="Throws" class="hidden-radio" />
+                    <div class="card-content card-sm">
+                      <div class="status-icon">
+<i class="fa-solid fa-weight-hanging event-icon"></i>
+                      </div>
+                      <div class="card-text">
+                        <h3>Throws</h3>
+                      </div>
+                    </div>
+                  </label>
+                </div>
+                <div class="field-error" id="eventGroupError" aria-live="polite"></div>
+
+                <!-- Hurdles / Jumps add-ons (new athletes only, only when Sprints selected) -->
+                <div id="sprintAddons" class="collapsible" style="margin-top:1.25rem;">
+                  <p class="prompt-label" style="margin-bottom:0.75rem;">Also interested in: <span style="font-weight:400;color:var(--text-muted)">(optional)</span></p>
+                  <div style="display:flex;gap:1.5rem;flex-wrap:wrap;">
+                    <label class="checkbox-label"><input type="checkbox" name="sprintAddons[]" value="Hurdles" /> <span>Hurdles</span></label>
+                    <label class="checkbox-label"><input type="checkbox" name="sprintAddons[]" value="Jumps" /> <span>Jumps</span></label>
+                  </div>
+                </div>
+              </div>
+
+              <div class="action-row right">
+                <button type="button" class="btn-primary" id="btnPhase1" onclick="nextPhase(1)">Start Registration &rarr;</button>
+              </div>
+            </div>
+
+            <!-- PHASE 2 -->
+            <div class="form-step" id="phase2">
+              <h2 class="step-title">Athlete Details</h2>
+              <p class="step-desc">Your basic information and contact details.</p>
+              
+              <div class="input-grid">
+                <div class="input-group">
+                  <label for="firstName">First Name</label>
+                  <input type="text" id="firstName" name="firstName" required />
+                </div>
+                <div class="input-group">
+                  <label for="lastName">Last Name</label>
+                  <input type="text" id="lastName" name="lastName" required />
+                </div>
+              </div>
+
+              <div class="input-grid">
+                <div class="input-group">
+                  <label for="grade">Grade</label>
+                  <div class="select-wrapper">
+                    <select id="grade" name="grade" required>
+                      <option value="" disabled selected>Select Grade...</option>
+                      <option value="9">9th Grade</option>
+                      <option value="10">10th Grade</option>
+                      <option value="11">11th Grade</option>
+                      <option value="12">12th Grade</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="input-group">
+                  <label for="birthday">Birthday</label>
+                  <input type="date" id="birthday" name="birthday" required />
+                </div>
+              </div>
+
+              <div class="input-grid">
+                <div class="input-group">
+                  <label for="phone">Athlete Phone</label>
+                  <input type="tel" id="phone" name="phone" placeholder="(555) 555-5555" required />
+                </div>
+                <div class="input-group">
+                  <label for="email">Athlete Email</label>
+                  <input type="email" id="email" name="email" placeholder="athlete@example.com" required />
+                </div>
+              </div>
+
+              <div class="action-row space-between">
+                <button type="button" class="btn-secondary" onclick="prevPhase(2)">&larr; Back</button>
+                <button type="button" class="btn-primary" onclick="nextPhase(2)">Next: Academics &rarr;</button>
+              </div>
+            </div>
+
+            <!-- PHASE 3 -->
+            <div class="form-step" id="phase3">
+              <h2 class="step-title">Academic Background</h2>
+              <p class="step-desc">Tell us about your schooling.</p>
+              
+              <div class="input-group">
+                <label for="middleSchool">Middle School Attended</label>
+                <div class="select-wrapper">
+                  <select id="middleSchool" name="middleSchool" required>
+                    <option value="" disabled selected>Select Middle School...</option>
+                    <option value="Brookland Middle">Brookland Middle</option>
+                    <option value="Elko Middle">Elko Middle</option>
+                    <option value="Fairfield Middle">Fairfield Middle</option>
+                    <option value="George H. Moody Middle">George H. Moody Middle</option>
+                    <option value="Holman Middle">Holman Middle</option>
+                    <option value="Hungary Creek Middle">Hungary Creek Middle</option>
+                    <option value="L. Douglas Wilder Middle">L. Douglas Wilder Middle</option>
+                    <option value="Pocohontas Middle">Pocohontas Middle</option>
+                    <option value="Quioccasin Middle">Quioccasin Middle</option>
+                    <option value="John Rolfe Middle">John Rolfe Middle</option>
+                    <option value="Short Pump Middle">Short Pump Middle</option>
+                    <option value="Tuckahoe Middle">Tuckahoe Middle</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+              </div>
+
+              <div id="otherMiddleSchoolField" class="collapsible input-group" style="margin-top: -0.5rem;">
+                <label for="otherMiddleSchool">Please specify your middle school</label>
+                <input type="text" id="otherMiddleSchool" name="otherMiddleSchool" placeholder="Middle school name" />
+              </div>
+
+              <div class="highlight-panel">
+                <label class="long-label">Are you a student in a specialty center?</label>
+                <div class="radio-group">
+                  <label class="radio-label">
+                    <input type="radio" name="isSpecialty" value="yes" id="specialtyYes" required />
+                    <span class="radio-text">Yes</span>
+                  </label>
+                  <label class="radio-label">
+                    <input type="radio" name="isSpecialty" value="no" id="specialtyNo" required />
+                    <span class="radio-text">No</span>
+                  </label>
+                </div>
+                <div class="field-error" id="specialtyError" aria-live="polite"></div>
+              </div>
+
+              <div id="specialtyProgramFields" class="collapsible">
+                <div class="input-group">
+                  <label for="specialtyProgram">Which program are you a part of?</label>
+                  <div class="select-wrapper">
+                    <select id="specialtyProgram" name="specialtyProgram">
+                      <option value="" disabled selected>Select Program...</option>
+                      <option value="Advance College Academy">Advance College Academy</option>
+                      <option value="International Baccalaureate">International Baccalaureate</option>
+                      <option value="Spanish Language Immersion">Spanish Language Immersion</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div class="action-row space-between">
+                <button type="button" class="btn-secondary" onclick="prevPhase(3)">&larr; Back</button>
+                <button type="button" class="btn-primary" onclick="nextPhase(3)">Next: Athletics &rarr;</button>
+              </div>
+            </div>
+
+            <!-- PHASE 4 -->
+            <div class="form-step" id="phase4">
+              <h2 class="step-title">Athletic Profile</h2>
+              <p class="step-desc">Your team and prior activity.</p>
+
+              <div class="input-group">
+                <label for="team">Team</label>
+                <div class="select-wrapper">
+                  <select id="team" name="team" required>
+                    <option value="" disabled selected>Select Team...</option>
+                    <option value="Boys">Boys</option>
+                    <option value="Girls">Girls</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="highlight-panel">
+                <label class="long-label">During the current academic year, have you been a part of any sports team, JROTC, Marching Band, or the Step Team, Dance Team, or Forensics Team?</label>
+                <div class="radio-group">
+                  <label class="radio-label">
+                    <input type="radio" name="hasActivities" value="yes" id="activitiesYes" required />
+                    <span class="radio-text">Yes</span>
+                  </label>
+                  <label class="radio-label">
+                    <input type="radio" name="hasActivities" value="no" id="activitiesNo" required />
+                    <span class="radio-text">No</span>
+                  </label>
+                </div>
+                <div class="field-error" id="activitiesError" aria-live="polite"></div>
+              </div>
+
+              <div id="activitiesList" class="collapsible">
+                <label class="prompt-label">Select all that apply:</label>
+                <div class="checkbox-grid">
+                  <label class="checkbox-label"><input type="checkbox" name="activities[]" value="Basketball" /> <span>Basketball</span></label>
+                  <label class="checkbox-label"><input type="checkbox" name="activities[]" value="Competition Cheer" /> <span>Competition Cheer</span></label>
+                  <label class="checkbox-label"><input type="checkbox" name="activities[]" value="Dance Team" /> <span>Dance Team</span></label>
+                  <label class="checkbox-label"><input type="checkbox" name="activities[]" value="Debate" /> <span>Debate</span></label>
+                  <label class="checkbox-label"><input type="checkbox" name="activities[]" value="Field Hockey" /> <span>Field Hockey</span></label>
+                  <label class="checkbox-label"><input type="checkbox" name="activities[]" value="Football" /> <span>Football</span></label>
+                  <label class="checkbox-label"><input type="checkbox" name="activities[]" value="Forensics" /> <span>Forensics</span></label>
+                  <label class="checkbox-label"><input type="checkbox" name="activities[]" value="Golf" /> <span>Golf</span></label>
+                  <label class="checkbox-label"><input type="checkbox" name="activities[]" value="Gymnastics" /> <span>Gymnastics</span></label>
+                  <label class="checkbox-label"><input type="checkbox" name="activities[]" value="JROTC" /> <span>JROTC</span></label>
+                  <label class="checkbox-label"><input type="checkbox" name="activities[]" value="Marching Band" /> <span>Marching Band</span></label>
+                  <label class="checkbox-label"><input type="checkbox" name="activities[]" value="Sideline Cheer" /> <span>Sideline Cheer</span></label>
+                  <label class="checkbox-label"><input type="checkbox" name="activities[]" value="Step Team" /> <span>Step Team</span></label>
+                  <label class="checkbox-label"><input type="checkbox" name="activities[]" value="Swim" /> <span>Swim</span></label>
+                  <label class="checkbox-label"><input type="checkbox" name="activities[]" value="Volleyball" /> <span>Volleyball</span></label>
+                  <label class="checkbox-label"><input type="checkbox" name="activities[]" value="Wrestling" /> <span>Wrestling</span></label>
+                </div>
+              </div>
+
+              <div class="action-row space-between">
+                <button type="button" class="btn-secondary" onclick="prevPhase(4)">&larr; Back</button>
+                <button type="button" class="btn-primary" onclick="nextPhase(4)">Next: Parents &rarr;</button>
+              </div>
+            </div>
+
+            <!-- PHASE 5 -->
+            <div class="form-step" id="phase5">
+              <h2 class="step-title">Parent / Guardian</h2>
+              <p class="step-desc">Primary emergency contact information.</p>
+              
+              <div class="input-group">
+                <label for="parent1Name">Parent/Guardian 1 Full Name</label>
+                <input type="text" id="parent1Name" name="parent1Name" required />
+              </div>
+              <div class="input-grid">
+                <div class="input-group">
+                  <label for="parent1Phone">Phone Number</label>
+                  <input type="tel" id="parent1Phone" name="parent1Phone" placeholder="(555) 555-5555" required />
+                </div>
+                <div class="input-group">
+                  <label for="parent1Email">Email Address</label>
+                  <input type="email" id="parent1Email" name="parent1Email" placeholder="parent@example.com" required />
+                </div>
+              </div>
+
+              <div class="toggle-container">
+                <label class="toggle-label" for="addParent2">
+                  <input type="checkbox" id="addParent2" name="addParent2" />
+                  <span class="toggle-text">+ Add secondary contact</span>
+                </label>
+              </div>
+
+              <div id="parent2Fields" class="collapsible highlight-panel">
+                <div class="input-group">
+                  <label for="parent2Name">Parent/Guardian 2 Full Name</label>
+                  <input type="text" id="parent2Name" name="parent2Name" />
+                </div>
+                <div class="input-grid">
+                  <div class="input-group">
+                    <label for="parent2Phone">Phone Number</label>
+                    <input type="tel" id="parent2Phone" name="parent2Phone" placeholder="(555) 555-5555" />
+                  </div>
+                  <div class="input-group">
+                    <label for="parent2Email">Email Address</label>
+                    <input type="email" id="parent2Email" name="parent2Email" placeholder="parent2@example.com" />
+                  </div>
+                </div>
+              </div>
+
+              <div class="action-row space-between">
+                <button type="button" class="btn-secondary" onclick="prevPhase(5)">&larr; Back</button>
+                <button type="button" class="btn-primary" onclick="nextPhase(5)">Next: Notes &rarr;</button>
+              </div>
+            </div>
+
+            <!-- PHASE 6 -->
+            <div class="form-step" id="phase6">
+              <h2 class="step-title">Additional Notes</h2>
+              <p class="step-desc">Anything else we should know before you join the team.</p>
+
+              <div class="input-group">
+                <label for="notes">Additional Information <span class="label-optional">(optional)</span></label>
+                <textarea
+                  id="notes"
+                  name="notes"
+                  maxlength="256"
+                  rows="5"
+                  placeholder="Please include any additional information you think is important, such as a summary of your previous athletic experience."
+                ></textarea>
+                <div class="char-counter"><span id="charCount">0</span> / 256</div>
+              </div>
+
+              <div class="action-row space-between">
+                <button type="button" class="btn-secondary" onclick="prevPhase(6)">&larr; Back</button>
+                <button type="submit" class="btn-submit">Complete Registration</button>
+              </div>
+            </div>
+
+          </form>
+        </div>
+      </main>
+    </div>
+
+    <script>
+      // ─── COLLAPSIBLE UTILITY ──────────────────────────────────────────────────
+      // Animates open/close using max-height + opacity so both directions are smooth.
+      function collapseEl(el) {
+        // If already collapsed or mid-collapse, bail
+        if (el.dataset.collapsing === 'true') return;
+        el.dataset.collapsing = 'true';
+
+        // Lock current height so transition has a from-value
+        el.style.maxHeight = el.scrollHeight + 'px';
+        el.style.opacity = '1';
+        el.style.overflow = 'hidden';
+
+        requestAnimationFrame(() => {
+          el.style.transition = 'max-height 0.35s cubic-bezier(0.4,0,0.2,1), opacity 0.3s ease';
+          el.style.maxHeight = '0px';
+          el.style.opacity = '0';
+        });
+
+        el.addEventListener('transitionend', () => {
+          el.style.display = 'none';
+          el.style.transition = '';
+          el.style.maxHeight = '';
+          el.style.opacity = '';
+          el.style.overflow = '';
+          el.dataset.collapsing = 'false';
+          el.dataset.open = 'false';
+        }, { once: true });
+      }
+
+      function expandEl(el) {
+        el.style.display = 'block';
+        el.style.maxHeight = '0px';
+        el.style.opacity = '0';
+        el.style.overflow = 'hidden';
+
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            el.style.transition = 'max-height 0.35s cubic-bezier(0.4,0,0.2,1), opacity 0.3s ease';
+            el.style.maxHeight = el.scrollHeight + 'px';
+            el.style.opacity = '1';
+          });
+        });
+
+        el.addEventListener('transitionend', () => {
+          el.style.transition = '';
+          el.style.maxHeight = '';
+          el.style.opacity = '';
+          el.style.overflow = '';
+          el.dataset.open = 'true';
+        }, { once: true });
+      }
+
+      function toggleCollapsible(el, show) {
+        const isOpen = el.dataset.open === 'true' || (el.style.display !== 'none' && el.style.display !== '');
+        if (show && !isOpen) expandEl(el);
+        if (!show && isOpen) collapseEl(el);
+      }
+
+      // Hide all collapsibles on load
+      document.querySelectorAll('.collapsible').forEach(el => {
+        el.style.display = 'none';
+        el.dataset.open = 'false';
+      });
+
+      // ─── PHASE 1: WELCOME CARD LOGIC ─────────────────────────────────────────
+      const typeRadios = document.querySelectorAll('input[name="type"]');
+      const welcomeMsg = document.getElementById('welcomeMessage');
+      const typeError  = document.getElementById('typeError');
+
+      typeRadios.forEach(radio => {
+        radio.addEventListener('change', (e) => {
+          typeError.textContent = '';
+          typeError.classList.remove('visible');
+
+          const isReturning = e.target.value === 'Returning Athlete';
+          welcomeMsg.innerHTML = isReturning
+            ? '<div class="welcome-box returner"><h3>Welcome Back, Tiger!</h3><p>Let\'s verify and update your information for the new season.</p></div>'
+            : '<div class="welcome-box new"><h3>Welcome, Tiger!</h3><p>Let\'s get your profile set up so you\'re ready to compete.</p></div>';
+
+          toggleCollapsible(welcomeMsg, true);
+        });
+      });
+
+      // ─── PHASE 1: SEASON + EVENT GROUP LOGIC ────────────────────────────────────
+      const seasonSection      = document.getElementById('seasonSection');
+      const eventGroupSection  = document.getElementById('eventGroupSection');
+      const sprintAddons       = document.getElementById('sprintAddons');
+      const eventGroupTitle    = document.getElementById('eventGroupTitle');
+      const eventGroupDesc     = document.getElementById('eventGroupDesc');
+
+      // When athlete type changes, reveal season section and update event group label
+      typeRadios.forEach(radio => {
+        radio.addEventListener('change', () => {
+          toggleCollapsible(seasonSection, true);
+          // Re-evaluate event group visibility in case season already picked
+          updateEventGroupVisibility();
+          updateEventGroupLabel();
+        });
+      });
+
+      function updateEventGroupLabel() {
+        const isReturning = document.querySelector('input[name="type"]:checked')?.value === 'Returning Athlete';
+        if (eventGroupTitle) eventGroupTitle.textContent = isReturning ? 'Previous Event Group' : 'Event Group';
+        if (eventGroupDesc)  eventGroupDesc.textContent  = isReturning
+          ? 'Which event group were you in last season?'
+          : 'Which event group are you interested in?';
+      }
+
+      function updateEventGroupVisibility() {
+        const athleteSelected  = !!document.querySelector('input[name="type"]:checked');
+        const checkedSeasons   = [...document.querySelectorAll('input[name="season[]"]:checked')].map(i => i.value);
+        const hasTF            = checkedSeasons.some(s => s.includes('Track'));
+
+        if (athleteSelected && checkedSeasons.length > 0 && hasTF) {
+          toggleCollapsible(eventGroupSection, true);
+          updateEventGroupLabel();
+        } else {
+          toggleCollapsible(eventGroupSection, false);
+          document.querySelectorAll('input[name="eventGroup"]').forEach(r => r.checked = false);
+          document.querySelectorAll('input[name="sprintAddons[]"]').forEach(c => c.checked = false);
+          toggleCollapsible(sprintAddons, false);
+          const errEl = document.getElementById('eventGroupError');
+          if (errEl) { errEl.textContent = ''; errEl.classList.remove('visible'); }
+        }
+      }
+
+      // Season card selection
+
+      document.querySelectorAll('input[name="season[]"]').forEach(checkbox => {
+        checkbox.addEventListener('change', () => {
+          const errEl = document.getElementById('seasonError');
+          if (errEl) { errEl.textContent = ''; errEl.classList.remove('visible'); }
+          updateEventGroupVisibility();
+        });
+      });
+
+      // Sprint → show Hurdles/Jumps addons (new athletes only)
+      document.querySelectorAll('input[name="eventGroup"]').forEach(radio => {
+        radio.addEventListener('change', () => {
+          const errEl = document.getElementById('eventGroupError');
+          if (errEl) { errEl.textContent = ''; errEl.classList.remove('visible'); }
+
+          const isReturning = document.querySelector('input[name="type"]:checked')?.value === 'Returning Athlete';
+          const isSprints   = document.querySelector('input[name="eventGroup"]:checked')?.value === 'Sprints';
+          toggleCollapsible(sprintAddons, isSprints && !isReturning);
+          if (!isSprints || isReturning) {
+            document.querySelectorAll('input[name="sprintAddons[]"]').forEach(c => c.checked = false);
+          }
+        });
+      });
+
+      // ─── RADIO GROUP VALIDATOR ────────────────────────────────────────────────
+      // Returns true if at least one radio in the named group is checked.
+      function validateRadioGroup(name, errorElId, message) {
+        const checked = document.querySelector(`input[name="${name}"]:checked`);
+        const errorEl = document.getElementById(errorElId);
+        if (!checked) {
+          errorEl.textContent = message;
+          errorEl.classList.add('visible');
+          // Scroll the error into view
+          errorEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          return false;
+        }
+        errorEl.textContent = '';
+        errorEl.classList.remove('visible');
+        return true;
+      }
+
+      // ─── WIZARD NAVIGATION ───────────────────────────────────────────────────
+      let currentPhase = 1;
+      const totalPhases = 6;
+      let isAnimating = false;
+
+      // Per-phase radio groups that need custom validation
+      // Note: phase 1 season/eventGroup are handled by custom logic below
+      const phaseRadioGroups = {
+        1: [{ name: 'type', errorElId: 'typeError', message: 'Please select your athlete status.' }],
+        3: [{ name: 'isSpecialty',   errorElId: 'specialtyError',  message: 'Please indicate if you are in a specialty center.' }],
+        4: [{ name: 'hasActivities', errorElId: 'activitiesError', message: 'Please answer the activities question.' }],
+      };
+
+      window.nextPhase = function(phase) {
+        if (isAnimating) return;
+
+        // 1. Validate radio groups for this phase
+        const radioGroups = phaseRadioGroups[phase] || [];
+        let radioValid = true;
+        radioGroups.forEach(group => {
+          if (!validateRadioGroup(group.name, group.errorElId, group.message)) {
+            radioValid = false;
+          }
+        });
+        if (!radioValid) return;
+
+        // Phase 1 extra: validate season, and eventGroup if season is not XC
+        if (phase === 1) {
+          const seasonSection = document.getElementById('seasonSection');
+          const isSeasonVisible = seasonSection.dataset.open === 'true';
+          if (isSeasonVisible) {
+            const checkedSeasons = [...document.querySelectorAll('input[name="season[]"]:checked')];
+            if (checkedSeasons.length === 0) {
+              const errEl = document.getElementById('seasonError');
+              errEl.textContent = 'Please select at least one season.';
+              errEl.classList.add('visible');
+              errEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              return;
+            } else {
+              const errEl = document.getElementById('seasonError');
+              errEl.textContent = ''; errEl.classList.remove('visible');
+            }
+            const hasTF = checkedSeasons.some(i => i.value.includes('Track'));
+            const eventGroupSection = document.getElementById('eventGroupSection');
+            const isEventGroupVisible = eventGroupSection.dataset.open === 'true';
+            if (hasTF && isEventGroupVisible) {
+              if (!validateRadioGroup('eventGroup', 'eventGroupError', 'Please select an event group.')) return;
+            }
+          }
+        }
+
+        // 2. Validate native inputs (text, email, select, etc.)
+        const currentPhaseDiv = document.getElementById(`phase${phase}`);
+        const inputs = currentPhaseDiv.querySelectorAll('input:not([type="radio"]):not([type="checkbox"]), select');
+        let nativeValid = true;
+        inputs.forEach(input => {
+          if (!input.checkValidity()) {
+            input.reportValidity();
+            nativeValid = false;
+          }
+        });
+        if (!nativeValid) return;
+
+        // 3. Animate forward
+        const nextPhaseDiv = document.getElementById(`phase${phase + 1}`);
+        isAnimating = true;
+
+        currentPhaseDiv.style.animation = 'slideOutLeft 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards';
+
+        setTimeout(() => {
+          currentPhaseDiv.classList.remove('active');
+          currentPhaseDiv.style.animation = '';
+          nextPhaseDiv.classList.add('active');
+          nextPhaseDiv.style.animation = 'slideInRight 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards';
+          currentPhase++;
+          updateProgress();
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          setTimeout(() => { isAnimating = false; }, 400);
+        }, 350);
+      };
+
+      window.prevPhase = function(phase) {
+        if (isAnimating) return;
+        isAnimating = true;
+
+        const currentPhaseDiv = document.getElementById(`phase${phase}`);
+        const prevPhaseDiv    = document.getElementById(`phase${phase - 1}`);
+
+        currentPhaseDiv.style.animation = 'slideOutRight 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards';
+
+        setTimeout(() => {
+          currentPhaseDiv.classList.remove('active');
+          currentPhaseDiv.style.animation = '';
+          prevPhaseDiv.classList.add('active');
+          prevPhaseDiv.style.animation = 'slideInLeft 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards';
+          currentPhase--;
+          updateProgress();
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          setTimeout(() => { isAnimating = false; }, 400);
+        }, 350);
+      };
+
+      function updateProgress() {
+        const fillPercentage = ((currentPhase - 1) / (totalPhases - 1)) * 100;
+        document.getElementById('progressFill').style.width = `${fillPercentage}%`;
+        const indicators = document.getElementById('phaseIndicators').children;
+        for (let i = 0; i < indicators.length; i++) {
+          indicators[i].classList.toggle('active', i < currentPhase);
+        }
+      }
+
+      // ─── CONDITIONAL FIELD TOGGLES ────────────────────────────────────────────
+      // Secondary parent
+      const parentCheckbox = document.getElementById('addParent2');
+      const parent2Fields  = document.getElementById('parent2Fields');
+      if (parentCheckbox && parent2Fields) {
+        parentCheckbox.addEventListener('change', (e) => {
+          toggleCollapsible(parent2Fields, e.target.checked);
+          if (!e.target.checked) {
+            parent2Fields.querySelectorAll('input').forEach(input => input.value = '');
+          }
+        });
+      }
+
+      // Specialty program
+      const specialtyYes           = document.getElementById('specialtyYes');
+      const specialtyNo            = document.getElementById('specialtyNo');
+      const specialtyProgramFields = document.getElementById('specialtyProgramFields');
+      const specialtySelect        = document.getElementById('specialtyProgram');
+
+      function handleSpecialty() {
+        const show = specialtyYes.checked;
+        toggleCollapsible(specialtyProgramFields, show);
+        if (specialtySelect) {
+          specialtySelect.required = show;
+          if (!show) specialtySelect.value = '';
+        }
+      }
+      if (specialtyYes && specialtyNo) {
+        specialtyYes.addEventListener('change', handleSpecialty);
+        specialtyNo.addEventListener('change', handleSpecialty);
+      }
+
+      // Activities list
+      const activitiesYes  = document.getElementById('activitiesYes');
+      const activitiesNo   = document.getElementById('activitiesNo');
+      const activitiesList = document.getElementById('activitiesList');
+
+      function handleActivities() {
+        const show = activitiesYes.checked;
+        toggleCollapsible(activitiesList, show);
+        if (!show) {
+          activitiesList.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+        }
+      }
+      if (activitiesYes && activitiesNo) {
+        activitiesYes.addEventListener('change', handleActivities);
+        activitiesNo.addEventListener('change', handleActivities);
+      }
+
+      // Other middle school
+      const middleSchoolSelect      = document.getElementById('middleSchool');
+      const otherMiddleSchoolField  = document.getElementById('otherMiddleSchoolField');
+      const otherMiddleSchoolInput  = document.getElementById('otherMiddleSchool');
+
+      middleSchoolSelect.addEventListener('change', (e) => {
+        const isOther = e.target.value === 'Other';
+        toggleCollapsible(otherMiddleSchoolField, isOther);
+        if (otherMiddleSchoolInput) {
+          otherMiddleSchoolInput.required = isOther;
+          if (!isOther) otherMiddleSchoolInput.value = '';
+        }
+      });
+
+      // Clear radio errors on change
+      ['isSpecialty', 'hasActivities'].forEach(name => {
+        document.querySelectorAll(`input[name="${name}"]`).forEach(radio => {
+          radio.addEventListener('change', () => {
+            const errorMap = { isSpecialty: 'specialtyError', hasActivities: 'activitiesError' };
+            const el = document.getElementById(errorMap[name]);
+            if (el) { el.textContent = ''; el.classList.remove('visible'); }
+          });
+        });
+      });
+
+      // ─── PHONE FORMATTING ────────────────────────────────────────────────────
+      function formatPhone(input) {
+        let digits = input.value.replace(/\D/g, '').slice(0, 10);
+        let formatted = '';
+        if (digits.length === 0) {
+          formatted = '';
+        } else if (digits.length <= 3) {
+          formatted = '(' + digits;
+        } else if (digits.length <= 6) {
+          formatted = '(' + digits.slice(0,3) + ') ' + digits.slice(3);
+        } else {
+          formatted = '(' + digits.slice(0,3) + ') ' + digits.slice(3,6) + '-' + digits.slice(6);
+        }
+        input.value = formatted;
+      }
+
+      document.querySelectorAll('input[type="tel"]').forEach(input => {
+        input.addEventListener('input', () => formatPhone(input));
+        input.addEventListener('keydown', (e) => {
+          // Allow backspace to work naturally against the formatted string
+        });
+      });
+
+      // ─── NOTES CHAR COUNTER ───────────────────────────────────────────────────
+      const notesTextarea = document.getElementById('notes');
+      const charCount     = document.getElementById('charCount');
+      if (notesTextarea && charCount) {
+        notesTextarea.addEventListener('input', () => {
+          const len = notesTextarea.value.length;
+          charCount.textContent = len;
+          charCount.parentElement.classList.toggle('near-limit', len >= 230);
+          charCount.parentElement.classList.toggle('at-limit',   len >= 256);
+        });
+      }
+
+      // ─── FORM SUBMIT → THANK YOU ─────────────────────────────────────────────
+      document.getElementById('dossierForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const season = [...document.querySelectorAll('input[name="season[]"]:checked')].map(i => i.value).join(' · ') || '';
+        document.getElementById('ty-season').textContent = season;
+        showThankYou();
+      });
+
+      function showThankYou() {
+        const screen = document.getElementById('thankYouScreen');
+        screen.style.display = 'flex';
+        requestAnimationFrame(() => screen.classList.add('visible'));
+        buildPawBurst();
+        startConfetti();
+      }
+
+      // ─── PAW BURST (thank you screen) ────────────────────────────────────────
+      function buildPawBurst() {
+        const container = document.getElementById('tyPawBurst');
+        container.innerHTML = '';
+        const count = 8;
+        for (let i = 0; i < count; i++) {
+          const paw = document.createElement('div');
+          paw.innerHTML = '<i class="fa-solid fa-paw" style="width:100%;height:100%;"></i>';
+          const angle = (i / count) * 360;
+          const delay = i * 60;
+          paw.className = 'burst-paw';
+          paw.style.cssText = `--angle:${angle}deg; animation-delay:${delay}ms;`;
+          container.appendChild(paw);
+        }
+      }
+
+      // ─── CONFETTI ────────────────────────────────────────────────────────────
+      function startConfetti() {
+        const canvas = document.getElementById('confettiCanvas');
+        const ctx    = canvas.getContext('2d');
+        canvas.width  = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const colors = ['#FF6700','#0033A0','#ffffff','#FFB347','#64B5F6','#FF8A65'];
+        const pieces = Array.from({ length: 140 }, () => ({
+          x:    Math.random() * canvas.width,
+          y:    Math.random() * -canvas.height,
+          w:    6 + Math.random() * 8,
+          h:    10 + Math.random() * 6,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          rot:  Math.random() * 360,
+          vx:   (Math.random() - 0.5) * 2.5,
+          vy:   2.5 + Math.random() * 3.5,
+          vr:   (Math.random() - 0.5) * 6,
+          dead: false,
+        }));
+
+        let frame;
+        function draw() {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          let alive = 0;
+          pieces.forEach(p => {
+            if (p.dead) return;
+            p.x  += p.vx;
+            p.y  += p.vy;
+            p.rot += p.vr;
+            if (p.y > canvas.height + 20) { p.dead = true; return; }
+            alive++;
+            ctx.save();
+            ctx.translate(p.x, p.y);
+            ctx.rotate(p.rot * Math.PI / 180);
+            ctx.fillStyle = p.color;
+            ctx.globalAlpha = 0.85;
+            ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+            ctx.restore();
+          });
+          if (alive > 0) frame = requestAnimationFrame(draw);
+        }
+        draw();
+      }
+
+      // ─── LOADER ──────────────────────────────────────────────────────────────
+      const loaderMessages = [
+        'Lacing up...',
+        'Chalking the shot circle...',
+        'Measuring the runway...',
+        'Setting the blocks...',
+        'Almost at the line...',
+      ];
+      let msgIdx = 0;
+      const loaderLabel = document.getElementById('loaderLabel');
+
+      // Cycle fun messages every 900ms
+      const msgInterval = setInterval(() => {
+        msgIdx = (msgIdx + 1) % loaderMessages.length;
+        loaderLabel.style.opacity = '0';
+        setTimeout(() => {
+          loaderLabel.textContent = loaderMessages[msgIdx];
+          loaderLabel.style.opacity = '1';
+        }, 200);
+      }, 1100);
+
+      // Build paw trail
+      (function buildPawTrail() {
+        const trail = document.getElementById('pawTrail');
+        const PAW_SVG = `<i class="fa-solid fa-paw" style="color:currentColor;width:100%;height:100%;display:block;"></i>`;
+        const count = 6;
+        // Alternate left/right, stepping forward
+        const offsets = [-28, 20, -22, 24, -18, 22];
+        const rotations = [-15, 10, -12, 10, -10, 8];
+        for (let i = 0; i < count; i++) {
+          const wrap = document.createElement('div');
+          wrap.className = 'trail-paw';
+          wrap.style.cssText = `--delay:${i * 180}ms; --offset:${offsets[i]}px; --rot:${rotations[i]}deg;`;
+          wrap.innerHTML = PAW_SVG;
+          trail.appendChild(wrap);
+        }
+      })();
+
+      // Dismiss loader: minimum 2.2s AND page loaded
+      let pageReady = false;
+      let timerDone = false;
+
+      function tryDismissLoader() {
+        if (!pageReady || !timerDone) return;
+        clearInterval(msgInterval);
+        const loader = document.getElementById('loader');
+        loader.classList.add('fade-out');
+        loader.addEventListener('transitionend', () => loader.style.display = 'none', { once: true });
+      }
+
+      window.addEventListener('load', () => { pageReady = true; tryDismissLoader(); });
+      setTimeout(() => { timerDone = true; tryDismissLoader(); }, 2200);
+    </script>
+  </body>
+</html>
+
+<style>
+  /* ─── THEME ─────────────────────────────────────────────────────────────── */
+  :root {
+    --primary-blue: #0033A0;
+    --accent-orange: #FF6700;
+    --accent-orange-hover: #e65c00;
+    --bg-dark: #020617;
+    --card-bg: rgba(15, 23, 42, 0.75);
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+    --border-light: rgba(255, 255, 255, 0.15);
+    --input-bg: rgba(255, 255, 255, 0.05);
+    --focus-ring: rgba(255, 103, 0, 0.4);
+    --font-ui: 'Inter', system-ui, sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background-color: var(--bg-dark);
+    color: var(--text-main);
+    font-family: var(--font-ui);
+    line-height: 1.6;
+    min-height: 100vh;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .bg-mesh {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(-45deg, #020617, #0f172a, var(--primary-blue), #020617);
+    background-size: 400% 400%;
+    animation: gradientBG 15s ease infinite;
+    z-index: -2; opacity: 0.9;
+  }
+  @keyframes gradientBG {
+    0%   { background-position: 0% 50%; }
+    50%  { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  .page-wrapper { display: flex; justify-content: center; padding: 3rem 1rem; }
+
+  .glass-card {
+    background: var(--card-bg);
+    width: 100%; max-width: 760px;
+    border-radius: 20px;
+    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.6), inset 0 0 20px rgba(0,51,160,0.2);
+    backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255,255,255,0.1);
+    overflow: hidden;
+  }
+
+  /* ─── HEADER ────────────────────────────────────────────────────────────── */
+  .app-header {
+    padding: 3rem 2.5rem 2rem;
+    text-align: center;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+  .brand-badge {
+    display: inline-block; color: var(--accent-orange);
+    font-size: 0.85rem; font-weight: 700; letter-spacing: 2px; margin-bottom: 0.75rem;
+  }
+  h1 {
+    font-size: 2.25rem; font-weight: 800; color: #ffffff;
+    letter-spacing: -0.025em; margin-bottom: 2rem;
+  }
+
+  /* Progress */
+  .progress-container { max-width: 500px; margin: 0 auto; }
+  .progress-bar {
+    height: 4px; background: rgba(255,255,255,0.1);
+    border-radius: 999px; margin-bottom: 1rem; overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%; background: var(--accent-orange); width: 0%;
+    border-radius: 999px; transition: width 0.4s cubic-bezier(0.4,0,0.2,1);
+    box-shadow: 0 0 10px rgba(255,103,0,0.6);
+  }
+  .phase-indicators {
+    display: flex; justify-content: space-between;
+    font-size: 0.8rem; font-weight: 600;
+    color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;
+  }
+  .phase-indicators span.active { color: #ffffff; text-shadow: 0 0 8px rgba(255,255,255,0.4); }
+
+  /* ─── FORM VIEWPORT ─────────────────────────────────────────────────────── */
+  .form-viewport { position: relative; overflow: hidden; }
+  .app-form { padding: 2.5rem; }
+  .form-step { display: none; width: 100%; }
+  .form-step.active { display: block; }
+
+  @keyframes slideInRight  { from { opacity: 0; transform: translateX(50px);  } to { opacity: 1; transform: translateX(0); } }
+  @keyframes slideOutLeft  { from { opacity: 1; transform: translateX(0);      } to { opacity: 0; transform: translateX(-50px); } }
+  @keyframes slideInLeft   { from { opacity: 0; transform: translateX(-50px); } to { opacity: 1; transform: translateX(0); } }
+  @keyframes slideOutRight { from { opacity: 1; transform: translateX(0);      } to { opacity: 0; transform: translateX(50px); } }
+
+  .step-title { font-size: 1.5rem; font-weight: 700; color: #ffffff; margin-bottom: 0.25rem; }
+  .step-desc  { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 2rem; }
+
+  /* ─── PHASE 1: STATUS CARDS (redesigned) ───────────────────────────────── */
+  .status-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 1.25rem; margin-bottom: 1.5rem;
+    align-items: stretch;
+  }
+  .status-card { position: relative; display: block; cursor: pointer; height: 100%; }
+  .hidden-radio { opacity: 0; position: absolute; width: 0; height: 0; }
+  .hidden-check { opacity: 0; position: absolute; width: 0; height: 0; }
+
+  .card-content {
+    display: flex; align-items: center; gap: 1.25rem;
+    height: 100%;
+    background: rgba(255,255,255,0.03);
+    border: 1.5px solid var(--border-light);
+    border-radius: 14px; padding: 1.25rem 1.5rem;
+    transition: all 0.2s ease;
+  }
+  .card-content:hover {
+    background: rgba(255,255,255,0.06);
+    border-color: rgba(255,255,255,0.35);
+  }
+  .hidden-radio:checked + .card-content,
+  .hidden-check:checked + .card-content {
+    background: rgba(255,103,0,0.08);
+    border-color: var(--accent-orange);
+    box-shadow: 0 0 0 1px var(--accent-orange), 0 4px 20px rgba(255,103,0,0.18);
+  }
+
+
+  /* Paw icon — Font Awesome fa-paw */
+  .status-icon { flex-shrink: 0; }
+  .paw-icon {
+    font-size: 2rem;
+    color: var(--accent-orange);
+    opacity: 0.45;
+    transition: opacity 0.2s ease, filter 0.2s ease;
+    display: block;
+  }
+  .card-content:hover .paw-icon { opacity: 0.75; }
+  .hidden-radio:checked + .card-content .paw-icon { opacity: 1; filter: drop-shadow(0 0 6px rgba(255,103,0,0.5)); }
+
+  /* Double paw for Returning Athlete */
+  .paw-double-wrap {
+    display: flex; align-items: flex-end; gap: 0.2rem;
+    color: var(--accent-orange);
+    transition: opacity 0.2s ease;
+  }
+  .paw-double-wrap .paw-small { font-size: 1.1rem; opacity: 0.45; margin-bottom: 2px; }
+  .paw-double-wrap .paw-large { font-size: 1.9rem; opacity: 0.9; }
+  .card-content:hover .paw-double-wrap .paw-small { opacity: 0.65; }
+  .card-content:hover .paw-double-wrap .paw-large { opacity: 1; }
+  .hidden-radio:checked + .card-content .paw-double-wrap .paw-small { opacity: 0.7; }
+  .hidden-radio:checked + .card-content .paw-double-wrap .paw-large { opacity: 1; filter: drop-shadow(0 0 6px rgba(255,103,0,0.5)); }
+
+  /* Card text block */
+  .card-text { display: flex; flex-direction: column; }
+  .status-card h3 { font-size: 1rem; font-weight: 700; color: #fff; margin-bottom: 0.15rem; line-height: 1.2; }
+  .subtext { color: var(--text-muted); font-size: 0.8rem; font-weight: 500; }
+
+  /* Welcome message */
+  .welcome-box {
+    padding: 1.25rem 1.5rem; border-radius: 12px; margin-bottom: 0.5rem;
+    border-left: 3px solid var(--primary-blue); background: rgba(0,51,160,0.1);
+  }
+  .welcome-box h3 { color: #fff; font-size: 1rem; margin-bottom: 0.2rem; }
+  .welcome-box p  { color: var(--text-muted); font-size: 0.9rem; }
+
+  /* ─── VALIDATION ERRORS ─────────────────────────────────────────────────── */
+  .field-error {
+    display: none; color: #f87171; font-size: 0.85rem;
+    font-weight: 500; margin-top: 0.5rem;
+  }
+  .field-error.visible { display: block; animation: fadeIn 0.2s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* ─── INPUTS ────────────────────────────────────────────────────────────── */
+  .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }
+  .input-group { display: flex; flex-direction: column; margin-bottom: 1.5rem; }
+  .input-grid .input-group { margin-bottom: 0; }
+
+  label {
+    font-size: 0.85rem; font-weight: 600; color: var(--text-muted);
+    margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .long-label {
+    text-transform: none; letter-spacing: normal;
+    color: #fff; font-size: 1rem; display: block; margin-bottom: 1rem;
+  }
+  .prompt-label { display: block; margin-bottom: 0.75rem; color: var(--text-muted); font-weight: 500; }
+
+  input[type="text"], input[type="email"], input[type="tel"], input[type="date"], select {
+    width: 100%; padding: 1rem; border: 1px solid var(--border-light);
+    border-radius: 10px; font-size: 1rem; font-family: inherit;
+    background-color: var(--input-bg); color: #ffffff; transition: all 0.2s ease;
+  }
+  input:hover, select:hover { background-color: rgba(255,255,255,0.08); }
+  input:focus, select:focus {
+    outline: none; border-color: var(--accent-orange);
+    background-color: rgba(255,255,255,0.1); box-shadow: 0 0 0 2px var(--focus-ring);
+  }
+  input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1); }
+
+  .select-wrapper { position: relative; width: 100%; }
+  .select-wrapper::after {
+    content: "▼"; color: var(--text-muted); position: absolute;
+    right: 1rem; top: 50%; transform: translateY(-50%);
+    pointer-events: none; font-size: 0.75rem;
+  }
+  select { appearance: none; padding-right: 2.5rem; }
+  select option { background-color: var(--bg-dark); color: white; }
+
+  /* ─── HIGHLIGHT PANELS ──────────────────────────────────────────────────── */
+  .highlight-panel {
+    background: rgba(255,255,255,0.03); border: 1px solid var(--border-light);
+    border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0;
+  }
+
+  /* ─── RADIO & CHECKBOX ──────────────────────────────────────────────────── */
+  .radio-group { display: flex; gap: 2rem; }
+  .radio-label, .checkbox-label {
+    display: flex; align-items: center; gap: 0.6rem;
+    cursor: pointer; font-size: 0.95rem; font-weight: 500;
+  }
+  input[type="radio"], input[type="checkbox"] {
+    width: 1.2rem; height: 1.2rem; accent-color: var(--accent-orange); cursor: pointer;
+  }
+  .checkbox-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 1rem; }
+
+  /* ─── TOGGLE ────────────────────────────────────────────────────────────── */
+  .toggle-container { margin: 1.5rem 0; }
+  .toggle-label { cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem; }
+  .toggle-text { color: var(--accent-orange); font-weight: 600; font-size: 0.95rem; }
+
+  /* ─── BUTTONS ───────────────────────────────────────────────────────────── */
+  .action-row {
+    display: flex; margin-top: 2.5rem; padding-top: 1.5rem;
+    border-top: 1px solid rgba(255,255,255,0.05);
+  }
+  .action-row.right          { justify-content: flex-end; }
+  .action-row.space-between  { justify-content: space-between; }
+
+  button {
+    font-size: 1rem; font-weight: 600; padding: 0.875rem 2rem;
+    border-radius: 30px; cursor: pointer; transition: all 0.2s; border: none; font-family: inherit;
+  }
+  .btn-primary, .btn-submit {
+    background-color: var(--accent-orange); color: white;
+    box-shadow: 0 4px 15px rgba(255,103,0,0.3);
+  }
+  .btn-primary:hover, .btn-submit:hover {
+    background-color: var(--accent-orange-hover); transform: translateY(-2px);
+  }
+  .btn-secondary {
+    background-color: transparent; color: var(--text-muted); border: 1px solid var(--text-muted);
+  }
+  .btn-secondary:hover {
+    color: #ffffff; border-color: #ffffff; background-color: rgba(255,255,255,0.1);
+  }
+
+  /* ─── RESPONSIVE ────────────────────────────────────────────────────────── */
+  @media (max-width: 640px) {
+    .page-wrapper { padding: 0; }
+    .glass-card { border-radius: 0; border: none; min-height: 100vh; }
+    .app-header { padding: 2rem 1.5rem; }
+    .app-form { padding: 2rem 1.5rem; }
+    .status-grid { grid-template-columns: 1fr; }
+    .input-grid { grid-template-columns: 1fr; gap: 1.5rem; }
+    h1 { font-size: 1.75rem; }
+    .action-row { flex-direction: column-reverse; gap: 1rem; }
+    button { width: 100%; border-radius: 12px; }
+    .phase-indicators { font-size: 0.7rem; }
+    .card-content { padding: 1rem 1.25rem; }
+  }
+
+  /* ─── TEXTAREA ──────────────────────────────────────────────────────────── */
+  textarea {
+    width: 100%; padding: 1rem; border: 1px solid var(--border-light);
+    border-radius: 10px; font-size: 1rem; font-family: inherit;
+    background-color: var(--input-bg); color: #ffffff;
+    transition: all 0.2s ease; resize: vertical; min-height: 120px; line-height: 1.6;
+  }
+  textarea:hover { background-color: rgba(255,255,255,0.08); }
+  textarea:focus {
+    outline: none; border-color: var(--accent-orange);
+    background-color: rgba(255,255,255,0.1); box-shadow: 0 0 0 2px var(--focus-ring);
+  }
+  textarea::placeholder { color: var(--text-muted); }
+
+  .char-counter {
+    text-align: right; font-size: 0.8rem; color: var(--text-muted);
+    margin-top: 0.4rem; font-weight: 500; transition: color 0.2s;
+  }
+  .char-counter.near-limit { color: #fb923c; }
+  .char-counter.at-limit   { color: #f87171; }
+
+  .label-optional {
+    text-transform: none; letter-spacing: normal;
+    font-weight: 400; color: var(--text-muted); font-size: 0.8rem;
+  }
+
+  /* ─── PHASE 1 EXTRAS ────────────────────────────────────────────────────── */
+  .section-divider {
+    height: 1px; background: rgba(255,255,255,0.07);
+    margin: 1.75rem 0 1.5rem;
+  }
+  .subsection-title {
+    font-size: 1.1rem; font-weight: 700; color: #fff; margin-bottom: 0.25rem;
+  }
+  .three-col {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 1rem !important;
+    align-items: stretch !important;
+  }
+  /* All cards in three-col grids share the same padding — height comes from stretch */
+  .three-col .card-content {
+    padding: 1.25rem 1rem !important;
+    gap: 0.9rem !important;
+    align-items: center;
+  }
+  .three-col .paw-icon {
+    font-size: 1.6rem !important;
+    flex-shrink: 0;
+  }
+  .season-icon, .event-icon {
+    font-size: 1.6rem;
+    color: var(--accent-orange);
+    opacity: 0.55;
+    transition: opacity 0.2s ease;
+    flex-shrink: 0;
+  }
+  .card-content:hover .season-icon,
+  .card-content:hover .event-icon { opacity: 0.85; }
+  .hidden-radio:checked + .card-content .season-icon,
+  .hidden-radio:checked + .card-content .event-icon,
+  .hidden-check:checked + .card-content .season-icon,
+  .hidden-check:checked + .card-content .event-icon { opacity: 1; filter: drop-shadow(0 0 6px rgba(255,103,0,0.5)); }
+
+  @media (max-width: 640px) {
+    .three-col { grid-template-columns: 1fr !important; }
+  }
+
+  /* ─── LOADER ────────────────────────────────────────────────────────────── */
+  .loader-overlay {
+    position: fixed; inset: 0; z-index: 9999;
+    background: var(--bg-dark);
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column;
+    transition: opacity 0.6s ease;
+  }
+  .loader-overlay.fade-out { opacity: 0; pointer-events: none; }
+  .loader-inner { display: flex; flex-direction: column; align-items: center; gap: 2.5rem; }
+
+  /* Paw trail */
+  .paw-trail {
+    display: flex; gap: 0; position: relative;
+    height: 90px; width: 260px;
+  }
+  .trail-paw {
+    position: absolute;
+    width: 44px; height: 44px;
+    color: var(--accent-orange);
+    opacity: 0;
+    animation: pawStep 1.1s ease-in-out infinite;
+    animation-delay: var(--delay);
+    left: calc(50% + var(--offset) - 22px);
+    top: 50%;
+    transform: translateY(-50%) rotate(var(--rot));
+  }
+  .trail-paw i { font-size: 2rem; color: var(--accent-orange); }
+
+  @keyframes pawStep {
+    0%   { opacity: 0;    transform: translateY(-50%) rotate(var(--rot)) scale(0.5); }
+    20%  { opacity: 1;    transform: translateY(-50%) rotate(var(--rot)) scale(1.1); }
+    45%  { opacity: 0.85; transform: translateY(-50%) rotate(var(--rot)) scale(1);   }
+    100% { opacity: 0;    transform: translateY(-50%) rotate(var(--rot)) scale(0.9); }
+  }
+
+  .loader-label {
+    color: var(--text-muted); font-size: 0.95rem; font-weight: 600;
+    letter-spacing: 1px; text-transform: uppercase;
+    transition: opacity 0.2s ease;
+  }
+
+  /* ─── THANK YOU SCREEN ──────────────────────────────────────────────────── */
+  .thankyou-overlay {
+    position: fixed; inset: 0; z-index: 8888;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(2, 6, 23, 0.92);
+    backdrop-filter: blur(8px);
+    opacity: 0; transition: opacity 0.5s ease;
+    padding: 2rem;
+  }
+  .thankyou-overlay.visible { opacity: 1; }
+
+  #confettiCanvas {
+    position: absolute; inset: 0; pointer-events: none; z-index: 0;
+  }
+
+  .thankyou-card {
+    position: relative; z-index: 1;
+    background: var(--card-bg);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 24px;
+    padding: 3rem 2.5rem;
+    max-width: 480px; width: 100%;
+    text-align: center;
+    box-shadow: 0 30px 60px rgba(0,0,0,0.5), inset 0 0 30px rgba(0,51,160,0.15);
+    backdrop-filter: blur(24px);
+    animation: cardPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s both;
+  }
+  @keyframes cardPop {
+    from { transform: scale(0.85); opacity: 0; }
+    to   { transform: scale(1);    opacity: 1; }
+  }
+
+  /* Paw burst ring */
+  .ty-paw-burst {
+    position: relative; width: 100px; height: 100px;
+    margin: 0 auto 1.75rem;
+  }
+  .burst-paw {
+    position: absolute;
+    width: 28px; height: 28px;
+    top: 50%; left: 50%;
+    color: var(--accent-orange);
+    transform-origin: center;
+    animation: burstOut 0.7s cubic-bezier(0.34, 1.4, 0.64, 1) both;
+    --radius: 44px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .burst-paw i { font-size: 1.1rem; color: var(--accent-orange); }
+  @keyframes burstOut {
+    from {
+      transform: translate(-50%, -50%) rotate(var(--angle)) translateY(0px) scale(0);
+      opacity: 0;
+    }
+    to {
+      transform: translate(-50%, -50%) rotate(var(--angle)) translateY(calc(-1 * var(--radius))) scale(1);
+      opacity: 1;
+    }
+  }
+
+  .ty-brand {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 0.5rem; margin-bottom: 1.25rem;
+  }
+  .ty-paw-logo {
+    font-size: 5rem;
+    color: var(--accent-orange);
+    transform: rotate(45deg);
+    display: block;
+    animation: pawPulse 1.8s ease-in-out infinite;
+  }
+  @keyframes pawPulse {
+    0%, 100% { transform: scale(1);    opacity: 1;    }
+    50%       { transform: scale(1.15); opacity: 0.8;  }
+  }
+  .ty-brand-text {
+    color: var(--accent-orange); font-size: 0.85rem; font-weight: 800;
+    letter-spacing: 3px;
+  }
+
+  .ty-email-prompt {
+    display: flex; align-items: center; justify-content: center;
+    gap: 0.6rem; margin-top: 0.25rem; margin-bottom: 1.5rem;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px; padding: 0.85rem 1.25rem;
+  }
+  .ty-email-icon {
+    width: 20px; height: 20px; color: var(--accent-orange); flex-shrink: 0;
+  }
+  .ty-email-prompt p {
+    color: var(--text-muted); font-size: 0.875rem; line-height: 1.4;
+    text-align: left;
+  }
+  .ty-title {
+    font-size: 2rem; font-weight: 800; color: #fff;
+    letter-spacing: -0.03em; margin-bottom: 0.75rem; line-height: 1.1;
+  }
+  .ty-sub {
+    color: var(--text-muted); font-size: 0.95rem; line-height: 1.6; margin-bottom: 1.5rem;
+  }
+  .ty-divider {
+    height: 1px; background: rgba(255,255,255,0.08); margin-bottom: 1.25rem;
+  }
+  .ty-footnote {
+    color: var(--text-muted); font-size: 0.8rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 1px;
+  }
+</style>
