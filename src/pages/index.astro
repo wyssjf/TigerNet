@@ -14,7 +14,7 @@ import type { AthleteRegistration } from '../types/database';
     <!-- ─── LOADER ──────────────────────────────────────────────────────────── -->
     <div id="loader" class="loader-overlay">
       <div class="loader-inner">
-        <div class="paw-trail" id="pawTrail"></div>
+        <i class="fa-solid fa-paw loader-paw"></i>
         <p class="loader-label" id="loaderLabel">Lacing up...</p>
       </div>
     </div>
@@ -955,23 +955,6 @@ import type { AthleteRegistration } from '../types/database';
         }, 200);
       }, 1100);
 
-      // Build paw trail
-      (function buildPawTrail() {
-        const trail = document.getElementById('pawTrail');
-        const PAW_SVG = `<i class="fa-solid fa-paw" style="color:currentColor;width:100%;height:100%;display:block;"></i>`;
-        const count = 6;
-        // Alternate left/right, stepping forward
-        const offsets = [-28, 20, -22, 24, -18, 22];
-        const rotations = [-15, 10, -12, 10, -10, 8];
-        for (let i = 0; i < count; i++) {
-          const wrap = document.createElement('div');
-          wrap.className = 'trail-paw';
-          wrap.style.cssText = `--delay:${i * 180}ms; --offset:${offsets[i]}px; --rot:${rotations[i]}deg;`;
-          wrap.innerHTML = PAW_SVG;
-          trail.appendChild(wrap);
-        }
-      })();
-
       // Dismiss loader: minimum 2.2s AND page loaded
       let pageReady = false;
       let timerDone = false;
@@ -1343,29 +1326,15 @@ import type { AthleteRegistration } from '../types/database';
   .loader-overlay.fade-out { opacity: 0; pointer-events: none; }
   .loader-inner { display: flex; flex-direction: column; align-items: center; gap: 2.5rem; }
 
-  /* Paw trail */
-  .paw-trail {
-    display: flex; gap: 0; position: relative;
-    height: 90px; width: 260px;
-  }
-  .trail-paw {
-    position: absolute;
-    width: 44px; height: 44px;
+  /* Single loader paw */
+  .loader-paw {
+    font-size: 3.5rem;
     color: var(--accent-orange);
-    opacity: 0;
-    animation: pawStep 1.1s ease-in-out infinite;
-    animation-delay: var(--delay);
-    left: calc(50% + var(--offset) - 22px);
-    top: 50%;
-    transform: translateY(-50%) rotate(var(--rot));
+    animation: pawFade 1.4s ease-in-out infinite;
   }
-  .trail-paw i { font-size: 2rem; color: var(--accent-orange); }
-
-  @keyframes pawStep {
-    0%   { opacity: 0;    transform: translateY(-50%) rotate(var(--rot)) scale(0.5); }
-    20%  { opacity: 1;    transform: translateY(-50%) rotate(var(--rot)) scale(1.1); }
-    45%  { opacity: 0.85; transform: translateY(-50%) rotate(var(--rot)) scale(1);   }
-    100% { opacity: 0;    transform: translateY(-50%) rotate(var(--rot)) scale(0.9); }
+  @keyframes pawFade {
+    0%, 100% { opacity: 0.15; transform: scale(0.92); }
+    50%       { opacity: 1;    transform: scale(1.05); }
   }
 
   .loader-label {
