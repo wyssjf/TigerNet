@@ -23,7 +23,6 @@ import type { AthleteRegistration } from '../types/database';
     <div id="thankYouScreen" class="thankyou-overlay" style="display:none;">
       <canvas id="confettiCanvas"></canvas>
       <div class="thankyou-card">
-        <div class="ty-paw-burst" id="tyPawBurst"></div>
         <div class="ty-brand">
           <i class="fa-solid fa-paw ty-paw-logo"></i>
           <span class="ty-brand-text">JRTXCTF</span>
@@ -457,6 +456,8 @@ import type { AthleteRegistration } from '../types/database';
                 <div class="char-counter"><span id="charCount">0</span> / 256</div>
               </div>
 
+              <div class="field-error submit-error" id="submitError" aria-live="polite"></div>
+
               <div class="action-row space-between">
                 <button type="button" class="btn-secondary" onclick="prevPhase(6)">&larr; Back</button>
                 <button type="submit" class="btn-submit">Complete Registration</button>
@@ -857,38 +858,52 @@ import type { AthleteRegistration } from '../types/database';
         });
       }
 
-      // ─── FORM SUBMIT → THANK YOU ─────────────────────────────────────────────
-      document.getElementById('dossierForm').addEventListener('submit', (e) => {
+      // ─── FORM SUBMIT → API → THANK YOU ──────────────────────────────────────
+      const submitBtn   = document.querySelector('.btn-submit');
+      const submitError = document.getElementById('submitError');
+
+      document.getElementById('dossierForm').addEventListener('submit', async (e) => {
         e.preventDefault();
-        const season = [...document.querySelectorAll('input[name="season[]"]:checked')].map(i => i.value).join(' · ') || '';
-        document.getElementById('ty-season').textContent = season;
-        showThankYou();
+
+        // Show loading state
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Submitting...';
+        submitError.classList.remove('visible');
+
+        try {
+          const formData = new FormData(e.target);
+          const response = await fetch('/api/submit-registration', {
+            method: 'POST',
+            body: formData,
+          });
+
+          const result = await response.json();
+
+          if (result.success) {
+            const season = [...document.querySelectorAll('input[name="season[]"]:checked')]
+              .map(i => i.value).join(' · ') || '';
+            document.getElementById('ty-season').textContent = season;
+            showThankYou();
+          } else {
+            submitError.textContent = result.error || 'Something went wrong. Please try again.';
+            submitError.classList.add('visible');
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Complete Registration';
+          }
+        } catch (err) {
+          submitError.textContent = 'Network error — please check your connection and try again.';
+          submitError.classList.add('visible');
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Complete Registration';
+        }
       });
 
       function showThankYou() {
         const screen = document.getElementById('thankYouScreen');
         screen.style.display = 'flex';
         requestAnimationFrame(() => screen.classList.add('visible'));
-        buildPawBurst();
         startConfetti();
       }
-
-      // ─── PAW BURST (thank you screen) ────────────────────────────────────────
-      function buildPawBurst() {
-        const container = document.getElementById('tyPawBurst');
-        container.innerHTML = '';
-        const count = 8;
-        for (let i = 0; i < count; i++) {
-          const paw = document.createElement('div');
-          paw.innerHTML = '<i class="fa-solid fa-paw" style="width:100%;height:100%;"></i>';
-          const angle = (i / count) * 360;
-          const delay = i * 60;
-          paw.className = 'burst-paw';
-          paw.style.cssText = `--angle:${angle}deg; animation-delay:${delay}ms;`;
-          container.appendChild(paw);
-        }
-      }
-
       // ─── CONFETTI ────────────────────────────────────────────────────────────
       function startConfetti() {
         const canvas = document.getElementById('confettiCanvas');
@@ -1374,28 +1389,6 @@ import type { AthleteRegistration } from '../types/database';
     from { transform: scale(0.85); opacity: 0; }
     to   { transform: scale(1);    opacity: 1; }
   }
-
-  /* Paw burst ring */
-  .ty-paw-burst {
-    position: relative; width: 100px; height: 100px;
-    margin: 0 auto 1.75rem;
-  }
-  .burst-paw {
-    position: absolute;
-    width: 28px; height: 28px;
-    top: 50%; left: 50%;
-    color: var(--accent-orange);
-    transform-origin: center;
-    animation: burstOut 0.7s cubic-bezier(0.34, 1.4, 0.64, 1) both;
-    --radius: 44px;
-    display: flex; align-items: center; justify-content: center;
-  }
-  .burst-paw i { font-size: 1.1rem; color: var(--accent-orange); }
-  @keyframes burstOut {
-    from {
-      transform: translate(-50%, -50%) rotate(var(--angle)) translateY(0px) scale(0);
-      opacity: 0;
-    }
     to {
       transform: translate(-50%, -50%) rotate(var(--angle)) translateY(calc(-1 * var(--radius))) scale(1);
       opacity: 1;
@@ -1409,12 +1402,9 @@ import type { AthleteRegistration } from '../types/database';
   .ty-paw-logo {
     font-size: 5rem;
     color: var(--accent-orange);
-    transform: rotate(45deg);
     display: block;
-    animation: pawPulse 1.8s ease-in-out infinite;
+    opacity: 1;
   }
-  @keyframes pawPulse {
-    0%, 100% { transform: scale(1);    opacity: 1;    }
     50%       { transform: scale(1.15); opacity: 0.8;  }
   }
   .ty-brand-text {
