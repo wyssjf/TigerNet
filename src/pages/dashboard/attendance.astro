@@ -112,11 +112,16 @@
     <script type="module">
       import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-      const supabase = createClient(
-        'https://kbewlrudpdqmvdsbljen.supabase.co',
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiZXdscnVkcGRxbXZkc2JsamVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM2ODkxNDQsImV4cCI6MjA4OTI2NTE0NH0.RYeII_T640_x4AVrThyYgy3nJcHfHc6iUVkWy2R9GgI'
-      );
-
+    const supabase = createClient(
+      'https://kbewlrudpdqmvdsbljen.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiZXdscnVkcGRxbXZkc2JsamVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM2ODkxNDQsImV4cCI6MjA4OTI2NTE0NH0.RYeII_T640_x4AVrThyYgy3nJcHfHc6iUVkWy2R9GgI',
+      {
+        auth: {
+          persistSession: true,
+          autoRefreshToken: true,
+        }
+      }
+    );
       // ── Auth guard ───────────────────────────────────────────────────────────
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) { window.location.href = '/dashboard'; }
