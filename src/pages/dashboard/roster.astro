@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>JRTXCTF | Roster</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
 </head>
 <body>
@@ -178,22 +178,22 @@ function applyFilters() {
 
 // ── Render ────────────────────────────────────────────────────────────────────
 function paperworkBadge(status) {
-  if (status === 'No Physical')      return '<span class="pw-badge outline-red">NO PHYSICAL</span>';
-  if (status === 'Missing Docs')     return '<span class="pw-badge outline-yellow">DOCS PENDING</span>';
-  if (status === 'Paperwork Complete') return '<span class="pw-badge solid-purple"><i class="fa-solid fa-shield"></i> CLEARED</span>';
-  return '<span class="pw-badge outline-gray">—</span>';
+  if (status === 'No Physical')      return '<span class="status-badge bg-red"><i class="fa-solid fa-triangle-exclamation"></i> No Physical</span>';
+  if (status === 'Missing Docs')     return '<span class="status-badge bg-yellow"><i class="fa-solid fa-file-circle-xmark"></i> Docs Pending</span>';
+  if (status === 'Paperwork Complete') return '<span class="status-badge bg-purple"><i class="fa-solid fa-shield-check"></i> Cleared</span>';
+  return '<span class="status-badge bg-gray">—</span>';
 }
 
 function statusBadge(status) {
   const map = { 
-    'Active': { cls: 'green', icon: 'fa-circle-check' },
-    'Suspended': { cls: 'red', icon: 'fa-circle-xmark' },
-    'Ineligible': { cls: 'red', icon: 'fa-circle-xmark' },
-    'Quit': { cls: 'gray', icon: 'fa-circle-minus' },
-    'Cut': { cls: 'gray', icon: 'fa-circle-minus' }
+    'Active': { cls: 'bg-green', icon: 'fa-circle-check' },
+    'Suspended': { cls: 'bg-red', icon: 'fa-circle-xmark' },
+    'Ineligible': { cls: 'bg-red', icon: 'fa-circle-xmark' },
+    'Quit': { cls: 'bg-gray', icon: 'fa-circle-minus' },
+    'Cut': { cls: 'bg-gray', icon: 'fa-circle-minus' }
   };
-  const info = map[status] || { cls: 'gray', icon: 'fa-circle-question' };
-  return `<span class="ac-status ${info.cls}"><i class="fa-regular ${info.icon}"></i> ${status}</span>`;
+  const info = map[status] || { cls: 'bg-gray', icon: 'fa-circle-question' };
+  return `<span class="status-badge ${info.cls}"><i class="fa-regular ${info.icon}"></i> ${status}</span>`;
 }
 
 function renderRoster(athletes) {
@@ -216,21 +216,19 @@ function renderRoster(athletes) {
     
     return `
       <div class="athlete-card ${isInactive ? 'inactive' : ''}">
-        <div class="ac-top" onclick="openDossier('${a.id}')">
+        <div class="ac-info" onclick="openDossier('${a.id}')">
           <h3 class="ac-name">${a.first_name} ${a.last_name}</h3>
           <div class="ac-meta">
             ${statusBadge(a.status || 'Active')}
-            <span class="ac-divider">|</span>
-            <span class="ac-group">${groupName}</span>
-            <span class="ac-divider">|</span>
+            <span class="ac-group"><i class="fa-solid fa-running"></i> ${groupName}</span>
             ${paperworkBadge(a.paperwork_status)}
           </div>
         </div>
         <div class="ac-actions">
-          <button class="att-btn" title="Present"><i class="fa-solid fa-check"></i></button>
-          <button class="att-btn" title="Late">L</button>
-          <button class="att-btn" title="Absent"><i class="fa-solid fa-xmark"></i></button>
-          <button class="att-btn" title="Excused">E</button>
+          <button class="att-btn btn-present" title="Present"><i class="fa-solid fa-check"></i></button>
+          <button class="att-btn btn-late" title="Late">L</button>
+          <button class="att-btn btn-absent" title="Absent"><i class="fa-solid fa-xmark"></i></button>
+          <button class="att-btn btn-excused" title="Excused">E</button>
         </div>
       </div>
     `;
@@ -259,7 +257,7 @@ window.overlayClick = (e, id) => {
   --accent:    #FF6700;
   
   /* Backgrounds & Surfaces */
-  --bg-page:   #f1f5f9;
+  --bg-page:   #f8fafc;
   --bg-surface: #ffffff;
   
   /* Text Colors */
@@ -274,12 +272,6 @@ window.overlayClick = (e, id) => {
   /* Dimensions */
   --sidebar-w: 240px;
   --topbar-h:  64px;
-
-  /* Event Group Colors */
-  --c-sprints-bg:  #fef3c7; --c-sprints-txt: #b45309;
-  --c-distance-bg: #dcfce7; --c-distance-txt: #166534;
-  --c-throws-bg:   #fee2e2; --c-throws-txt:  #991b1b;
-  --c-default-bg:  #f1f5f9; --c-default-txt: #475569;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -408,27 +400,38 @@ body {
 .search-wrap i { font-size: 13px; color: var(--text-light); }
 .search-wrap input { border: none; outline: none; font-size: 14px; font-family: inherit; color: var(--text-main); background: transparent; width: 100%; }
 
-/* ── HORIZONTAL ATHLETE CARDS (IMAGE MATCH) ────────────────────────────── */
+/* ── HORIZONTAL ATHLETE FLIGHT SHEET ───────────────────────────────────── */
 .roster-list {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
 }
 
 .athlete-card {
   background: #ffffff;
   border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 16px 20px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.02);
   display: flex;
   flex-direction: column;
+  gap: 16px;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (min-width: 768px) {
+  .athlete-card {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 24px;
+    gap: 24px;
+  }
 }
 
 .athlete-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 12px -4px rgba(0,0,0,0.08);
+  box-shadow: 0 8px 16px -4px rgba(0,0,0,0.06);
   border-color: var(--border-medium);
 }
 
@@ -438,20 +441,38 @@ body {
 }
 .athlete-card.inactive:hover { opacity: 1; }
 
-.ac-top {
+/* Info Section (Left side on desktop) */
+.ac-info {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
   cursor: pointer;
-  padding-bottom: 16px;
-  border-bottom: 1px solid #f1f5f9;
-  margin-bottom: 16px;
+  flex: 1;
+}
+
+@media (min-width: 768px) {
+  .ac-info {
+    flex-direction: row;
+    align-items: center;
+    gap: 20px;
+  }
 }
 
 .ac-name {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 800;
   color: #0f172a;
-  margin-bottom: 6px;
+  white-space: nowrap;
 }
 
+@media (min-width: 768px) {
+  .ac-name {
+    min-width: 220px;
+    margin-bottom: 0;
+  }
+}
+
+/* Badges & Meta */
 .ac-meta {
   display: flex;
   align-items: center;
@@ -459,72 +480,84 @@ body {
   flex-wrap: wrap;
 }
 
-.ac-status {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.ac-status.green { color: #10b981; }
-.ac-status.red { color: #ef4444; }
-.ac-status.gray { color: #64748b; }
-
-.ac-divider { color: #cbd5e1; font-weight: 300; font-size: 14px; }
-
 .ac-group {
   font-size: 12px;
-  font-weight: 600;
-  color: #475569;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  background: #f1f5f9;
+  border-radius: 8px;
 }
 
-.pw-badge {
+.status-badge {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 10px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 11px;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
-.pw-badge.solid-purple { background: #5b58ed; color: #ffffff; border: 1px solid #5b58ed; }
-.pw-badge.outline-yellow { background: transparent; color: #d97706; border: 1px solid #f59e0b; }
-.pw-badge.outline-red { background: transparent; color: #dc2626; border: 1px solid #ef4444; }
-.pw-badge.outline-gray { background: transparent; color: #64748b; border: 1px solid #cbd5e1; }
+/* Bold Background Colors for Badges */
+.bg-green { background: #dcfce7; color: #166534; }
+.bg-red { background: #fee2e2; color: #991b1b; }
+.bg-yellow { background: #fef9c3; color: #b45309; }
+.bg-purple { background: #e0e7ff; color: #3730a3; }
+.bg-gray { background: #f1f5f9; color: #475569; }
 
+/* Actions (Right side on desktop) */
 .ac-actions {
   display: flex;
-  gap: 12px;
+  gap: 16px;
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  .ac-actions {
+    width: auto;
+    min-width: 320px;
+  }
 }
 
 .att-btn {
   flex: 1;
-  height: 40px;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  color: #334155;
-  font-size: 16px;
+  height: 48px; /* Taller, expert-level touch target */
+  background: #f8fafc;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  color: #64748b;
+  font-size: 18px;
   font-weight: 800;
   font-family: inherit;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
 }
 
 .att-btn:hover {
-  background: #f8fafc;
-  border-color: #cbd5e1;
-  color: var(--primary);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0,0,0,0.05);
 }
+.att-btn:active {
+  transform: translateY(0);
+}
+
+/* Distinct Hover States for Action Buttons */
+.btn-present:hover { background: #dcfce7; border-color: #22c55e; color: #166534; }
+.btn-late:hover    { background: #fef9c3; border-color: #eab308; color: #b45309; }
+.btn-absent:hover  { background: #fee2e2; border-color: #ef4444; color: #991b1b; }
+.btn-excused:hover { background: #f1f5f9; border-color: #94a3b8; color: #334155; }
 
 /* Loading / Empty States */
 .loading-state, .empty-state {
@@ -532,8 +565,8 @@ body {
   padding: 4rem;
   color: var(--text-muted);
   background: var(--bg-surface);
-  border-radius: 12px;
-  border: 1px dashed var(--border-medium);
+  border-radius: 16px;
+  border: 2px dashed var(--border-medium);
 }
 .spinner-wrapper { font-size: 24px; color: var(--primary); margin-bottom: 1rem; }
 .empty-state i { font-size: 32px; margin-bottom: 1rem; opacity: 0.5; }
@@ -575,22 +608,5 @@ body {
   
   .filter-bar { flex-direction: column; align-items: stretch; gap: 12px; }
   .search-wrap { min-width: 100%; }
-  
-  /* Stack the row contents on very small screens */
-  .athlete-row {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 16px;
-    padding: 16px;
-  }
-  .row-statuses {
-    width: 100%;
-    justify-content: flex-start;
-    padding-top: 12px;
-    border-top: 1px solid var(--border-light);
-  }
-  .row-chevron {
-    margin-left: auto;
-  }
 }
 </style>
