@@ -1,151 +1,236 @@
-<!DOCTYPE html>
+---
+// src/pages/dashboard/roster.astro
+---
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>JRTXCTF | Roster</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
 </head>
 <body>
 
 <div class="mobile-topbar">
-  <div class="mobile-brand">
-    <div class="brand-icon-wrapper"><i class="fa-solid fa-paw"></i></div>
-    JRTXCTF
-  </div>
+  <div class="mobile-brand"><i class="fa-solid fa-paw" style="color:#FF6700;font-size:16px;"></i> JRTXCTF</div>
   <button class="hamburger" onclick="openDrawer()"><i class="fa-solid fa-bars"></i></button>
 </div>
 <div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
 
 <div class="layout">
   <aside class="sidebar" id="sidebar">
-    <div class="sb-header">
-      <div class="sb-brand">
-        <div class="brand-icon-wrapper"><i class="fa-solid fa-paw"></i></div>
-        <span class="sb-name">JRTXCTF</span>
-      </div>
+    <div class="sb-brand">
+      <i class="fa-solid fa-paw" style="color:#FF6700;font-size:18px;"></i>
+      <span class="sb-name">JRTXCTF</span>
     </div>
-    
-    <div class="sb-content">
-      <div class="sb-section">PROGRAM MANAGEMENT</div>
-      <nav class="sb-nav">
-        <a href="#" class="nav-item active">
-          <i class="fa-solid fa-users nav-icon"></i>
-          <span>Roster</span>
-        </a>
-        <a href="#" class="nav-item">
-          <i class="fa-solid fa-calendar-check nav-icon"></i>
-          <span>Attendance</span>
-        </a>
-      </nav>
-    </div>
-
+    <div class="sb-section">PROGRAM</div>
+    <nav class="sb-nav">
+      <a href="/dashboard/roster" class="nav-item active"><span class="nav-dot"></span> Roster</a>
+      <a href="/dashboard/attendance" class="nav-item"><span class="nav-dot"></span> Attendance</a>
+    </nav>
     <div class="sb-foot">
       <div class="user-chip">
-        <div class="user-av" id="userAv">CO</div>
-        <div class="user-info">
-          <span class="user-role">Administrator</span>
-          <span class="user-em" id="userEmail">coach@jrtxctf.com</span>
-        </div>
+        <div class="user-av" id="userAv">?</div>
+        <span class="user-em" id="userEmail">Loading...</span>
       </div>
-      <button class="signout-btn" id="signoutBtn">
-        <i class="fa-solid fa-arrow-right-from-bracket"></i>
-        <span>Sign out</span>
-      </button>
+      <button class="signout-btn" id="signoutBtn"><i class="fa-solid fa-right-from-bracket"></i> Sign out</button>
     </div>
   </aside>
 
   <main class="main">
     <div class="topbar">
       <div class="topbar-left">
-        <h1>Team Roster</h1>
+        <h1>Roster</h1>
         <span class="page-meta" id="rosterCount">—</span>
       </div>
       <div class="topbar-right">
-        <button class="tbtn btn-secondary" id="importBtn"><i class="fa-solid fa-file-import"></i> <span>Import</span></button>
-        <button class="tbtn btn-secondary" id="exportBtn"><i class="fa-solid fa-download"></i> <span>Export</span></button>
-        <button class="tbtn btn-primary" id="addAthleteBtn"><i class="fa-solid fa-plus"></i> <span>Add Athlete</span></button>
+        <button class="tbtn" id="importBtn"><i class="fa-solid fa-file-arrow-up"></i> Import</button>
+        <button class="tbtn" id="addAthleteBtn"><i class="fa-solid fa-user-plus"></i> Add</button>
+        <button class="tbtn accent" id="exportBtn"><i class="fa-solid fa-download"></i> Export</button>
       </div>
     </div>
 
-    <div class="content-wrapper">
-      
-      <!-- Filter Bar -->
-      <div class="filter-bar">
-        <div class="filter-scroll-area">
-          <div class="filter-group">
-            <button class="fpill active" data-filter="all" onclick="setFilter(this,'all')">All</button>
-            <div class="fsep"></div>
-            <button class="fpill" data-filter="Boys" onclick="setFilter(this,'team:Boys')">Boys</button>
-            <button class="fpill" data-filter="Girls" onclick="setFilter(this,'team:Girls')">Girls</button>
-          </div>
-          
-          <div class="filter-group">
-            <button class="fpill" data-filter="Active" onclick="setFilter(this,'status:Active')">Active</button>
-            <button class="fpill" data-filter="Suspended" onclick="setFilter(this,'status:Suspended')">Suspended</button>
-            <button class="fpill" data-filter="Ineligible" onclick="setFilter(this,'status:Ineligible')">Ineligible</button>
-          </div>
-          
-          <div class="filter-group">
-            <button class="fpill" data-filter="Missing Docs" onclick="setFilter(this,'paperwork:Missing Docs')">Missing Docs</button>
-            <button class="fpill" data-filter="No Physical" onclick="setFilter(this,'paperwork:No Physical')">No Physical</button>
-          </div>
-        </div>
+    <div class="filter-bar">
+      <button class="fpill active" data-filter="all" onclick="setFilter(this,'all')">All</button>
+      <div class="fsep"></div>
+      <button class="fpill" data-filter="Boys" onclick="setFilter(this,'team:Boys')">Boys</button>
+      <button class="fpill" data-filter="Girls" onclick="setFilter(this,'team:Girls')">Girls</button>
+      <div class="fsep"></div>
+      <button class="fpill" data-filter="Active" onclick="setFilter(this,'status:Active')">Active</button>
+      <button class="fpill" data-filter="Suspended" onclick="setFilter(this,'status:Suspended')">Suspended</button>
+      <button class="fpill" data-filter="Ineligible" onclick="setFilter(this,'status:Ineligible')">Ineligible</button>
+      <button class="fpill" data-filter="Cut" onclick="setFilter(this,'status:Cut')">Cut</button>
+      <div class="fsep"></div>
+      <button class="fpill" data-filter="Cross Country" onclick="setFilter(this,'season:Cross Country')">XC</button>
+      <button class="fpill" data-filter="Indoor Track & Field" onclick="setFilter(this,'season:Indoor Track & Field')">Indoor</button>
+      <button class="fpill" data-filter="Outdoor Track & Field" onclick="setFilter(this,'season:Outdoor Track & Field')">Outdoor</button>
+      <div class="fsep"></div>
+      <button class="fpill" data-filter="No Physical" onclick="setFilter(this,'paperwork:No Physical')">No Physical</button>
+      <button class="fpill" data-filter="Missing Docs" onclick="setFilter(this,'paperwork:Missing Docs')">Missing Docs</button>
+      <div class="search-wrap"><i class="fa-solid fa-magnifying-glass"></i><input type="text" id="searchInput" placeholder="Search..." /></div>
+    </div>
 
-        <div class="search-wrap">
-          <i class="fa-solid fa-magnifying-glass"></i>
-          <input type="text" id="searchInput" placeholder="Search athletes..." />
-        </div>
-      </div>
-
-      <!-- Athlete Horizontal List -->
-      <div class="roster-list" id="rosterBody">
-        <div class="loading-state">
-          <div class="spinner-wrapper"><i class="fa-solid fa-circle-notch fa-spin"></i></div>
-          <div>Loading roster data...</div>
-        </div>
-      </div>
-
+    <div class="tbl-wrap">
+      <table class="roster-tbl">
+        <thead>
+          <tr>
+            <th style="width:220px">ATHLETE</th>
+            <th>GR</th>
+            <th>TEAM</th>
+            <th>EVENT</th>
+            <th>STATUS</th>
+            <th>PAPERWORK</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="rosterBody">
+          <tr><td colspan="7" class="loading-cell"><i class="fa-solid fa-paw fa-spin"></i> Loading...</td></tr>
+        </tbody>
+      </table>
     </div>
   </main>
 </div>
 
-<!-- DOSSIER MODAL -->
-<div class="overlay hidden" id="dossierOverlay" onclick="overlayClick(event,'dossierOverlay')">
-  <div class="modal modal-wide" id="dossierModal">
-    <div id="dossierContent">
-      <div class="empty-state" style="padding: 3rem;">
-        <i class="fa-regular fa-address-card"></i>
-        <p>Athlete Dossier Mockup<br><small>Click outside to close</small></p>
+<!-- ADD MODAL -->
+<div class="overlay hidden" id="addOverlay">
+  <div class="modal">
+    <div class="modal-hd">
+      <div><div class="modal-title">Add Athlete</div><div class="modal-sub">Manually add to roster</div></div>
+      <button class="modal-x" onclick="closeOverlay('addOverlay')"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="frow">
+        <div class="fg"><label>First Name *</label><input type="text" id="a_fn" /></div>
+        <div class="fg"><label>Last Name *</label><input type="text" id="a_ln" /></div>
+      </div>
+      <div class="frow">
+        <div class="fg"><label>Grade *</label>
+          <select id="a_gr"><option value="">—</option><option>9</option><option>10</option><option>11</option><option>12</option></select>
+        </div>
+        <div class="fg"><label>Team *</label>
+          <select id="a_tm"><option value="">—</option><option>Boys</option><option>Girls</option></select>
+        </div>
+      </div>
+      <div class="fg"><label>Season(s) *</label>
+        <div class="check-row">
+          <label class="ck"><input type="checkbox" name="a_s" value="Cross Country" /> Cross Country</label>
+          <label class="ck"><input type="checkbox" name="a_s" value="Indoor Track & Field" /> Indoor T&F</label>
+          <label class="ck"><input type="checkbox" name="a_s" value="Outdoor Track & Field" /> Outdoor T&F</label>
+        </div>
+      </div>
+      <div class="fg"><label>Event Group</label>
+        <select id="a_ev"><option value="">—</option><option>Sprints</option><option>Distance</option><option>Throws</option></select>
+      </div>
+      <div class="frow">
+        <div class="fg"><label>Athlete Email *</label><input type="email" id="a_em" /></div>
+        <div class="fg"><label>Athlete Phone *</label><input type="tel" id="a_ph" /></div>
+      </div>
+      <div class="fg"><label>Parent Name *</label><input type="text" id="a_p1n" /></div>
+      <div class="frow">
+        <div class="fg"><label>Parent Phone *</label><input type="tel" id="a_p1p" /></div>
+        <div class="fg"><label>Parent Email *</label><input type="email" id="a_p1e" /></div>
+      </div>
+      <div class="form-error hidden" id="addError"></div>
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeOverlay('addOverlay')">Cancel</button>
+        <button class="btn-primary" id="saveAddBtn"><i class="fa-solid fa-check"></i> Save Athlete</button>
       </div>
     </div>
   </div>
 </div>
 
-<script>
-// MOCK DATA SETUP FOR DESIGN REVIEW
-let allAthletes = [
-  { id: '1', first_name: 'Sarah', last_name: 'Jenkins', grade: 11, team: 'Girls', event_group: 'Distance', status: 'Active', paperwork_status: 'Paperwork Complete', email: 'sarah.j@student.com', phone: '(555) 123-4567', parent1_name: 'Robert Jenkins', parent1_phone: '(555) 987-6543', parent1_email: 'rob@parents.com', season: ['Cross Country', 'Indoor Track & Field'] },
-  { id: '2', first_name: 'Marcus', last_name: 'Washington', grade: 12, team: 'Boys', event_group: 'Sprints', status: 'Active', paperwork_status: 'Missing Docs', email: 'm.wash@student.com', phone: '(555) 222-3333', parent1_name: 'Linda Washington', parent1_phone: '(555) 444-5555', parent1_email: 'linda@parents.com', season: ['Indoor Track & Field', 'Outdoor Track & Field'] },
-  { id: '3', first_name: 'Emily', last_name: 'Chen', grade: 9, team: 'Girls', event_group: 'Throws', status: 'Ineligible', paperwork_status: 'No Physical', email: 'echen@student.com', phone: '(555) 777-8888', parent1_name: 'David Chen', parent1_phone: '(555) 999-0000', parent1_email: 'david@parents.com', season: ['Outdoor Track & Field'] },
-  { id: '4', first_name: 'Elijah', last_name: 'Perez', grade: 10, team: 'Boys', event_group: 'Distance', status: 'Suspended', paperwork_status: 'Paperwork Complete', email: 'eli.p@student.com', phone: '(555) 111-2222', parent1_name: 'Maria Perez', parent1_phone: '(555) 333-4444', parent1_email: 'maria@parents.com', season: ['Cross Country'] },
-  { id: '5', first_name: 'Chloe', last_name: 'Davis', grade: 10, team: 'Girls', event_group: 'Sprints', status: 'Active', paperwork_status: 'Paperwork Complete', email: 'chloe@student.com', phone: '(555) 555-1111', parent1_name: 'Amanda Davis', parent1_phone: '(555) 555-2222', parent1_email: 'amanda@parents.com', season: ['Indoor Track & Field'] },
-  { id: '6', first_name: 'Jackson', last_name: 'Taylor', grade: 11, team: 'Boys', event_group: 'Throws', status: 'Cut', paperwork_status: 'Missing Docs', email: 'jtaylor@student.com', phone: '(555) 555-3333', parent1_name: 'Mark Taylor', parent1_phone: '(555) 555-4444', parent1_email: 'mark@parents.com', season: ['Outdoor Track & Field'] },
-];
+<!-- IMPORT MODAL -->
+<div class="overlay hidden" id="importOverlay">
+  <div class="modal">
+    <div class="modal-hd">
+      <div><div class="modal-title">Import CSV</div><div class="modal-sub">Bulk add athletes</div></div>
+      <button class="modal-x" onclick="closeOverlay('importOverlay')"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="template-bar">
+        <i class="fa-solid fa-file-csv"></i>
+        <div>
+          <div class="template-label">Need the format?</div>
+          <button class="btn-link" id="downloadTemplateBtn">Download CSV template</button>
+        </div>
+      </div>
+      <div class="upload-area" id="uploadArea">
+        <i class="fa-solid fa-cloud-arrow-up"></i>
+        <p>Drag & drop or <label class="btn-link" style="cursor:pointer;">browse<input type="file" id="csvFileInput" accept=".csv" style="display:none;" /></label></p>
+      </div>
+      <div class="hidden" id="importPreview">
+        <div class="preview-hd">
+          <span id="previewCount"></span>
+          <button class="btn-link" onclick="clearImport()">Clear</button>
+        </div>
+        <div class="preview-scroll">
+          <table class="preview-tbl" id="previewTable"></table>
+        </div>
+      </div>
+      <div class="form-error hidden" id="importError"></div>
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeOverlay('importOverlay')">Cancel</button>
+        <button class="btn-primary hidden" id="importSaveBtn"><i class="fa-solid fa-file-arrow-up"></i> Import</button>
+      </div>
+    </div>
+  </div>
+</div>
 
-let activeFilter = 'all';
+<!-- ATHLETE DOSSIER MODAL -->
+<div class="overlay hidden" id="dossierOverlay" onclick="overlayClick(event,'dossierOverlay')">
+  <div class="modal modal-wide" id="dossierModal">
+    <div id="dossierContent"></div>
+  </div>
+</div>
 
-function loadRoster() {
-  // Simulate network delay for effect
-  setTimeout(() => { applyFilters(); }, 400); 
+<script type="module">
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+(async () => {
+
+const supabase = createClient(
+  'https://kbewlrudpdqmvdsbljen.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiZXdscnVkcGRxbXZkc2JsamVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM2ODkxNDQsImV4cCI6MjA4OTI2NTE0NH0.RYeII_T640_x4AVrThyYgy3nJcHfHc6iUVkWy2R9GgI'
+);
+
+// ── Auth ────────────────────────────────────────────────────────────────────
+const { data: { session } } = await supabase.auth.getSession();
+if (!session) { window.location.href = '/dashboard'; return; }
+
+const { data: profile } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
+const email = session.user.email;
+document.getElementById('userEmail').textContent = email;
+document.getElementById('userAv').textContent = email.slice(0,2).toUpperCase();
+
+if (profile?.role === 'manager') {
+  document.getElementById('rosterBody').innerHTML = '<tr><td colspan="7" class="loading-cell"><i class="fa-solid fa-lock"></i> Managers cannot view the full roster.</td></tr>';
+  document.getElementById('rosterCount').textContent = '';
+  ['exportBtn','addAthleteBtn','importBtn'].forEach(id => document.getElementById(id).style.display = 'none');
+  return;
 }
-
-loadRoster();
 
 // ── Drawer ───────────────────────────────────────────────────────────────────
 window.openDrawer  = () => { document.getElementById('sidebar').classList.add('open'); document.getElementById('drawerOverlay').classList.add('visible'); document.body.style.overflow='hidden'; };
 window.closeDrawer = () => { document.getElementById('sidebar').classList.remove('open'); document.getElementById('drawerOverlay').classList.remove('visible'); document.body.style.overflow=''; };
+
+// ── Sign out ─────────────────────────────────────────────────────────────────
+document.getElementById('signoutBtn').addEventListener('click', async () => { await supabase.auth.signOut(); window.location.href = '/dashboard'; });
+
+// ── Load data ────────────────────────────────────────────────────────────────
+let allAthletes = [];
+let activeFilter = 'all';
+
+async function loadRoster() {
+  const { data, error } = await supabase.from('athlete_summary').select('*').order('last_name', { ascending: true });
+  if (error) {
+    document.getElementById('rosterBody').innerHTML = `<tr><td colspan="7" class="loading-cell">Error: ${error.message}</td></tr>`;
+    return;
+  }
+  allAthletes = data || [];
+  applyFilters();
+}
+
+await loadRoster();
 
 // ── Filter system ─────────────────────────────────────────────────────────────
 window.setFilter = (btn, filter) => {
@@ -169,76 +254,219 @@ function applyFilters() {
     }
     if (search) {
       const name = `${a.first_name} ${a.last_name}`.toLowerCase();
-      if (!name.includes(search)) return false;
+      if (!name.includes(search) && !(a.email||'').toLowerCase().includes(search)) return false;
     }
     return true;
   });
-  renderRoster(filtered);
+  renderTable(filtered);
 }
 
 // ── Render ────────────────────────────────────────────────────────────────────
+const EV_COLOR = { Sprints:'ev-sprints', Distance:'ev-distance', Throws:'ev-throws' };
+
 function paperworkBadge(status) {
-  if (status === 'No Physical')      return '<span class="status-badge bg-red"><i class="fa-solid fa-triangle-exclamation"></i> No Physical</span>';
-  if (status === 'Missing Docs')     return '<span class="status-badge bg-yellow"><i class="fa-solid fa-file-circle-xmark"></i> Docs Pending</span>';
-  if (status === 'Paperwork Complete') return '<span class="status-badge bg-purple"><i class="fa-solid fa-shield-check"></i> Cleared</span>';
-  return '<span class="status-badge bg-gray">—</span>';
+  if (status === 'No Physical')      return '<span class="badge badge-danger">No Physical</span>';
+  if (status === 'Missing Docs')     return '<span class="badge badge-warn">Missing Docs</span>';
+  if (status === 'Paperwork Complete') return '<span class="badge badge-ok">Complete</span>';
+  return '<span class="badge badge-neutral">—</span>';
 }
 
 function statusBadge(status) {
-  const map = { 
-    'Active': { cls: 'bg-green', icon: 'fa-circle-check' },
-    'Suspended': { cls: 'bg-red', icon: 'fa-circle-xmark' },
-    'Ineligible': { cls: 'bg-red', icon: 'fa-circle-xmark' },
-    'Quit': { cls: 'bg-gray', icon: 'fa-circle-minus' },
-    'Cut': { cls: 'bg-gray', icon: 'fa-circle-minus' }
-  };
-  const info = map[status] || { cls: 'bg-gray', icon: 'fa-circle-question' };
-  return `<span class="status-badge ${info.cls}"><i class="fa-regular ${info.icon}"></i> ${status}</span>`;
+  const map = { Active:'badge-active', Suspended:'badge-warn', Ineligible:'badge-danger', Quit:'badge-neutral', Cut:'badge-neutral' };
+  return `<span class="badge ${map[status]||'badge-neutral'}">${status}</span>`;
 }
 
-function renderRoster(athletes) {
-  const container = document.getElementById('rosterBody');
+function renderTable(athletes) {
+  const tbody  = document.getElementById('rosterBody');
   const countEl = document.getElementById('rosterCount');
-  countEl.textContent = `${athletes.length} Athlete${athletes.length !== 1 ? 's' : ''}`;
+  countEl.textContent = `${athletes.length} athlete${athletes.length !== 1 ? 's' : ''}`;
 
   if (!athletes.length) {
-    container.innerHTML = `
-      <div class="empty-state">
-        <i class="fa-regular fa-folder-open"></i>
-        <p>No athletes found matching those criteria.</p>
-      </div>`;
+    tbody.innerHTML = '<tr><td colspan="7" class="loading-cell">No athletes match.</td></tr>';
     return;
   }
 
-  container.innerHTML = athletes.map(a => {
-    const isInactive = ['Quit','Cut'].includes(a.status);
-    const groupName = a.event_group || 'Unassigned';
-    
-    return `
-      <div class="athlete-card ${isInactive ? 'inactive' : ''}">
-        <div class="ac-info" onclick="openDossier('${a.id}')">
-          <h3 class="ac-name">${a.first_name} ${a.last_name}</h3>
-          <div class="ac-meta">
-            ${statusBadge(a.status || 'Active')}
-            <span class="ac-group"><i class="fa-solid fa-running"></i> ${groupName}</span>
-            ${paperworkBadge(a.paperwork_status)}
-          </div>
-        </div>
-        <div class="ac-actions">
-          <button class="att-btn btn-present" title="Present"><i class="fa-solid fa-check"></i></button>
-          <button class="att-btn btn-late" title="Late">L</button>
-          <button class="att-btn btn-absent" title="Absent"><i class="fa-solid fa-xmark"></i></button>
-          <button class="att-btn btn-excused" title="Excused">E</button>
-        </div>
-      </div>
-    `;
+  tbody.innerHTML = athletes.map(a => {
+    const dimmed = ['Quit','Cut'].includes(a.status) ? 'row-dim' : '';
+    return `<tr class="${dimmed}" onclick="openDossier('${a.id}')">
+      <td><div class="name-cell">
+        <div class="av ${EV_COLOR[a.event_group]||'ev-default'}">${a.first_name[0]}${a.last_name[0]}</div>
+        <div><div class="name-main">${a.last_name}, ${a.first_name}</div><div class="name-sub">Gr. ${a.grade} &middot; ${a.team}</div></div>
+      </div></td>
+      <td>${a.grade}</td>
+      <td><span class="badge ${a.team==='Boys'?'badge-boys':'badge-girls'}">${a.team}</span></td>
+      <td>${a.event_group ? `<span class="badge ${EV_COLOR[a.event_group]||''}-badge">${a.event_group}</span>` : '<span class="muted">—</span>'}</td>
+      <td>${statusBadge(a.status||'Active')}</td>
+      <td>${paperworkBadge(a.paperwork_status)}</td>
+      <td onclick="event.stopPropagation()"><button class="row-btn" onclick="openDossier('${a.id}')"><i class="fa-solid fa-pen-to-square"></i></button></td>
+    </tr>`;
   }).join('');
 }
 
-// ── Dossier Placeholder ─────────────────────────────────
-window.openDossier = (id) => {
+// ── Dossier modal ─────────────────────────────────────────────────────────────
+const PAPERWORK_FIELDS = [
+  { key:'physical_exam',       label:'Physical Exam' },
+  { key:'activities_contract', label:'Activities Contract' },
+  { key:'concussion_form',     label:'Concussion Form' },
+  { key:'heat_illness_form',   label:'Heat Illness Form' },
+  { key:'cardiac_arrest_form', label:'Cardiac Arrest Form' },
+  { key:'emergency_card',      label:'Emergency Card' },
+  { key:'team_contract',       label:'Team Contract' },
+];
+
+let currentAthleteId = null;
+
+window.openDossier = async (id) => {
+  currentAthleteId = id;
+  const a = allAthletes.find(x => x.id === id);
+  if (!a) return;
+
+  document.getElementById('dossierContent').innerHTML = buildDossierView(a);
   document.getElementById('dossierOverlay').classList.remove('hidden');
   document.body.style.overflow = 'hidden';
+};
+
+function buildDossierView(a) {
+  const pw = PAPERWORK_FIELDS.map(f => `
+    <div class="pw-item">
+      <span class="pw-label">${f.label}</span>
+      ${a[f.key] ? '<span class="pw-check"><i class="fa-solid fa-check"></i></span>' : '<span class="pw-missing"><i class="fa-solid fa-xmark"></i></span>'}
+    </div>`).join('');
+
+  const seasons = (a.season||[]).map(s => {
+    const cls = s==='Cross Country'?'badge-xc':s.includes('Indoor')?'badge-indoor':'badge-outdoor';
+    const lbl = s==='Cross Country'?'XC':s.includes('Indoor')?'Indoor':'Outdoor';
+    return `<span class="badge ${cls}">${lbl}</span>`;
+  }).join('');
+
+  return `
+    <div class="dossier-header">
+      <div class="dossier-av ${EV_COLOR[a.event_group]||'ev-default'}">${a.first_name[0]}${a.last_name[0]}</div>
+      <div class="dossier-name-block">
+        <div class="dossier-name">${a.first_name} ${a.last_name}</div>
+        <div class="dossier-badges">
+          ${statusBadge(a.status||'Active')}
+          ${paperworkBadge(a.paperwork_status)}
+          ${a.event_group ? `<span class="badge ev-${(a.event_group||'').toLowerCase()}-badge">${a.event_group}</span>` : ''}
+          <span class="badge badge-neutral">Grade ${a.grade}</span>
+          <span class="badge ${a.team==='Boys'?'badge-boys':'badge-girls'}">${a.team}</span>
+        </div>
+      </div>
+      <div class="dossier-actions">
+        <button class="tbtn" onclick="switchToDossierEdit()"><i class="fa-solid fa-pen"></i> Edit</button>
+        <button class="modal-x" onclick="closeDossier()"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+    </div>
+
+    <div class="dossier-grid">
+      <div class="dossier-section">
+        <div class="ds-label">CONTACT</div>
+        <div class="ds-row"><span>Email</span><span>${a.email}</span></div>
+        <div class="ds-row"><span>Phone</span><span>${a.phone}</span></div>
+        ${a.birthday ? `<div class="ds-row"><span>Birthday</span><span>${a.birthday}</span></div>` : ''}
+      </div>
+      <div class="dossier-section">
+        <div class="ds-label">SEASONS</div>
+        <div style="display:flex;gap:4px;flex-wrap:wrap;padding-top:2px;">${seasons||'—'}</div>
+      </div>
+      <div class="dossier-section">
+        <div class="ds-label">PARENT / GUARDIAN</div>
+        <div class="ds-name">${a.parent1_name}</div>
+        <div class="ds-row"><span>Phone</span><span>${a.parent1_phone}</span></div>
+        <div class="ds-row"><span>Email</span><span>${a.parent1_email}</span></div>
+      </div>
+      <div class="dossier-section">
+        <div class="ds-label">PAPERWORK</div>
+        <div class="pw-grid">${pw}</div>
+      </div>
+    </div>
+  `;
+}
+
+function buildDossierEdit(a) {
+  const pwChecks = PAPERWORK_FIELDS.map(f => `
+    <label class="pw-edit-item">
+      <input type="checkbox" id="pw_${f.key}" ${a[f.key]?'checked':''} />
+      <span>${f.label}</span>
+    </label>`).join('');
+
+  const statusOpts = ['Active','Suspended','Ineligible','Quit','Cut'].map(s =>
+    `<option value="${s}" ${(a.status||'Active')===s?'selected':''}>${s}</option>`).join('');
+
+  const evOpts = ['','Sprints','Distance','Throws'].map(v =>
+    `<option value="${v}" ${(a.event_group||'')=== v?'selected':''}>${v||'—'}</option>`).join('');
+
+  return `
+    <div class="dossier-header">
+      <div class="dossier-av ${EV_COLOR[a.event_group]||'ev-default'}">${a.first_name[0]}${a.last_name[0]}</div>
+      <div class="dossier-name-block">
+        <div class="dossier-name">${a.first_name} ${a.last_name}</div>
+        <div class="dossier-badges"><span class="badge badge-neutral">Editing</span></div>
+      </div>
+      <div class="dossier-actions">
+        <button class="tbtn" onclick="switchToDossierView('${a.id}')"><i class="fa-solid fa-arrow-left"></i> Back</button>
+        <button class="modal-x" onclick="closeDossier()"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+    </div>
+
+    <div class="dossier-edit-body">
+      <div class="dossier-edit-cols">
+        <div>
+          <div class="ds-label" style="margin-bottom:0.75rem;">ATHLETE INFO</div>
+          <div class="frow"><div class="fg"><label>First Name</label><input type="text" id="e_fn" value="${a.first_name}" /></div><div class="fg"><label>Last Name</label><input type="text" id="e_ln" value="${a.last_name}" /></div></div>
+          <div class="frow">
+            <div class="fg"><label>Grade</label><select id="e_gr"><option>9</option><option>10</option><option>11</option><option>12</option></select></div>
+            <div class="fg"><label>Team</label><select id="e_tm"><option>Boys</option><option>Girls</option></select></div>
+          </div>
+          <div class="fg" style="margin-bottom:0.75rem;"><label>Event Group</label><select id="e_ev">${evOpts}</select></div>
+          <div class="fg" style="margin-bottom:0.75rem;"><label>Status</label><select id="e_st">${statusOpts}</select></div>
+          <div class="fg"><label>Season(s)</label>
+            <div class="check-row">
+              <label class="ck"><input type="checkbox" name="e_s" value="Cross Country" ${(a.season||[]).includes('Cross Country')?'checked':''}/> XC</label>
+              <label class="ck"><input type="checkbox" name="e_s" value="Indoor Track & Field" ${(a.season||[]).includes('Indoor Track & Field')?'checked':''}/> Indoor</label>
+              <label class="ck"><input type="checkbox" name="e_s" value="Outdoor Track & Field" ${(a.season||[]).includes('Outdoor Track & Field')?'checked':''}/> Outdoor</label>
+            </div>
+          </div>
+          <div class="frow"><div class="fg"><label>Email</label><input type="email" id="e_em" value="${a.email}" /></div><div class="fg"><label>Phone</label><input type="tel" id="e_ph" value="${a.phone}" /></div></div>
+          <div class="fg"><label>Parent Name</label><input type="text" id="e_p1n" value="${a.parent1_name}" /></div>
+          <div class="frow"><div class="fg"><label>Parent Phone</label><input type="tel" id="e_p1p" value="${a.parent1_phone}" /></div><div class="fg"><label>Parent Email</label><input type="email" id="e_p1e" value="${a.parent1_email}" /></div></div>
+        </div>
+        <div>
+          <div class="ds-label" style="margin-bottom:0.75rem;">PAPERWORK</div>
+          <div class="pw-edit-grid">${pwChecks}</div>
+        </div>
+      </div>
+      <div class="form-error hidden" id="editError"></div>
+      <div class="modal-actions" style="margin-top:1.25rem;">
+        <button class="btn-cancel" onclick="switchToDossierView('${a.id}')">Cancel</button>
+        <button class="btn-primary" id="saveDossierBtn"><i class="fa-solid fa-floppy-disk"></i> Save Changes</button>
+      </div>
+    </div>
+  `;
+}
+
+window.switchToDossierEdit = () => {
+  const a = allAthletes.find(x => x.id === currentAthleteId);
+  if (!a) return;
+  document.getElementById('dossierContent').innerHTML = buildDossierEdit(a);
+  // Set grade and team selects correctly after render
+  const grSel = document.getElementById('e_gr');
+  const tmSel = document.getElementById('e_tm');
+  if (grSel) grSel.value = String(a.grade);
+  if (tmSel) tmSel.value = a.team;
+
+  document.getElementById('saveDossierBtn').addEventListener('click', saveDossier);
+};
+
+window.switchToDossierView = (id) => {
+  const a = allAthletes.find(x => x.id === (id || currentAthleteId));
+  if (!a) return;
+  document.getElementById('dossierContent').innerHTML = buildDossierView(a);
+};
+
+window.closeDossier = () => {
+  document.getElementById('dossierOverlay').classList.add('hidden');
+  document.body.style.overflow = '';
 };
 
 window.overlayClick = (e, id) => {
@@ -247,366 +475,436 @@ window.overlayClick = (e, id) => {
     document.body.style.overflow = '';
   }
 };
+
+async function saveDossier() {
+  const btn = document.getElementById('saveDossierBtn');
+  const errEl = document.getElementById('editError');
+  errEl.classList.add('hidden');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+
+  const season = [...document.querySelectorAll('input[name="e_s"]:checked')].map(i => i.value);
+
+  // Update registration
+  const { error: regErr } = await supabase.from('registrations').update({
+    first_name:    document.getElementById('e_fn').value.trim(),
+    last_name:     document.getElementById('e_ln').value.trim(),
+    grade:         parseInt(document.getElementById('e_gr').value),
+    team:          document.getElementById('e_tm').value,
+    event_group:   document.getElementById('e_ev').value || null,
+    email:         document.getElementById('e_em').value.trim(),
+    phone:         document.getElementById('e_ph').value.trim(),
+    season,
+    parent1_name:  document.getElementById('e_p1n').value.trim(),
+    parent1_phone: document.getElementById('e_p1p').value.trim(),
+    parent1_email: document.getElementById('e_p1e').value.trim(),
+  }).eq('id', currentAthleteId);
+
+  if (regErr) {
+    errEl.textContent = regErr.message;
+    errEl.classList.remove('hidden');
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Save Changes';
+    return;
+  }
+
+  // Update athlete_records
+  const pwUpdate = {};
+  PAPERWORK_FIELDS.forEach(f => {
+    pwUpdate[f.key] = document.getElementById(`pw_${f.key}`)?.checked || false;
+  });
+  pwUpdate.status = document.getElementById('e_st').value;
+  pwUpdate.status_changed_by = session.user.id;
+
+  const { error: recErr } = await supabase.from('athlete_records')
+    .update(pwUpdate)
+    .eq('athlete_id', currentAthleteId);
+
+  if (recErr) {
+    errEl.textContent = recErr.message;
+    errEl.classList.remove('hidden');
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Save Changes';
+    return;
+  }
+
+  await loadRoster();
+  closeDossier();
+}
+
+// ── Add athlete ───────────────────────────────────────────────────────────────
+window.closeOverlay = (id) => { document.getElementById(id).classList.add('hidden'); document.body.style.overflow = ''; };
+
+document.getElementById('addAthleteBtn').addEventListener('click', () => {
+  document.getElementById('addOverlay').classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+});
+
+document.getElementById('saveAddBtn').addEventListener('click', async () => {
+  const btn   = document.getElementById('saveAddBtn');
+  const errEl = document.getElementById('addError');
+  errEl.classList.add('hidden');
+
+  const fn  = document.getElementById('a_fn').value.trim();
+  const ln  = document.getElementById('a_ln').value.trim();
+  const gr  = parseInt(document.getElementById('a_gr').value);
+  const tm  = document.getElementById('a_tm').value;
+  const em  = document.getElementById('a_em').value.trim();
+  const ph  = document.getElementById('a_ph').value.trim();
+  const p1n = document.getElementById('a_p1n').value.trim();
+  const p1p = document.getElementById('a_p1p').value.trim();
+  const p1e = document.getElementById('a_p1e').value.trim();
+  const ev  = document.getElementById('a_ev').value || null;
+  const s   = [...document.querySelectorAll('input[name="a_s"]:checked')].map(i => i.value);
+
+  if (!fn||!ln||!gr||!tm||!em||!ph||!p1n||!p1p||!p1e) {
+    errEl.textContent='Please fill in all required fields.';errEl.classList.remove('hidden');return;
+  }
+  if (!s.length) { errEl.textContent='Select at least one season.';errEl.classList.remove('hidden');return; }
+
+  btn.disabled=true; btn.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+
+  const { error } = await supabase.from('registrations').insert([{
+    athlete_type:'New Athlete', first_name:fn, last_name:ln, grade:gr, team:tm,
+    email:em, phone:ph, season:s, event_group:ev,
+    parent1_name:p1n, parent1_phone:p1p, parent1_email:p1e,
+    middle_school:'Other', is_specialty:false, has_activities:false,
+  }]);
+
+  if (error) { errEl.textContent=error.message;errEl.classList.remove('hidden');btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-check"></i> Save Athlete';return; }
+
+  await loadRoster();
+  closeOverlay('addOverlay');
+  document.getElementById('addOverlay').querySelectorAll('input,select').forEach(el=>el.value='');
+  document.querySelectorAll('input[name="a_s"]').forEach(c=>c.checked=false);
+  btn.disabled=false; btn.innerHTML='<i class="fa-solid fa-check"></i> Save Athlete';
+});
+
+// ── Export CSV ────────────────────────────────────────────────────────────────
+document.getElementById('exportBtn').addEventListener('click', () => {
+  const headers = ['Last Name','First Name','Grade','Team','Season','Event','Status','Paperwork','Email','Phone','Parent','Parent Phone','Parent Email'];
+  const rows = allAthletes.map(a => [
+    a.last_name, a.first_name, a.grade, a.team,
+    (a.season||[]).join('; '), a.event_group||'',
+    a.status||'', a.paperwork_status||'',
+    a.email, a.phone, a.parent1_name, a.parent1_phone, a.parent1_email,
+  ]);
+  const csv = [headers,...rows].map(r=>r.map(v=>`"${String(v||'').replace(/"/g,'""')}"`).join(',')).join('\n');
+  const url = URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  const a = document.createElement('a'); a.href=url; a.download=`jrtxctf-roster-${new Date().toISOString().split('T')[0]}.csv`; a.click();
+  URL.revokeObjectURL(url);
+});
+
+// ── Import CSV ────────────────────────────────────────────────────────────────
+const CSV_HEADERS = ['first_name','last_name','grade','team','season (semicolon separated)','event_group','email','phone','parent1_name','parent1_phone','parent1_email'];
+
+document.getElementById('importBtn').addEventListener('click', () => {
+  document.getElementById('importOverlay').classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+});
+
+document.getElementById('downloadTemplateBtn').addEventListener('click', () => {
+  const example = ['Jane','Smith','10','Girls','Cross Country; Outdoor Track & Field','Distance','jane@example.com','(555) 555-5555','Bob Smith','(555) 555-5556','bob@example.com'];
+  const csv = [CSV_HEADERS,example].map(r=>r.map(v=>`"${v}"`).join(',')).join('\n');
+  const url = URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  const a = document.createElement('a'); a.href=url; a.download='jrtxctf-import-template.csv'; a.click();
+  URL.revokeObjectURL(url);
+});
+
+const uploadArea = document.getElementById('uploadArea');
+uploadArea.addEventListener('dragover', e=>{e.preventDefault();uploadArea.classList.add('drag-over');});
+uploadArea.addEventListener('dragleave', ()=>uploadArea.classList.remove('drag-over'));
+uploadArea.addEventListener('drop', e=>{e.preventDefault();uploadArea.classList.remove('drag-over');const f=e.dataTransfer.files[0];if(f)parseCSV(f);});
+document.getElementById('csvFileInput').addEventListener('change', e=>{const f=e.target.files[0];if(f)parseCSV(f);});
+
+let parsedAthletes = [];
+
+function parseCSV(file) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    const lines = e.target.result.split('\n').filter(l=>l.trim());
+    const headers = lines[0].split(',').map(h=>h.replace(/"/g,'').trim().toLowerCase());
+    parsedAthletes = lines.slice(1).map(row => {
+      const vals = row.match(/(".*?"|[^,]+)/g)||[];
+      const clean = vals.map(v=>v.replace(/^"|"$/g,'').trim());
+      const obj = {}; headers.forEach((h,i)=>{obj[h]=clean[i]||'';});
+      const seasonRaw = obj['season (semicolon separated)']||obj['season']||'';
+      return {
+        athlete_type:'New Athlete',
+        first_name:obj.first_name, last_name:obj.last_name,
+        grade:parseInt(obj.grade)||null, team:obj.team,
+        season:seasonRaw.split(';').map(s=>s.trim()).filter(Boolean),
+        event_group:obj.event_group||null,
+        email:obj.email, phone:obj.phone,
+        parent1_name:obj.parent1_name, parent1_phone:obj.parent1_phone, parent1_email:obj.parent1_email,
+        middle_school:'Other', is_specialty:false, has_activities:false,
+      };
+    }).filter(a=>a.first_name&&a.last_name);
+
+    if (!parsedAthletes.length) {
+      const e=document.getElementById('importError');e.textContent='No valid rows found.';e.classList.remove('hidden');return;
+    }
+
+    document.getElementById('previewCount').textContent = `${parsedAthletes.length} athlete${parsedAthletes.length!==1?'s':''} ready`;
+    document.getElementById('previewTable').innerHTML = `
+      <thead><tr>${['Name','Grade','Team','Season(s)','Event','Email'].map(h=>`<th>${h}</th>`).join('')}</tr></thead>
+      <tbody>${parsedAthletes.map(a=>`<tr><td>${a.first_name} ${a.last_name}</td><td>${a.grade||'—'}</td><td>${a.team||'—'}</td><td>${(a.season||[]).join(', ')||'—'}</td><td>${a.event_group||'—'}</td><td>${a.email||'—'}</td></tr>`).join('')}</tbody>`;
+    document.getElementById('importPreview').classList.remove('hidden');
+    document.getElementById('importSaveBtn').classList.remove('hidden');
+    uploadArea.classList.add('hidden');
+  };
+  reader.readAsText(file);
+}
+
+window.clearImport = () => {
+  parsedAthletes=[];
+  document.getElementById('importPreview').classList.add('hidden');
+  document.getElementById('importSaveBtn').classList.add('hidden');
+  document.getElementById('uploadArea').classList.remove('hidden');
+  document.getElementById('csvFileInput').value='';
+};
+
+document.getElementById('importSaveBtn').addEventListener('click', async () => {
+  const btn=document.getElementById('importSaveBtn');
+  const errEl=document.getElementById('importError');
+  btn.disabled=true; btn.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Importing...';
+
+  const { error } = await supabase.from('registrations').insert(parsedAthletes);
+  if (error) { errEl.textContent='Import failed: '+error.message; errEl.classList.remove('hidden'); btn.disabled=false; btn.innerHTML='<i class="fa-solid fa-file-arrow-up"></i> Import'; return; }
+
+  await loadRoster();
+  closeOverlay('importOverlay');
+  clearImport();
+  btn.disabled=false; btn.innerHTML='<i class="fa-solid fa-file-arrow-up"></i> Import';
+});
+
+})(); // end IIFE
 </script>
+</body>
+</html>
 
 <style>
 :root {
-  /* Core Brand Colors */
-  --primary:   #002878; 
-  --primary-light: #003ab3;
-  --accent:    #FF6700;
-  
-  /* Backgrounds & Surfaces */
-  --bg-page:   #f8fafc;
-  --bg-surface: #ffffff;
-  
-  /* Text Colors */
-  --text-main: #0f172a;
-  --text-muted: #64748b;
-  --text-light: #94a3b8;
-  
-  /* Borders */
-  --border-light: #e2e8f0;
-  --border-medium: #cbd5e1;
-  
-  /* Dimensions */
-  --sidebar-w: 240px;
-  --topbar-h:  64px;
+  --navy:   #001a6e;
+  --orange: #FF6700;
+  --bg:     #f4f5f7;
+  --white:  #ffffff;
+  --text:   #0d1117;
+  --muted:  #6b7280;
+  --border: rgba(0,0,0,0.08);
+  --font:   'DM Sans', system-ui, sans-serif;
+  --mono:   'DM Mono', monospace;
+  --sidebar-w: 210px;
+
+  --c-sprints-bg:  #FAEEDA; --c-sprints-txt: #633806;
+  --c-distance-bg: #E1F5EE; --c-distance-txt: #085041;
+  --c-throws-bg:   #FAECE7; --c-throws-txt:  #712B13;
+  --c-default-bg:  #EEEDFE; --c-default-txt: #3C3489;
+
+  --c-active-bg:   #E1F5EE; --c-active-txt:  #085041;
+  --c-warn-bg:     #FAEEDA; --c-warn-txt:    #633806;
+  --c-danger-bg:   #FCEBEB; --c-danger-txt:  #791F1F;
+  --c-neutral-bg:  #F1EFE8; --c-neutral-txt: #5F5E5A;
+  --c-boys-bg:     #E6F1FB; --c-boys-txt:    #0C447C;
+  --c-girls-bg:    #FBEAF0; --c-girls-txt:   #72243E;
+  --c-xc-bg:       #EAF3DE; --c-xc-txt:      #27500A;
+  --c-indoor-bg:   #EEEDFE; --c-indoor-txt:  #3C3489;
+  --c-outdoor-bg:  #E6F1FB; --c-outdoor-txt: #0C447C;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
-body { 
-  font-family: 'Inter', system-ui, sans-serif; 
-  background: var(--bg-page); 
-  color: var(--text-main); 
-  -webkit-font-smoothing: antialiased; 
-  min-height: 100vh; 
-}
+body { font-family: var(--font); background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; min-height: 100vh; }
 
-/* ── Layout & Sidebar ── */
+/* ── Layout ─────────────────────────────────────────────────────────────── */
 .layout { display: flex; min-height: 100vh; }
 
+/* ── Sidebar ────────────────────────────────────────────────────────────── */
 .sidebar {
-  width: var(--sidebar-w); 
-  background: linear-gradient(180deg, var(--primary) 0%, #00184a 100%);
+  width: var(--sidebar-w); background: var(--navy);
   display: flex; flex-direction: column;
-  position: fixed; top: 0; left: 0; bottom: 0; z-index: 100;
-  box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+  padding: 1.25rem 0.75rem; position: fixed;
+  top: 0; left: 0; bottom: 0; z-index: 100;
 }
-
-.sb-header { padding: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.1); }
-.sb-brand { display: flex; align-items: center; gap: 12px; }
-.brand-icon-wrapper { 
-  width: 28px; height: 28px; border-radius: 6px; 
-  background: rgba(255, 103, 0, 0.2); color: var(--accent);
-  display: flex; align-items: center; justify-content: center; font-size: 14px; 
-}
-.sb-name  { color: white; font-size: 14px; font-weight: 700; letter-spacing: 1px; }
-
-.sb-content { flex: 1; padding: 1.5rem 1rem; }
-.sb-section { font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.4); letter-spacing: 1px; padding: 0 0.75rem 0.75rem; }
-.sb-nav { display: flex; flex-direction: column; gap: 4px; }
-.nav-item { 
-  display: flex; align-items: center; gap: 12px; padding: 0.75rem; 
-  border-radius: 8px; color: rgba(255,255,255,0.6); 
-  font-size: 13px; font-weight: 500; text-decoration: none; transition: all 0.2s; 
-}
-.nav-item:hover  { background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.9); }
+.sb-brand { display: flex; align-items: center; gap: 8px; padding: 0 0.25rem 1.25rem; border-bottom: 0.5px solid rgba(255,255,255,0.08); margin-bottom: 0.5rem; }
+.sb-name  { color: white; font-size: 11px; font-weight: 600; letter-spacing: 2px; }
+.sb-section { font-size: 9px; color: rgba(255,255,255,0.3); letter-spacing: 2px; padding: 0.75rem 0.5rem 0.3rem; }
+.sb-nav { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+.nav-item { display: flex; align-items: center; gap: 8px; padding: 0.5rem 0.6rem; border-radius: 8px; color: rgba(255,255,255,0.5); font-size: 12px; text-decoration: none; transition: all 0.12s; }
+.nav-item:hover  { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.85); }
 .nav-item.active { background: rgba(255,255,255,0.1); color: white; }
-.nav-icon { width: 16px; text-align: center; opacity: 0.8; }
-.nav-item.active .nav-icon { opacity: 1; color: var(--accent); }
+.nav-dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+.sb-foot { border-top: 0.5px solid rgba(255,255,255,0.08); padding-top: 0.75rem; display: flex; flex-direction: column; gap: 6px; }
+.user-chip { display: flex; align-items: center; gap: 7px; padding: 0.4rem 0.5rem; background: rgba(255,255,255,0.05); border-radius: 6px; }
+.user-av { width: 22px; height: 22px; border-radius: 50%; background: var(--orange); display: flex; align-items: center; justify-content: center; font-size: 9px; color: white; font-weight: 600; flex-shrink: 0; }
+.user-em { font-size: 10px; color: rgba(255,255,255,0.4); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.signout-btn { display: flex; align-items: center; gap: 6px; padding: 0.4rem 0.6rem; background: rgba(255,255,255,0.06); border: 0.5px solid rgba(255,255,255,0.1); border-radius: 6px; color: rgba(255,255,255,0.5); font-size: 11px; font-family: var(--font); cursor: pointer; transition: all 0.12s; }
+.signout-btn:hover { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.8); }
 
-.sb-foot { padding: 1.25rem 1rem; border-top: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.1); }
-.user-chip { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; padding: 0 0.5rem; }
-.user-av { 
-  width: 32px; height: 32px; border-radius: 50%; 
-  background: var(--accent); color: white;
-  display: flex; align-items: center; justify-content: center; 
-  font-size: 12px; font-weight: 700; flex-shrink: 0; 
-}
-.user-info { display: flex; flex-direction: column; overflow: hidden; }
-.user-role { font-size: 11px; font-weight: 600; color: white; }
-.user-em { font-size: 11px; color: rgba(255,255,255,0.5); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-
-.signout-btn { 
-  display: flex; align-items: center; justify-content: center; gap: 8px; 
-  width: 100%; padding: 0.6rem; border-radius: 8px; 
-  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); 
-  color: rgba(255,255,255,0.7); font-size: 12px; font-weight: 500; cursor: pointer; transition: all 0.2s; 
-}
-.signout-btn:hover { background: rgba(255,255,255,0.1); color: white; }
-
-/* ── Main Workspace ─────────────────────────────────────────────────────── */
+/* ── Main ───────────────────────────────────────────────────────────────── */
 .main { margin-left: var(--sidebar-w); flex: 1; display: flex; flex-direction: column; }
 
-.topbar { 
-  background: var(--bg-surface); border-bottom: 1px solid var(--border-light); 
-  padding: 0 2rem; height: var(--topbar-h); 
-  display: flex; align-items: center; justify-content: space-between; 
-  position: sticky; top: 0; z-index: 10; 
-}
-.topbar-left { display: flex; align-items: baseline; gap: 12px; }
-.topbar h1 { font-size: 20px; font-weight: 700; color: var(--text-main); letter-spacing: -0.02em; }
-.page-meta { font-size: 13px; font-weight: 500; color: var(--text-muted); }
-.topbar-right { display: flex; gap: 10px; }
+/* ── Topbar ─────────────────────────────────────────────────────────────── */
+.topbar { background: var(--white); border-bottom: 1px solid var(--border); padding: 0 1.5rem; height: 54px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; position: sticky; top: 0; z-index: 10; }
+.topbar-left { display: flex; align-items: baseline; gap: 8px; }
+.topbar h1 { font-size: 16px; font-weight: 600; color: var(--text); letter-spacing: -0.01em; }
+.page-meta { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.topbar-right { display: flex; gap: 6px; }
+.tbtn { display: flex; align-items: center; gap: 5px; padding: 0 12px; height: 30px; border: 1px solid var(--border); border-radius: 6px; font-size: 12px; font-family: var(--font); font-weight: 500; background: var(--white); color: var(--text); cursor: pointer; transition: all 0.12s; }
+.tbtn:hover { background: var(--bg); }
+.tbtn.accent { background: var(--orange); color: white; border-color: var(--orange); }
+.tbtn.accent:hover { background: #e65c00; }
 
-.tbtn { 
-  display: flex; align-items: center; gap: 8px; padding: 0 16px; height: 36px; 
-  border-radius: 8px; font-size: 13px; font-weight: 600; font-family: inherit; 
-  cursor: pointer; transition: all 0.2s; 
-}
-.btn-secondary { background: var(--bg-surface); color: var(--text-main); border: 1px solid var(--border-medium); }
-.btn-secondary:hover { background: #f8fafc; border-color: var(--text-muted); }
-.btn-primary { background: var(--primary); color: white; border: 1px solid var(--primary); }
-.btn-primary:hover { background: var(--primary-light); border-color: var(--primary-light); }
+/* ── Filter bar ─────────────────────────────────────────────────────────── */
+.filter-bar { background: var(--white); border-bottom: 1px solid var(--border); padding: 0 1.5rem; height: 44px; display: flex; align-items: center; gap: 4px; flex-shrink: 0; overflow-x: auto; }
+.filter-bar::-webkit-scrollbar { display: none; }
+.fpill { display: flex; align-items: center; height: 24px; padding: 0 10px; border: 1px solid var(--border); border-radius: 999px; font-size: 11px; font-family: var(--font); font-weight: 500; color: var(--muted); background: var(--white); cursor: pointer; white-space: nowrap; transition: all 0.12s; }
+.fpill:hover  { border-color: rgba(0,0,0,0.2); color: var(--text); }
+.fpill.active { background: var(--navy); color: white; border-color: var(--navy); }
+.fsep { width: 1px; height: 18px; background: var(--border); margin: 0 2px; flex-shrink: 0; }
+.search-wrap { display: flex; align-items: center; gap: 6px; height: 24px; padding: 0 10px; border: 1px solid var(--border); border-radius: 999px; margin-left: auto; min-width: 160px; flex-shrink: 0; }
+.search-wrap i { font-size: 10px; color: var(--muted); }
+.search-wrap input { border: none; outline: none; font-size: 11px; font-family: var(--font); color: var(--text); background: transparent; width: 100%; }
+.search-wrap input::placeholder { color: var(--muted); }
 
-.content-wrapper { padding: 2rem; flex: 1; display: flex; flex-direction: column; max-width: 1200px; margin: 0 auto; width: 100%; }
+/* ── Table ──────────────────────────────────────────────────────────────── */
+.tbl-wrap { overflow-x: auto; flex: 1; }
+table.roster-tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+thead { background: var(--white); position: sticky; top: 54px; z-index: 5; }
+th { padding: 0 16px; height: 36px; text-align: left; font-size: 10px; font-weight: 600; letter-spacing: 0.6px; color: var(--muted); border-bottom: 1px solid var(--border); white-space: nowrap; }
+td { padding: 0 16px; height: 48px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+tbody tr { cursor: pointer; transition: background 0.1s; }
+tbody tr:hover td { background: rgba(0,26,110,0.02); }
+tbody tr:last-child td { border-bottom: none; }
+tbody tr.row-dim td { opacity: 0.45; }
+.loading-cell { text-align: center; color: var(--muted); padding: 3rem; font-size: 13px; }
 
-/* ── Filter Bar ──────────────────────────────────────────────────────────── */
-.filter-bar { 
-  display: flex; align-items: center; justify-content: space-between; gap: 1rem; 
-  margin-bottom: 1.5rem; flex-wrap: wrap;
-}
+/* ── Name cell ──────────────────────────────────────────────────────────── */
+.name-cell { display: flex; align-items: center; gap: 10px; }
+.av { width: 32px; height: 32px; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; flex-shrink: 0; font-family: var(--mono); }
+.ev-sprints  { background: var(--c-sprints-bg);  color: var(--c-sprints-txt); }
+.ev-distance { background: var(--c-distance-bg); color: var(--c-distance-txt); }
+.ev-throws   { background: var(--c-throws-bg);   color: var(--c-throws-txt); }
+.ev-default  { background: var(--c-default-bg);  color: var(--c-default-txt); }
+.name-main { font-size: 13px; font-weight: 500; color: var(--text); }
+.name-sub  { font-size: 11px; color: var(--muted); }
+.muted { color: var(--muted); font-size: 12px; }
+.row-btn { width: 28px; height: 28px; border-radius: 6px; border: 1px solid var(--border); background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 12px; color: var(--muted); transition: all 0.12s; }
+.row-btn:hover { border-color: var(--orange); color: var(--orange); background: #fff7ed; }
 
-.filter-scroll-area {
-  display: flex; gap: 0.75rem; overflow-x: auto; padding-bottom: 4px;
-}
-.filter-scroll-area::-webkit-scrollbar { display: none; }
+/* ── Badges ─────────────────────────────────────────────────────────────── */
+.badge { display: inline-flex; align-items: center; height: 20px; padding: 0 8px; border-radius: 999px; font-size: 11px; font-weight: 500; white-space: nowrap; }
+.badge-active  { background: var(--c-active-bg);  color: var(--c-active-txt); }
+.badge-warn    { background: var(--c-warn-bg);    color: var(--c-warn-txt); }
+.badge-danger  { background: var(--c-danger-bg);  color: var(--c-danger-txt); }
+.badge-ok      { background: var(--c-active-bg);  color: var(--c-active-txt); }
+.badge-neutral { background: var(--c-neutral-bg); color: var(--c-neutral-txt); }
+.badge-boys    { background: var(--c-boys-bg);    color: var(--c-boys-txt); }
+.badge-girls   { background: var(--c-girls-bg);   color: var(--c-girls-txt); }
+.badge-xc      { background: var(--c-xc-bg);      color: var(--c-xc-txt); }
+.badge-indoor  { background: var(--c-indoor-bg);  color: var(--c-indoor-txt); }
+.badge-outdoor { background: var(--c-outdoor-bg); color: var(--c-outdoor-txt); }
+.ev-sprints-badge  { background: var(--c-sprints-bg);  color: var(--c-sprints-txt); }
+.ev-distance-badge { background: var(--c-distance-bg); color: var(--c-distance-txt); }
+.ev-throws-badge   { background: var(--c-throws-bg);   color: var(--c-throws-txt); }
 
-.filter-group { 
-  display: flex; align-items: center; gap: 4px; 
-  background: var(--bg-surface); padding: 4px; 
-  border-radius: 8px; border: 1px solid var(--border-light); 
-  box-shadow: 0 1px 2px rgba(0,0,0,0.02);
-}
-.fpill { 
-  display: flex; align-items: center; height: 28px; padding: 0 12px; 
-  border: none; border-radius: 6px; font-size: 12px; font-weight: 600; 
-  color: var(--text-muted); background: transparent; cursor: pointer; transition: all 0.2s; 
-  white-space: nowrap;
-}
-.fpill:hover:not(.active)  { color: var(--text-main); background: #f8fafc; }
-.fpill.active { background: var(--bg-page); color: var(--accent); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-.fsep { width: 1px; height: 16px; background: var(--border-light); margin: 0 2px; }
-
-.search-wrap { 
-  display: flex; align-items: center; gap: 8px; height: 38px; padding: 0 14px; 
-  border: 1px solid var(--border-medium); border-radius: 8px; 
-  background: var(--bg-surface); min-width: 260px; transition: border-color 0.2s;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.02);
-}
-.search-wrap:focus-within { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(0, 40, 120, 0.1); }
-.search-wrap i { font-size: 13px; color: var(--text-light); }
-.search-wrap input { border: none; outline: none; font-size: 14px; font-family: inherit; color: var(--text-main); background: transparent; width: 100%; }
-
-/* ── HORIZONTAL ATHLETE FLIGHT SHEET ───────────────────────────────────── */
-.roster-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.athlete-card {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 16px;
-  padding: 16px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.02);
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-@media (min-width: 768px) {
-  .athlete-card {
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    padding: 12px 24px;
-    gap: 24px;
-  }
-}
-
-.athlete-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 16px -4px rgba(0,0,0,0.06);
-  border-color: var(--border-medium);
-}
-
-.athlete-card.inactive {
-  opacity: 0.6;
-  background: #f8fafc;
-}
-.athlete-card.inactive:hover { opacity: 1; }
-
-/* Info Section (Left side on desktop) */
-.ac-info {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  cursor: pointer;
-  flex: 1;
-}
-
-@media (min-width: 768px) {
-  .ac-info {
-    flex-direction: row;
-    align-items: center;
-    gap: 20px;
-  }
-}
-
-.ac-name {
-  font-size: 18px;
-  font-weight: 800;
-  color: #0f172a;
-  white-space: nowrap;
-}
-
-@media (min-width: 768px) {
-  .ac-name {
-    min-width: 220px;
-    margin-bottom: 0;
-  }
-}
-
-/* Badges & Meta */
-.ac-meta {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.ac-group {
-  font-size: 12px;
-  font-weight: 700;
-  color: #64748b;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 6px 10px;
-  background: #f1f5f9;
-  border-radius: 8px;
-}
-
-.status-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  border-radius: 8px;
-  font-size: 11px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-/* Bold Background Colors for Badges */
-.bg-green { background: #dcfce7; color: #166534; }
-.bg-red { background: #fee2e2; color: #991b1b; }
-.bg-yellow { background: #fef9c3; color: #b45309; }
-.bg-purple { background: #e0e7ff; color: #3730a3; }
-.bg-gray { background: #f1f5f9; color: #475569; }
-
-/* Actions (Right side on desktop) */
-.ac-actions {
-  display: flex;
-  gap: 16px;
-  width: 100%;
-}
-
-@media (min-width: 768px) {
-  .ac-actions {
-    width: auto;
-    min-width: 320px;
-  }
-}
-
-.att-btn {
-  flex: 1;
-  height: 48px; /* Taller, expert-level touch target */
-  background: #f8fafc;
-  border: 2px solid #e2e8f0;
-  border-radius: 12px;
-  color: #64748b;
-  font-size: 18px;
-  font-weight: 800;
-  font-family: inherit;
-  cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-}
-
-.att-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(0,0,0,0.05);
-}
-.att-btn:active {
-  transform: translateY(0);
-}
-
-/* Distinct Hover States for Action Buttons */
-.btn-present:hover { background: #dcfce7; border-color: #22c55e; color: #166534; }
-.btn-late:hover    { background: #fef9c3; border-color: #eab308; color: #b45309; }
-.btn-absent:hover  { background: #fee2e2; border-color: #ef4444; color: #991b1b; }
-.btn-excused:hover { background: #f1f5f9; border-color: #94a3b8; color: #334155; }
-
-/* Loading / Empty States */
-.loading-state, .empty-state {
-  text-align: center;
-  padding: 4rem;
-  color: var(--text-muted);
-  background: var(--bg-surface);
-  border-radius: 16px;
-  border: 2px dashed var(--border-medium);
-}
-.spinner-wrapper { font-size: 24px; color: var(--primary); margin-bottom: 1rem; }
-.empty-state i { font-size: 32px; margin-bottom: 1rem; opacity: 0.5; }
-
-/* Modals */
-.overlay { 
-  position: fixed; inset: 0; background: rgba(15, 23, 42, 0.4); 
-  backdrop-filter: blur(8px); z-index: 200; 
-  display: flex; align-items: center; justify-content: center; padding: 1.5rem; 
-  animation: fadeIn 0.2s ease-out;
-}
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+/* ── Modals ─────────────────────────────────────────────────────────────── */
+.overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 1.5rem; }
 .overlay.hidden { display: none; }
+.modal { background: var(--white); border-radius: 16px; width: 100%; max-width: 520px; max-height: 88vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.15); }
+.modal-wide { max-width: 700px; }
+.modal-hd { display: flex; align-items: flex-start; justify-content: space-between; padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border); }
+.modal-title { font-size: 15px; font-weight: 600; color: var(--text); }
+.modal-sub   { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.modal-x { width: 28px; height: 28px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); cursor: pointer; color: var(--muted); font-size: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.modal-x:hover { background: var(--border); color: var(--text); }
+.modal-body { padding: 1.25rem 1.5rem; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 8px; padding-top: 1rem; border-top: 1px solid var(--border); margin-top: 0.5rem; }
+.btn-cancel  { padding: 0 14px; height: 32px; border: 1px solid var(--border); border-radius: 6px; background: transparent; font-size: 12px; font-family: var(--font); color: var(--muted); cursor: pointer; }
+.btn-cancel:hover { border-color: var(--text); color: var(--text); }
+.btn-primary { display: flex; align-items: center; gap: 5px; padding: 0 14px; height: 32px; border: none; border-radius: 6px; background: var(--navy); color: white; font-size: 12px; font-family: var(--font); font-weight: 500; cursor: pointer; }
+.btn-primary:hover { background: #002280; }
+.btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+.btn-link { background: none; border: none; color: var(--navy); font-size: 12px; font-family: var(--font); cursor: pointer; text-decoration: underline; padding: 0; }
 
-.modal { 
-  background: var(--bg-surface); border-radius: 16px; width: 100%; max-width: 560px; 
-  max-height: 90vh; display: flex; flex-direction: column;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); overflow: hidden;
-  animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+/* ── Dossier ────────────────────────────────────────────────────────────── */
+.dossier-header { background: var(--navy); padding: 1.5rem; display: flex; align-items: center; gap: 1rem; border-radius: 16px 16px 0 0; }
+.dossier-av { width: 52px; height: 52px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 600; flex-shrink: 0; font-family: var(--mono); }
+.dossier-name-block { flex: 1; min-width: 0; }
+.dossier-name { font-size: 18px; font-weight: 600; color: white; letter-spacing: -0.02em; margin-bottom: 6px; }
+.dossier-badges { display: flex; gap: 5px; flex-wrap: wrap; }
+.dossier-actions { display: flex; gap: 6px; flex-shrink: 0; }
+.dossier-grid { display: grid; grid-template-columns: 1fr 1fr; }
+.dossier-section { padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border); }
+.dossier-section:nth-child(odd) { border-right: 1px solid var(--border); }
+.ds-label { font-size: 9px; font-weight: 600; letter-spacing: 1.5px; color: var(--muted); margin-bottom: 0.6rem; }
+.ds-row { display: flex; justify-content: space-between; align-items: baseline; font-size: 12px; padding: 3px 0; }
+.ds-row span:first-child { color: var(--muted); }
+.ds-row span:last-child  { color: var(--text); font-weight: 500; text-align: right; max-width: 60%; word-break: break-word; }
+.ds-name { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 4px; }
+
+/* Paperwork grid */
+.pw-grid { display: flex; flex-direction: column; gap: 4px; }
+.pw-item { display: flex; align-items: center; justify-content: space-between; font-size: 12px; padding: 3px 0; }
+.pw-label { color: var(--text); }
+.pw-check   { color: #085041; font-size: 12px; }
+.pw-missing { color: #dc2626; font-size: 12px; }
+
+/* Dossier edit */
+.dossier-edit-body { padding: 1.25rem 1.5rem; }
+.dossier-edit-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+.pw-edit-grid { display: flex; flex-direction: column; gap: 6px; }
+.pw-edit-item { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text); cursor: pointer; }
+.pw-edit-item input { accent-color: var(--orange); width: 14px; height: 14px; }
+
+/* ── Form elements ──────────────────────────────────────────────────────── */
+.frow { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+.fg { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
+.frow .fg { margin-bottom: 0; }
+label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; color: var(--muted); }
+input[type=text], input[type=email], input[type=tel], select {
+  padding: 0 10px; height: 32px; border: 1px solid var(--border); border-radius: 6px;
+  font-size: 12px; font-family: var(--font); color: var(--text); background: var(--white);
+  outline: none; transition: border-color 0.12s; width: 100%;
 }
-@keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+input:focus, select:focus { border-color: var(--orange); }
+.check-row { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 2px; }
+.ck { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--text); cursor: pointer; text-transform: none; letter-spacing: normal; font-weight: 400; }
+.ck input { accent-color: var(--orange); width: 13px; height: 13px; }
+.form-error { background: #fee2e2; color: #dc2626; border-radius: 6px; padding: 8px 12px; font-size: 12px; margin-bottom: 8px; }
+
+/* ── Import ─────────────────────────────────────────────────────────────── */
+.template-bar { display: flex; align-items: center; gap: 10px; background: #E6F1FB; border-radius: 8px; padding: 10px 14px; margin-bottom: 12px; }
+.template-bar i { color: #0C447C; font-size: 18px; }
+.template-label { font-size: 10px; color: #0C447C; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px; }
+.upload-area { border: 1.5px dashed var(--border); border-radius: 10px; padding: 2rem; text-align: center; color: var(--muted); font-size: 13px; margin-bottom: 12px; }
+.upload-area i { font-size: 24px; display: block; margin-bottom: 8px; opacity: 0.4; }
+.upload-area.drag-over { border-color: var(--orange); background: #fff7ed; }
+.preview-hd { display: flex; justify-content: space-between; align-items: center; font-size: 12px; font-weight: 500; margin-bottom: 8px; }
+.preview-scroll { max-height: 220px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; }
+.preview-tbl { width: 100%; border-collapse: collapse; font-size: 11px; }
+.preview-tbl th { padding: 6px 12px; background: var(--bg); font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; color: var(--muted); border-bottom: 1px solid var(--border); text-align: left; position: sticky; top: 0; }
+.preview-tbl td { padding: 6px 12px; border-bottom: 1px solid var(--border); color: var(--text); }
 
 /* ── Mobile ─────────────────────────────────────────────────────────────── */
-.mobile-topbar { display: none; position: fixed; top: 0; left: 0; right: 0; z-index: 200; background: var(--bg-surface); border-bottom: 1px solid var(--border-light); padding: 0 1.25rem; height: 60px; align-items: center; justify-content: space-between; }
-.mobile-brand  { display: flex; align-items: center; gap: 10px; color: var(--primary); font-size: 15px; font-weight: 800; letter-spacing: 1px; }
-.hamburger     { background: none; border: none; color: var(--text-main); font-size: 20px; cursor: pointer; padding: 8px; }
-.drawer-overlay { display: none; position: fixed; inset: 0; z-index: 99; background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(4px); }
-.drawer-overlay.visible { display: block; animation: fadeIn 0.2s; }
+.mobile-topbar { display: none; position: fixed; top: 0; left: 0; right: 0; z-index: 200; background: var(--navy); padding: 0 1.25rem; height: 52px; align-items: center; justify-content: space-between; }
+.mobile-brand  { display: flex; align-items: center; gap: 8px; color: white; font-size: 12px; font-weight: 600; letter-spacing: 1.5px; }
+.hamburger     { background: none; border: none; color: white; font-size: 16px; cursor: pointer; padding: 8px; }
+.drawer-overlay { display: none; position: fixed; inset: 0; z-index: 99; background: rgba(0,0,0,0.4); }
+.drawer-overlay.visible { display: block; }
 
 @media (max-width: 768px) {
   .mobile-topbar { display: flex; }
-  .sidebar { transform: translateX(-100%); transition: transform 0.3s ease; top: 0; z-index: 300; }
+  .sidebar { transform: translateX(-100%); transition: transform 0.25s cubic-bezier(0.4,0,0.2,1); top: 0; z-index: 300; }
   .sidebar.open { transform: translateX(0); }
-  .main { margin-left: 0; padding-top: 60px; }
-  .content-wrapper { padding: 1rem; }
-  .topbar { top: 60px; padding: 0 1rem; }
-  .topbar-right { gap: 6px; }
+  .main { margin-left: 0; padding-top: 52px; }
+  .topbar { top: 52px; }
+  thead { top: calc(52px + 54px); }
+  .topbar-right { gap: 4px; }
   .tbtn span { display: none; }
-  
-  .filter-bar { flex-direction: column; align-items: stretch; gap: 12px; }
-  .search-wrap { min-width: 100%; }
+  .dossier-grid { grid-template-columns: 1fr; }
+  .dossier-section:nth-child(odd) { border-right: none; }
+  .dossier-edit-cols { grid-template-columns: 1fr; gap: 1rem; }
+  .frow { grid-template-columns: 1fr; }
 }
 </style>
