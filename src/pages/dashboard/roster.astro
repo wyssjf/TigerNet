@@ -357,8 +357,10 @@ function renderTable(athletes) {
 // ── DOSSIER WIZARD ─────────────────────────────────────────────────────────────
 let currentAthleteId = null;
 let dossierPhase = 1;
-const DOSSIER_TOTAL = 8;
-const DOSSIER_PHASES = ['Info','Athlete','School','Athletics','Family','Status','Paperwork','Notes'];
+let dossierEditMode = false;
+
+const DOSSIER_PHASES = ['Contact','Academics','Athletics','Family','Status','Paperwork','Notes'];
+const DOSSIER_TOTAL = 7;
 
 window.overlayBgClick = (e) => { if (e.target === document.getElementById('dossierOverlay')) closeDossier(); };
 window.closeDossier = () => { document.getElementById('dossierOverlay').classList.add('hidden'); document.body.style.overflow = ''; };
@@ -368,6 +370,20 @@ window.openDossier = async (id) => {
   const a = allAthletes.find(x => x.id === id);
   if (!a) return;
   dossierPhase = 1;
+  dossierEditMode = false;
+
+  // Load last 30 days attendance for this athlete
+  const since = new Date(); since.setDate(since.getDate() - 29);
+  const sinceStr = since.toISOString().split('T')[0];
+  const { data: attRecords } = await supabase
+    .from('attendance')
+    .select('practice_date,status')
+    .eq('athlete_id', id)
+    .gte('practice_date', sinceStr)
+    .order('practice_date', { ascending: true });
+  window._dossierAtt = {};
+  (attRecords || []).forEach(r => { window._dossierAtt[r.practice_date] = r.status; });
+
   renderDossier(a);
   document.getElementById('dossierOverlay').classList.remove('hidden');
   document.body.style.overflow = 'hidden';
@@ -380,6 +396,11 @@ function dossierProgress() {
 }
 
 function dossierHeader(a) {
+  const editActions = `
+    <button class="d-save-btn" id="dossierSaveBtn" onclick="saveDossier()"><i class="fa-solid fa-floppy-disk"></i> Save</button>
+    <button class="d-cancel-btn" onclick="exitEditMode()">Cancel</button>`;
+  const viewActions = `
+    <button class="d-edit-btn" onclick="enterEditMode()"><i class="fa-solid fa-pen"></i> Edit</button>`;
   return `<div class="d-header">
     <div class="d-header-top">
       <div>
@@ -387,16 +408,115 @@ function dossierHeader(a) {
         <div class="d-athlete-name">${a.first_name} ${a.last_name}</div>
       </div>
       <div class="d-header-actions">
-        <button class="d-save-btn" id="dossierSaveBtn" onclick="saveDossier()"><i class="fa-solid fa-floppy-disk"></i> Save</button>
+        ${dossierEditMode ? editActions : viewActions}
         <button class="d-close-btn" onclick="closeDossier()"><i class="fa-solid fa-xmark"></i></button>
       </div>
     </div>
-    ${dossierProgress()}
+    ${dossierEditMode ? dossierProgress() : ''}
   </div>`;
 }
 
 function renderDossier(a) {
-  document.getElementById('dossierContent').innerHTML = dossierHeader(a) + `<div class="d-body" id="dossierBody">${buildPhase(a, dossierPhase)}</div>`;
+  const body = dossierEditMode
+    ? `<div class="d-body" id="dossierBody">${buildPhase(a, dossierPhase)}</div>`
+    : `<div class="d-body" id="dossierBody">${buildReadOnlyView(a)}</div>`;
+  document.getElementById('dossierContent').innerHTML = dossierHeader(a) + body;
+}
+
+window.enterEditMode = () => {
+  dossierEditMode = true;
+  dossierPhase = 1;
+  const a = allAthletes.find(x => x.id === currentAthleteId);
+  renderDossier(a);
+};
+
+window.exitEditMode = () => {
+  dossierEditMode = false;
+  const a = allAthletes.find(x => x.id === currentAthleteId);
+  renderDossier(a);
+};
+
+function buildReadOnlyView(a) {
+  const seasons = (a.season||[]).join(', ') || '—';
+  const att = window._dossierAtt || {};
+
+  // Build 30-day attendance strip
+  const days = [];
+  for (let i = 29; i >= 0; i--) {
+    const d = new Date(); d.setDate(d.getDate() - i);
+    const key = d.toISOString().split('T')[0];
+    const status = att[key];
+    const colors = { Present:'#4ade80', Late:'#fbbf24', Excused:'#818cf8', Unexcused:'#f87171' };
+    const color = colors[status] || 'rgba(255,255,255,0.08)';
+    const label = d.toLocaleDateString('en-US', { month:'short', day:'numeric' });
+    days.push(`<div class="att-dot" style="background:${color}" title="${label}${status ? ': '+status : ': No record'}"></div>`);
+  }
+
+  // Attendance summary counts
+  const counts = { Present:0, Late:0, Excused:0, Unexcused:0 };
+  Object.values(att).forEach(s => { if (counts[s] !== undefined) counts[s]++; });
+
+  const pw = PAPERWORK_FIELDS.map(f => `
+    <div class="ro-pw-row">
+      <span class="ro-pw-label">${f.label}</span>
+      ${a[f.key]
+        ? '<span class="ro-pw-yes"><i class="fa-solid fa-check"></i></span>'
+        : '<span class="ro-pw-no"><i class="fa-solid fa-xmark"></i></span>'}
+    </div>`).join('');
+
+  return `<div class="ro-view">
+
+    <div class="ro-section-grid">
+      <div class="ro-section">
+        <div class="ro-section-title">Contact</div>
+        <div class="ro-row"><span>Email</span><span>${a.email||'—'}</span></div>
+        <div class="ro-row"><span>Phone</span><span>${a.phone||'—'}</span></div>
+        ${a.birthday ? `<div class="ro-row"><span>Birthday</span><span>${a.birthday}</span></div>` : ''}
+        <div class="ro-row"><span>Grade</span><span>${a.grade}</span></div>
+        <div class="ro-row"><span>Team</span><span>${a.team}</span></div>
+      </div>
+
+      <div class="ro-section">
+        <div class="ro-section-title">Athletics</div>
+        <div class="ro-row"><span>Event</span><span>${a.event_group||'—'}</span></div>
+        <div class="ro-row"><span>Season(s)</span><span>${seasons}</span></div>
+        <div class="ro-row"><span>Status</span><span>${statusBadge(a.status||'Active')}</span></div>
+        <div class="ro-row"><span>Paperwork</span><span>${paperworkBadge(a.paperwork_status)}</span></div>
+        ${a.status_notes ? `<div class="ro-row"><span>Note</span><span>${a.status_notes}</span></div>` : ''}
+      </div>
+
+      <div class="ro-section">
+        <div class="ro-section-title">Parent / Guardian</div>
+        <div class="ro-row"><span>Name</span><span>${a.parent1_name||'—'}</span></div>
+        <div class="ro-row"><span>Phone</span><span>${a.parent1_phone||'—'}</span></div>
+        <div class="ro-row"><span>Email</span><span>${a.parent1_email||'—'}</span></div>
+        ${a.parent2_name ? `
+        <div class="ro-row" style="margin-top:0.5rem;"><span>Name 2</span><span>${a.parent2_name}</span></div>
+        <div class="ro-row"><span>Phone 2</span><span>${a.parent2_phone||'—'}</span></div>
+        <div class="ro-row"><span>Email 2</span><span>${a.parent2_email||'—'}</span></div>` : ''}
+      </div>
+
+      <div class="ro-section">
+        <div class="ro-section-title">Paperwork</div>
+        <div class="ro-pw-list">${pw}</div>
+      </div>
+    </div>
+
+    <div class="ro-section" style="margin-top:0;">
+      <div class="ro-section-title" style="margin-bottom:0.75rem;">
+        Attendance — last 30 days
+        <span class="att-summary">
+          <span class="att-sum-item" style="color:#4ade80">${counts.Present}P</span>
+          <span class="att-sum-item" style="color:#fbbf24">${counts.Late}L</span>
+          <span class="att-sum-item" style="color:#818cf8">${counts.Excused}E</span>
+          <span class="att-sum-item" style="color:#f87171">${counts.Unexcused}U</span>
+        </span>
+      </div>
+      <div class="att-strip">${days.join('')}</div>
+    </div>
+
+    ${a.notes ? `<div class="ro-section" style="margin-top:0;"><div class="ro-section-title">Notes</div><p class="ro-notes">${a.notes}</p></div>` : ''}
+  </div>`;
 }
 
 function buildPhase(a, phase) {
@@ -405,23 +525,6 @@ function buildPhase(a, phase) {
   const sprint_addons = a.sprint_addons || [];
 
   if (phase === 1) return `
-    <div class="d-phase">
-      <h2 class="d-step-title">Dossier</h2>
-      <div class="d-info-grid">
-        <div class="d-info-row"><span>Name</span><span>${a.first_name} ${a.last_name}</span></div>
-        <div class="d-info-row"><span>Grade</span><span>${a.grade}</span></div>
-        <div class="d-info-row"><span>Team</span><span>${a.team}</span></div>
-        <div class="d-info-row"><span>Event Group</span><span>${a.event_group || '—'}</span></div>
-        <div class="d-info-row"><span>Status</span><span>${statusBadge(a.status||'Active')}</span></div>
-        <div class="d-info-row"><span>Paperwork</span><span>${paperworkBadge(a.paperwork_status)}</span></div>
-        <div class="d-info-row"><span>Season(s)</span><span>${seasons.join(', ') || '—'}</span></div>
-        <div class="d-info-row"><span>Email</span><span>${a.email}</span></div>
-        <div class="d-info-row"><span>Phone</span><span>${a.phone}</span></div>
-      </div>
-      <div class="d-action-row right"><button class="d-btn-primary" onclick="dossierNext()">Edit Information &rarr;</button></div>
-    </div>`;
-
-  if (phase === 2) return `
     <div class="d-phase">
       <h2 class="d-step-title">Contact</h2>
       <div class="d-input-grid">
@@ -443,7 +546,7 @@ function buildPhase(a, phase) {
       <div class="d-action-row space-between"><button class="d-btn-secondary" onclick="dossierPrev()">&larr; Back</button><button class="d-btn-primary" onclick="dossierNext()">Next: School &rarr;</button></div>
     </div>`;
 
-  if (phase === 3) {
+  if (phase === 2) {
     const ms = a.middle_school || '';
     const isOther = ms === 'Other';
     const isSpec = a.is_specialty;
@@ -478,7 +581,7 @@ function buildPhase(a, phase) {
     </div>`;
   }
 
-  if (phase === 4) {
+  if (phase === 3) {
     const ACTS = ['Basketball','Competition Cheer','Dance Team','Debate','Field Hockey','Football','Forensics','Golf','Gymnastics','JROTC','Marching Band','Sideline Cheer','Step Team','Swim','Volleyball','Wrestling'];
     const hasAct = a.has_activities;
     return `<div class="d-phase">
@@ -498,7 +601,7 @@ function buildPhase(a, phase) {
     </div>`;
   }
 
-  if (phase === 5) {
+  if (phase === 4) {
     const hasP2 = !!a.parent2_name;
     return `<div class="d-phase">
       <h2 class="d-step-title">Parent / Guardian</h2>
@@ -521,7 +624,7 @@ function buildPhase(a, phase) {
     </div>`;
   }
 
-  if (phase === 6) {
+  if (phase === 5) {
     const STATUS_OPTIONS = ['Active','Suspended','Ineligible','Quit','Cut'];
     const curStatus = a.status || 'Active';
     return `<div class="d-phase">
@@ -544,7 +647,7 @@ function buildPhase(a, phase) {
     </div>`;
   }
 
-  if (phase === 7) {
+  if (phase === 6) {
     return `<div class="d-phase">
       <h2 class="d-step-title">Paperwork</h2>
       <div class="d-paperwork-list">
@@ -563,7 +666,7 @@ function buildPhase(a, phase) {
     </div>`;
   }
 
-  if (phase === 8) {
+  if (phase === 7) {
     return `<div class="d-phase">
       <h2 class="d-step-title">Notes</h2>
       <div class="d-input-group">
@@ -580,7 +683,7 @@ function buildPhase(a, phase) {
   return '';
 }
 
-window.goToPhase = (phase) => {
+window.goToPhase = (phase) => { if (!dossierEditMode) return;
   dossierPhase = phase;
   const a = allAthletes.find(x => x.id === currentAthleteId);
   document.getElementById('dossierBody').innerHTML = buildPhase(a, dossierPhase);
@@ -595,6 +698,7 @@ window.dossierNext = () => { if (dossierPhase < DOSSIER_TOTAL) goToPhase(dossier
 window.dossierPrev = () => { if (dossierPhase > 1) goToPhase(dossierPhase - 1); };
 
 window.saveDossier = async function saveDossier() {
+  if (!dossierEditMode) return;
   const btn = document.getElementById('dossierSaveBtn'); if (!btn) return;
   const errEl = document.getElementById('dossierError');
   if (errEl) errEl.classList.add('hidden');
@@ -647,8 +751,7 @@ window.saveDossier = async function saveDossier() {
   }
 
   await loadRoster();
-  const b = document.getElementById('dossierSaveBtn');
-  if (b) { b.disabled = false; b.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Save'; }
+  dossierEditMode = false;
   closeDossier();
 }
 
@@ -963,6 +1066,35 @@ background-position: 0% 50%; 50%{background-position:100% 50%} 100%{background-p
 .d-header-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
 .d-save-btn { display: flex; align-items: center; gap: 5px; padding: 0 12px; height: 30px; background: var(--accent-orange); color: white; border: none; border-radius: 20px; font-size: 12px; font-family: var(--font-ui); font-weight: 600; cursor: pointer; }
 .d-save-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.d-edit-btn { display: flex; align-items: center; gap: 5px; padding: 0 12px; height: 30px; background: var(--input-bg); color: white; border: 1px solid var(--border-light); border-radius: 20px; font-size: 12px; font-family: var(--font-ui); font-weight: 500; cursor: pointer; }
+.d-edit-btn:hover { background: rgba(255,255,255,0.1); }
+.d-cancel-btn { padding: 0 12px; height: 30px; background: transparent; color: var(--text-muted); border: 1px solid var(--border-light); border-radius: 20px; font-size: 12px; font-family: var(--font-ui); cursor: pointer; }
+.d-cancel-btn:hover { color: white; border-color: rgba(255,255,255,0.3); }
+
+/* Read-only view */
+.ro-view { display: flex; flex-direction: column; gap: 1px; background: var(--border-light); border-radius: 0 0 16px 16px; overflow: hidden; }
+.ro-section-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border-light); }
+.ro-section { background: rgba(15,23,42,0.8); padding: 1.25rem 1.5rem; }
+.ro-section-title { font-size: 9px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent-orange); margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.75rem; }
+.ro-row { display: flex; justify-content: space-between; align-items: baseline; padding: 4px 0; font-size: 12px; border-bottom: 1px solid rgba(255,255,255,0.04); }
+.ro-row:last-child { border-bottom: none; }
+.ro-row span:first-child { color: var(--text-muted); flex-shrink: 0; }
+.ro-row span:last-child { color: white; font-weight: 500; text-align: right; word-break: break-word; max-width: 60%; }
+.ro-notes { font-size: 13px; color: var(--text-muted); line-height: 1.6; }
+
+/* Paperwork in read-only */
+.ro-pw-list { display: flex; flex-direction: column; gap: 3px; }
+.ro-pw-row { display: flex; align-items: center; justify-content: space-between; padding: 4px 0; font-size: 12px; border-bottom: 1px solid rgba(255,255,255,0.04); }
+.ro-pw-row:last-child { border-bottom: none; }
+.ro-pw-label { color: var(--text-muted); }
+.ro-pw-yes { color: #4ade80; font-size: 11px; }
+.ro-pw-no  { color: #f87171; font-size: 11px; }
+
+/* Attendance strip */
+.att-strip { display: flex; gap: 4px; flex-wrap: wrap; }
+.att-dot { width: 18px; height: 18px; border-radius: 4px; cursor: default; }
+.att-summary { display: flex; gap: 8px; margin-left: auto; font-size: 11px; font-weight: 600; }
+.att-sum-item { }
 .d-close-btn { flex-shrink: 0; width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--border-light); background: var(--input-bg); cursor: pointer; color: var(--text-muted); font-size: 13px; display: flex; align-items: center; justify-content: center; }
 .d-close-btn:hover { background: rgba(255,255,255,0.08); color: white; }
 .d-body { padding: 2rem; }
