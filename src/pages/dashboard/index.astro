@@ -1,235 +1,116 @@
 ---
 // src/pages/dashboard/index.astro
-// Redirects to login if not authenticated, otherwise to /dashboard/roster
 ---
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>JRTXCTF | Coach Login</title>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
-  </head>
-  <body>
-    <div class="page">
-      <div class="login-card">
-        <div class="brand">
-          <i class="fa-solid fa-paw brand-paw"></i>
-          <div class="brand-text">
-            <span class="brand-name">JRTXCTF</span>
-            <span class="brand-sub">Tiger Net — Coach Portal</span>
-          </div>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>JRTXCTF | Coach Login</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+  <div class="bg-mesh"></div>
+  <div class="page">
+    <div class="glass-card">
+      <div class="brand">
+        <i class="fa-solid fa-paw brand-paw"></i>
+        <div class="brand-text">
+          <span class="brand-name">JRTXCTF</span>
+          <span class="brand-sub">Tiger Net — Coach Portal</span>
         </div>
-
-        <h1>Welcome back.</h1>
-        <p class="subtitle">Sign in to access the roster and attendance.</p>
-
-        <div class="form-group">
-          <label for="email">Email</label>
-          <input type="email" id="email" placeholder="coach@school.edu" autocomplete="email" />
-        </div>
-
-        <div class="form-group">
-          <label for="password">Password</label>
-          <input type="password" id="password" placeholder="••••••••" autocomplete="current-password" />
-        </div>
-
-        <div class="error-msg" id="errorMsg"></div>
-
-        <button class="btn-signin" id="signinBtn" onclick="handleSignIn()">
-          Sign In <i class="fa-solid fa-arrow-right"></i>
-        </button>
       </div>
+      <h1>Welcome back.</h1>
+      <p class="subtitle">Sign in to access the roster and attendance.</p>
+      <div class="input-group">
+        <label for="email">Email</label>
+        <input type="email" id="email" placeholder="coach@school.edu" autocomplete="email" />
+      </div>
+      <div class="input-group">
+        <label for="password">Password</label>
+        <input type="password" id="password" placeholder="••••••••" autocomplete="current-password" />
+      </div>
+      <div class="error-msg" id="errorMsg"></div>
+      <button class="btn-signin" id="signinBtn" onclick="handleSignIn()">
+        Sign In <i class="fa-solid fa-arrow-right"></i>
+      </button>
     </div>
+  </div>
 
-    <script type="module">
-      import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+    const supabase = createClient(
+      'https://kbewlrudpdqmvdsbljen.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiZXdscnVkcGRxbXZkc2JsamVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM2ODkxNDQsImV4cCI6MjA4OTI2NTE0NH0.RYeII_T640_x4AVrThyYgy3nJcHfHc6iUVkWy2R9GgI'
+    );
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) window.location.href = '/dashboard/roster';
 
-      const supabase = createClient(
-        'https://kbewlrudpdqmvdsbljen.supabase.co',
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiZXdscnVkcGRxbXZkc2JsamVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM2ODkxNDQsImV4cCI6MjA4OTI2NTE0NH0.RYeII_T640_x4AVrThyYgy3nJcHfHc6iUVkWy2R9GgI'
-      );
-
-      // Redirect if already logged in
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) window.location.href = '/dashboard/roster';
-
-      window.handleSignIn = async () => {
-        const email    = document.getElementById('email').value.trim();
-        const password = document.getElementById('password').value;
-        const btn      = document.getElementById('signinBtn');
-        const errorMsg = document.getElementById('errorMsg');
-
-        errorMsg.textContent = '';
-        btn.disabled = true;
-        btn.innerHTML = 'Signing in... <i class="fa-solid fa-spinner fa-spin"></i>';
-
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-
-        if (error) {
-          errorMsg.textContent = error.message;
-          btn.disabled = false;
-          btn.innerHTML = 'Sign In <i class="fa-solid fa-arrow-right"></i>';
-          return;
-        }
-
-        window.location.href = '/dashboard/roster';
-      };
-
-      // Allow Enter key to submit
-      document.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') window.handleSignIn();
-      });
-    </script>
-  </body>
+    window.handleSignIn = async () => {
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const btn = document.getElementById('signinBtn');
+      const errorMsg = document.getElementById('errorMsg');
+      errorMsg.textContent = '';
+      btn.disabled = true;
+      btn.innerHTML = 'Signing in... <i class="fa-solid fa-spinner fa-spin"></i>';
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        errorMsg.textContent = error.message;
+        btn.disabled = false;
+        btn.innerHTML = 'Sign In <i class="fa-solid fa-arrow-right"></i>';
+        return;
+      }
+      window.location.href = '/dashboard/roster';
+    };
+    document.addEventListener('keydown', (e) => { if (e.key === 'Enter') window.handleSignIn(); });
+  </script>
+</body>
 </html>
 
-<style>
+<style is:global>
   :root {
-    --navy:   #0033A0;
-    --orange: #FF6700;
-    --text:   #0f172a;
-    --muted:  #64748b;
-    --border: #e2e8f0;
-    --bg:     #f8fafc;
-    --white:  #ffffff;
-    --font:   'DM Sans', system-ui, sans-serif;
-    --mono:   'DM Mono', monospace;
+    --primary-blue: #0033A0;
+    --accent-orange: #FF6700;
+    --accent-orange-hover: #e65c00;
+    --bg-dark: #020617;
+    --card-bg: rgba(15, 23, 42, 0.75);
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+    --border-light: rgba(255, 255, 255, 0.15);
+    --input-bg: rgba(255, 255, 255, 0.05);
+    --focus-ring: rgba(255, 103, 0, 0.4);
+    --font-ui: 'Inter', system-ui, sans-serif;
   }
-
   * { box-sizing: border-box; margin: 0; padding: 0; }
-
-  body {
-    font-family: var(--font);
-    background: var(--bg);
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    -webkit-font-smoothing: antialiased;
+  body { font-family: var(--font-ui); background: var(--bg-dark); color: var(--text-main); min-height: 100vh; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+  .bg-mesh {
+    position: fixed; inset: 0; z-index: -1;
+    background: linear-gradient(-45deg, #020617, #0f172a, var(--primary-blue), #020617);
+    background-size: 400% 400%;
+    animation: gradientBG 15s ease infinite;
   }
-
-  .page {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 2rem 1rem;
+  @keyframes gradientBG { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+  .page { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 2rem 1rem; }
+  .glass-card {
+    background: var(--card-bg); width: 100%; max-width: 420px;
+    border-radius: 20px; padding: 2.5rem;
+    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.6), inset 0 0 20px rgba(0,51,160,0.2);
+    backdrop-filter: blur(24px); border: 1px solid var(--border-light);
   }
-
-  .login-card {
-    background: var(--white);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 2.5rem;
-    width: 100%;
-    max-width: 420px;
-    box-shadow: 0 4px 24px rgba(0,0,0,0.06);
-  }
-
-  .brand {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    margin-bottom: 2rem;
-    padding-bottom: 1.5rem;
-    border-bottom: 1px solid var(--border);
-  }
-
-  .brand-paw {
-    font-size: 1.75rem;
-    color: var(--orange);
-  }
-
-  .brand-text {
-    display: flex;
-    flex-direction: column;
-  }
-
-  .brand-name {
-    font-size: 0.9rem;
-    font-weight: 700;
-    color: var(--navy);
-    letter-spacing: 1.5px;
-  }
-
-  .brand-sub {
-    font-size: 0.75rem;
-    color: var(--muted);
-    font-weight: 400;
-  }
-
-  h1 {
-    font-size: 1.6rem;
-    font-weight: 700;
-    color: var(--text);
-    letter-spacing: -0.02em;
-    margin-bottom: 0.4rem;
-  }
-
-  .subtitle {
-    color: var(--muted);
-    font-size: 0.9rem;
-    margin-bottom: 2rem;
-  }
-
-  .form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 0.4rem;
-    margin-bottom: 1.25rem;
-  }
-
-  label {
-    font-size: 0.8rem;
-    font-weight: 600;
-    color: var(--text);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-
-  input {
-    padding: 0.75rem 1rem;
-    border: 1.5px solid var(--border);
-    border-radius: 8px;
-    font-size: 0.95rem;
-    font-family: var(--font);
-    color: var(--text);
-    background: var(--white);
-    transition: border-color 0.15s ease, box-shadow 0.15s ease;
-    outline: none;
-  }
-
-  input:focus {
-    border-color: var(--orange);
-    box-shadow: 0 0 0 3px rgba(255, 103, 0, 0.12);
-  }
-
-  .error-msg {
-    color: #dc2626;
-    font-size: 0.85rem;
-    min-height: 1.2rem;
-    margin-bottom: 0.75rem;
-  }
-
-  .btn-signin {
-    width: 100%;
-    padding: 0.875rem;
-    background: var(--navy);
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-size: 0.95rem;
-    font-weight: 600;
-    font-family: var(--font);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    transition: background 0.15s ease, transform 0.15s ease;
-  }
-
-  .btn-signin:hover { background: #002280; transform: translateY(-1px); }
+  .brand { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 2rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border-light); }
+  .brand-paw { font-size: 1.75rem; color: var(--accent-orange); }
+  .brand-text { display: flex; flex-direction: column; }
+  .brand-name { font-size: 0.9rem; font-weight: 700; color: var(--primary-blue); letter-spacing: 1.5px; color: white; }
+  .brand-sub { font-size: 0.75rem; color: var(--text-muted); }
+  h1 { font-size: 1.6rem; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 0.4rem; }
+  .subtitle { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 2rem; }
+  .input-group { display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 1.25rem; }
+  label { font-size: 0.8rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+  input { padding: 1rem; border: 1px solid var(--border-light); border-radius: 10px; font-size: 0.95rem; font-family: var(--font-ui); background: var(--input-bg); color: var(--text-main); outline: none; transition: all 0.2s; }
+  input:focus { border-color: var(--accent-orange); box-shadow: 0 0 0 2px var(--focus-ring); background: rgba(255,255,255,0.1); }
+  .error-msg { color: #f87171; font-size: 0.85rem; min-height: 1.2rem; margin-bottom: 0.75rem; }
+  .btn-signin { width: 100%; padding: 1rem; background: var(--accent-orange); color: white; border: none; border-radius: 30px; font-size: 1rem; font-weight: 700; font-family: var(--font-ui); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem; transition: all 0.2s; box-shadow: 0 4px 15px rgba(255,103,0,0.3); }
+  .btn-signin:hover { background: var(--accent-orange-hover); transform: translateY(-2px); }
   .btn-signin:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 </style>
