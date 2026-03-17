@@ -100,7 +100,7 @@
         </div>
       </div>
 
-      <div class="roster-grid" id="rosterBody">
+      <div class="roster-list" id="rosterBody">
         <div class="loading-state">
           <div class="spinner-wrapper"><i class="fa-solid fa-circle-notch fa-spin"></i></div>
           <div>Loading roster data...</div>
@@ -141,7 +141,6 @@ let allAthletes = [
 let activeFilter = 'all';
 
 async function loadRoster() {
-  // Simulate network delay for effect
   setTimeout(() => { applyFilters(); }, 500); 
 }
 
@@ -220,38 +219,31 @@ function renderRoster(athletes) {
     const groupName = a.event_group || 'Unassigned';
     
     return `
-      <div class="athlete-card ${isInactive ? 'inactive' : ''}" onclick="openDossier('${a.id}')">
-        <div class="ac-header">
-          <div class="ac-avatar ${evClass}">${a.first_name[0]}${a.last_name[0]}</div>
-          <div class="ac-title">
-            <h3 class="ac-name">${a.first_name} <strong>${a.last_name}</strong></h3>
-            <p class="ac-meta">${a.grade}th Grade &bull; ${a.team}</p>
+      <div class="athlete-row ${isInactive ? 'inactive' : ''}" onclick="openDossier('${a.id}')">
+        
+        <div class="row-identity">
+          <div class="row-avatar ${evClass}">${a.first_name[0]}${a.last_name[0]}</div>
+          <div class="row-name-group">
+            <div class="row-name">${a.first_name} <strong>${a.last_name}</strong></div>
+            <div class="row-group ${evClass}-text">
+              <i class="fa-solid fa-running"></i> ${groupName}
+            </div>
           </div>
-          <button class="ac-btn"><i class="fa-solid fa-arrow-right"></i></button>
         </div>
         
-        <div class="ac-group-label ${evClass}-text">
-          <i class="fa-solid fa-running"></i> ${groupName}
+        <div class="row-statuses">
+          ${statusBadge(a.status || 'Active')}
+          ${paperworkBadge(a.paperwork_status)}
+          <i class="fa-solid fa-chevron-right row-chevron"></i>
         </div>
-        
-        <div class="ac-badges">
-          <div class="ac-badge-row">
-            <span class="badge-label">Status</span>
-            ${statusBadge(a.status || 'Active')}
-          </div>
-          <div class="ac-badge-row">
-            <span class="badge-label">Forms</span>
-            ${paperworkBadge(a.paperwork_status)}
-          </div>
-        </div>
+
       </div>
     `;
   }).join('');
 }
 
-// ── Dossier Placeholder (From previous step) ──────────────────────────────────
+// ── Dossier Placeholder (From previous steps) ─────────────────────────────────
 window.openDossier = async (id) => {
-  // Logic to open dossier modal...
   alert("Opening dossier for ID: " + id);
 };
 
@@ -301,7 +293,7 @@ body {
   min-height: 100vh; 
 }
 
-/* ── Layout & Sidebar (Kept identical to premium version) ── */
+/* ── Layout & Sidebar ── */
 .layout { display: flex; min-height: 100vh; }
 
 .sidebar {
@@ -378,7 +370,7 @@ body {
 .btn-primary { background: var(--primary); color: white; border: 1px solid var(--primary); }
 .btn-primary:hover { background: var(--primary-light); border-color: var(--primary-light); }
 
-.content-wrapper { padding: 2rem; flex: 1; display: flex; flex-direction: column; }
+.content-wrapper { padding: 2rem; flex: 1; display: flex; flex-direction: column; max-width: 1200px; margin: 0 auto; width: 100%; }
 
 /* ── Filter Bar ──────────────────────────────────────────────────────────── */
 .filter-bar { 
@@ -417,48 +409,48 @@ body {
 .search-wrap i { font-size: 13px; color: var(--text-light); }
 .search-wrap input { border: none; outline: none; font-size: 14px; font-family: inherit; color: var(--text-main); background: transparent; width: 100%; }
 
-/* ── ATHLETE CARD GRID ──────────────────────────────────────────────────── */
-.roster-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 1.25rem;
-  align-items: start;
+/* ── HORIZONTAL ATHLETE LIST ────────────────────────────────────────────── */
+.roster-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
-.athlete-card {
+.athlete-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   background: var(--bg-surface);
   border: 1px solid var(--border-light);
   border-radius: 12px;
-  padding: 1.25rem;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+  padding: 14px 20px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.02);
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  position: relative;
 }
 
-.athlete-card:hover {
+.athlete-row:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 16px -4px rgba(0,0,0,0.08);
+  box-shadow: 0 6px 12px -4px rgba(0,0,0,0.08);
   border-color: var(--border-medium);
 }
 
-.athlete-card.inactive {
+.athlete-row.inactive {
   opacity: 0.6;
   background: #f8fafc;
 }
-.athlete-card.inactive:hover {
+.athlete-row.inactive:hover {
   opacity: 1;
 }
 
-/* Card Header (Avatar + Name) */
-.ac-header {
+/* Left Side: Identity */
+.row-identity {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 1rem;
+  gap: 16px;
 }
 
-.ac-avatar {
+.row-avatar {
   width: 44px;
   height: 44px;
   border-radius: 10px;
@@ -470,97 +462,67 @@ body {
   font-family: var(--font-sans);
 }
 
-.ac-title {
-  flex: 1;
-  min-width: 0;
+.row-name-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
-.ac-name {
+.row-name {
   font-size: 16px;
   font-weight: 500;
   color: var(--text-main);
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  margin-bottom: 2px;
 }
-.ac-name strong {
+.row-name strong {
   font-weight: 700;
 }
 
-.ac-meta {
-  font-size: 12px;
-  color: var(--text-muted);
-  font-weight: 500;
-}
-
-.ac-btn {
-  width: 28px;
-  height: 28px;
-  border-radius: 6px;
-  border: none;
-  background: transparent;
-  color: var(--text-light);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: 0.2s;
-}
-.athlete-card:hover .ac-btn {
-  background: #f1f5f9;
-  color: var(--primary);
-  transform: translateX(2px);
-}
-
-/* Event Group Label */
-.ac-group-label {
+.row-group {
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  margin-bottom: 1rem;
   display: flex;
   align-items: center;
   gap: 6px;
 }
 
-/* Badges Section */
-.ac-badges {
+/* Right Side: Statuses */
+.row-statuses {
   display: flex;
-  flex-direction: column;
-  gap: 8px;
-  border-top: 1px dashed var(--border-light);
-  padding-top: 1rem;
-}
-
-.ac-badge-row {
-  display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 16px;
 }
 
-.badge-label {
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--text-muted);
-}
-
-/* Status Badges (Colored) */
 .status-badge {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 4px 8px;
+  padding: 6px 10px;
   border-radius: 6px;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.2px;
+  white-space: nowrap;
 }
 
 .status-badge.success { background: #dcfce7; color: #166534; }
 .status-badge.warn    { background: #ffedd5; color: #9a3412; }
 .status-badge.danger  { background: #fee2e2; color: #991b1b; }
 .status-badge.neutral { background: #f1f5f9; color: #475569; }
+
+.row-chevron {
+  color: var(--text-light);
+  font-size: 14px;
+  margin-left: 8px;
+  transition: transform 0.2s, color 0.2s;
+}
+
+.athlete-row:hover .row-chevron {
+  color: var(--primary);
+  transform: translateX(4px);
+}
 
 /* Event Colors */
 .ev-sprints  { background: var(--c-sprints-bg);  color: var(--c-sprints-txt); }
@@ -575,10 +537,12 @@ body {
 
 /* Loading / Empty States */
 .loading-state, .empty-state {
-  grid-column: 1 / -1;
   text-align: center;
   padding: 4rem;
   color: var(--text-muted);
+  background: var(--bg-surface);
+  border-radius: 12px;
+  border: 1px dashed var(--border-medium);
 }
 .spinner-wrapper { font-size: 24px; color: var(--primary); margin-bottom: 1rem; }
 .empty-state i { font-size: 32px; margin-bottom: 1rem; opacity: 0.5; }
@@ -603,6 +567,21 @@ body {
   .filter-bar { flex-direction: column; align-items: stretch; gap: 12px; }
   .search-wrap { min-width: 100%; }
   
-  .roster-grid { grid-template-columns: 1fr; gap: 1rem; }
+  /* Stack the row contents on very small screens */
+  .athlete-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 16px;
+  }
+  .row-statuses {
+    width: 100%;
+    justify-content: flex-start;
+    padding-top: 12px;
+    border-top: 1px solid var(--border-light);
+  }
+  .row-chevron {
+    margin-left: auto;
+  }
 }
 </style>
