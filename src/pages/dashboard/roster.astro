@@ -386,7 +386,10 @@ function dossierHeader(a) {
         <div class="d-brand-badge">JRTXCTF // TIGER NET</div>
         <div class="d-athlete-name">${a.first_name} ${a.last_name}</div>
       </div>
-      <button class="d-close-btn" onclick="closeDossier()"><i class="fa-solid fa-xmark"></i></button>
+      <div class="d-header-actions">
+        <button class="d-save-btn" id="dossierSaveBtn" onclick="saveDossier()"><i class="fa-solid fa-floppy-disk"></i> Save</button>
+        <button class="d-close-btn" onclick="closeDossier()"><i class="fa-solid fa-xmark"></i></button>
+      </div>
     </div>
     ${dossierProgress()}
   </div>`;
@@ -577,9 +580,8 @@ function buildPhase(a, phase) {
         <div class="d-char-counter"><span id="d_notes_count">${(a.notes||'').length}</span> / 256</div>
       </div>
       <div class="d-form-error hidden" id="dossierError"></div>
-      <div class="d-action-row space-between">
+      <div class="d-action-row right">
         <button class="d-btn-secondary" onclick="dossierPrev()">&larr; Back</button>
-        <button class="d-btn-primary" id="dossierSaveBtn" onclick="saveDossier()"><i class="fa-solid fa-floppy-disk"></i> Save Changes</button>
       </div>
     </div>`;
   }
@@ -601,11 +603,11 @@ window.dossierNext = () => { if (dossierPhase < DOSSIER_TOTAL) goToPhase(dossier
 window.dossierPrev = () => { if (dossierPhase > 1) goToPhase(dossierPhase - 1); };
 
 async function saveDossier() {
-  const btn = document.getElementById('dossierSaveBtn');
+  const btn = document.getElementById('dossierSaveBtn'); if (!btn) return;
   const errEl = document.getElementById('dossierError');
   if (errEl) errEl.classList.add('hidden');
   btn.disabled = true;
-  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
 
   // Collect all data from all phases (read from DOM where available)
   const get = id => { const el = document.getElementById(id); return el ? el.value.trim() : null; };
@@ -653,6 +655,8 @@ async function saveDossier() {
   }
 
   await loadRoster();
+  const b = document.getElementById('dossierSaveBtn');
+  if (b) { b.disabled = false; b.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Save'; }
   closeDossier();
 }
 
@@ -964,6 +968,9 @@ background-position: 0% 50%; 50%{background-position:100% 50%} 100%{background-p
 .d-tab { flex-shrink: 0; padding: 0.45rem 0.85rem; border-radius: 8px; border: none; background: transparent; font-size: 12px; font-family: var(--font-ui); font-weight: 500; color: var(--text-muted); cursor: pointer; white-space: nowrap; }
 .d-tab:hover { background: rgba(255,255,255,0.06); color: white; }
 .d-tab.active { background: var(--accent-orange); color: white; font-weight: 600; }
+.d-header-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.d-save-btn { display: flex; align-items: center; gap: 5px; padding: 0 12px; height: 30px; background: var(--accent-orange); color: white; border: none; border-radius: 20px; font-size: 12px; font-family: var(--font-ui); font-weight: 600; cursor: pointer; }
+.d-save-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 .d-close-btn { flex-shrink: 0; width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--border-light); background: var(--input-bg); cursor: pointer; color: var(--text-muted); font-size: 13px; display: flex; align-items: center; justify-content: center; }
 .d-close-btn:hover { background: rgba(255,255,255,0.08); color: white; }
 .d-body { padding: 2rem; }
