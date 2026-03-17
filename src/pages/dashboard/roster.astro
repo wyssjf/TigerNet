@@ -90,7 +90,7 @@
       <button class="modal-x" onclick="closeAthleteForm()"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <div class="modal-body">
-      <div class="form-section-label">Athlete Details</div>
+      <div class="form-section-label">Contact</div>
       <div class="frow">
         <div class="fg"><label>First Name *</label><input type="text" id="f_fn" /></div>
         <div class="fg"><label>Last Name *</label><input type="text" id="f_ln" /></div>
@@ -406,8 +406,7 @@ function buildPhase(a, phase) {
 
   if (phase === 1) return `
     <div class="d-phase">
-      <h2 class="d-step-title">Athlete Overview</h2>
-      <p class="d-step-desc">Review and confirm this athlete's current information.</p>
+      <h2 class="d-step-title">Dossier</h2>
       <div class="d-info-grid">
         <div class="d-info-row"><span>Name</span><span>${a.first_name} ${a.last_name}</span></div>
         <div class="d-info-row"><span>Grade</span><span>${a.grade}</span></div>
@@ -424,8 +423,7 @@ function buildPhase(a, phase) {
 
   if (phase === 2) return `
     <div class="d-phase">
-      <h2 class="d-step-title">Athlete Details</h2>
-      <p class="d-step-desc">Basic information and contact details.</p>
+      <h2 class="d-step-title">Contact</h2>
       <div class="d-input-grid">
         <div class="d-input-group"><label>First Name</label><input type="text" id="d_fn" value="${a.first_name}" /></div>
         <div class="d-input-group"><label>Last Name</label><input type="text" id="d_ln" value="${a.last_name}" /></div>
@@ -451,8 +449,7 @@ function buildPhase(a, phase) {
     const isSpec = a.is_specialty;
     const MIDDLE_SCHOOLS = ['Brookland Middle','Elko Middle','Fairfield Middle','George H. Moody Middle','Holman Middle','Hungary Creek Middle','L. Douglas Wilder Middle','Pocohontas Middle','Quioccasin Middle','John Rolfe Middle','Short Pump Middle','Tuckahoe Middle','Other'];
     return `<div class="d-phase">
-      <h2 class="d-step-title">Academic Background</h2>
-      <p class="d-step-desc">School information and specialty programs.</p>
+      <h2 class="d-step-title">Academics</h2>
       <div class="d-input-group">
         <label>Middle School Attended</label>
         <select id="d_ms" onchange="document.getElementById('d_ms_other_wrap').classList.toggle('hidden', this.value !== 'Other')">
@@ -464,7 +461,7 @@ function buildPhase(a, phase) {
         <label>Please specify</label><input type="text" id="d_ms_other" value="${a.other_middle_school||''}" placeholder="School name" />
       </div>
       <div class="d-highlight-panel">
-        <label class="d-long-label">Are you a student in a specialty center?</label>
+        <label class="d-long-label">Enrolled in a specialty center?</label>
         <div class="d-radio-group">
           <label class="d-radio-label"><input type="radio" name="d_spec" value="yes" ${isSpec?'checked':''} onchange="document.getElementById('d_spec_prog_wrap').classList.toggle('hidden', this.value!=='yes')" /> <span>Yes</span></label>
           <label class="d-radio-label"><input type="radio" name="d_spec" value="no" ${!isSpec?'checked':''} onchange="document.getElementById('d_spec_prog_wrap').classList.add('hidden')" /> <span>No</span></label>
@@ -485,10 +482,9 @@ function buildPhase(a, phase) {
     const ACTS = ['Basketball','Competition Cheer','Dance Team','Debate','Field Hockey','Football','Forensics','Golf','Gymnastics','JROTC','Marching Band','Sideline Cheer','Step Team','Swim','Volleyball','Wrestling'];
     const hasAct = a.has_activities;
     return `<div class="d-phase">
-      <h2 class="d-step-title">Athletic Profile</h2>
-      <p class="d-step-desc">Team and prior activity this academic year.</p>
+      <h2 class="d-step-title">Athletics</h2>
       <div class="d-highlight-panel">
-        <label class="d-long-label">Has this athlete participated in other sports or activities this year?</label>
+        <label class="d-long-label">Participated in other sports or activities this year?</label>
         <div class="d-radio-group">
           <label class="d-radio-label"><input type="radio" name="d_hact" value="yes" ${hasAct?'checked':''} onchange="document.getElementById('d_acts_wrap').classList.toggle('hidden',false)" /> <span>Yes</span></label>
           <label class="d-radio-label"><input type="radio" name="d_hact" value="no" ${!hasAct?'checked':''} onchange="document.getElementById('d_acts_wrap').classList.add('hidden')" /> <span>No</span></label>
@@ -506,7 +502,6 @@ function buildPhase(a, phase) {
     const hasP2 = !!a.parent2_name;
     return `<div class="d-phase">
       <h2 class="d-step-title">Parent / Guardian</h2>
-      <p class="d-step-desc">Emergency contact information.</p>
       <div class="d-input-group"><label>Parent / Guardian 1 Full Name</label><input type="text" id="d_p1n" value="${a.parent1_name||''}" /></div>
       <div class="d-input-grid">
         <div class="d-input-group"><label>Phone</label><input type="tel" id="d_p1p" value="${a.parent1_phone||''}" placeholder="(555) 555-5555" /></div>
@@ -530,8 +525,7 @@ function buildPhase(a, phase) {
     const STATUS_OPTIONS = ['Active','Suspended','Ineligible','Quit','Cut'];
     const curStatus = a.status || 'Active';
     return `<div class="d-phase">
-      <h2 class="d-step-title">Athlete Status</h2>
-      <p class="d-step-desc">Set this athlete's current program status.</p>
+      <h2 class="d-step-title">Status</h2>
       <div class="d-status-grid">
         ${STATUS_OPTIONS.map(s => {
           const icons = { Active:'fa-circle-check', Suspended:'fa-circle-pause', Ineligible:'fa-circle-xmark', Quit:'fa-circle-minus', Cut:'fa-scissors' };
@@ -552,8 +546,7 @@ function buildPhase(a, phase) {
 
   if (phase === 7) {
     return `<div class="d-phase">
-      <h2 class="d-step-title">Paperwork Checklist</h2>
-      <p class="d-step-desc">Mark off documents that have been received.</p>
+      <h2 class="d-step-title">Paperwork</h2>
       <div class="d-paperwork-list">
         ${PAPERWORK_FIELDS.map(f => {
           const checked = a[f.key];
@@ -572,8 +565,7 @@ function buildPhase(a, phase) {
 
   if (phase === 8) {
     return `<div class="d-phase">
-      <h2 class="d-step-title">Additional Notes</h2>
-      <p class="d-step-desc">Any additional information about this athlete.</p>
+      <h2 class="d-step-title">Notes</h2>
       <div class="d-input-group">
         <label>Notes <span style="font-weight:400;color:var(--text-muted)">(optional, max 256 chars)</span></label>
         <textarea id="d_notes" maxlength="256" rows="5" placeholder="Previous athletic experience, injuries, anything else...">${a.notes||''}</textarea>
