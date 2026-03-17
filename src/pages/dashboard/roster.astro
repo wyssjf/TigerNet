@@ -70,23 +70,10 @@
       <div class="search-wrap"><i class="fa-solid fa-magnifying-glass"></i><input type="text" id="searchInput" placeholder="Search..." /></div>
     </div>
 
-    <div class="tbl-wrap">
-      <table class="roster-tbl">
-        <thead>
-          <tr>
-            <th style="width:220px">ATHLETE</th>
-            <th>GR</th>
-            <th>TEAM</th>
-            <th>EVENT</th>
-            <th>STATUS</th>
-            <th>PAPERWORK</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody id="rosterBody">
-          <tr><td colspan="7" class="loading-cell"><i class="fa-solid fa-paw fa-spin"></i> Loading...</td></tr>
-        </tbody>
-      </table>
+    <div class="flight-wrap">
+      <div class="flight-list" id="rosterBody">
+        <div class="loading-cell"><i class="fa-solid fa-paw fa-spin"></i> Loading...</div>
+      </div>
     </div>
   </main>
 </div>
@@ -322,7 +309,7 @@ document.getElementById('userEmail').textContent = email;
 document.getElementById('userAv').textContent = email.slice(0,2).toUpperCase();
 
 if (profile?.role === 'manager') {
-  document.getElementById('rosterBody').innerHTML = '<tr><td colspan="7" class="loading-cell"><i class="fa-solid fa-lock"></i> Managers cannot view the full roster.</td></tr>';
+  document.getElementById('rosterBody').innerHTML = '<div class="loading-cell"><i class="fa-solid fa-lock"></i> Managers cannot view the full roster.</div>';
   document.getElementById('rosterCount').textContent = '';
   ['exportBtn','addAthleteBtn','importBtn'].forEach(id => document.getElementById(id).style.display = 'none');
   return;
@@ -342,7 +329,7 @@ let activeFilter = 'all';
 async function loadRoster() {
   const { data, error } = await supabase.from('athlete_summary').select('*').order('last_name', { ascending: true });
   if (error) {
-    document.getElementById('rosterBody').innerHTML = `<tr><td colspan="7" class="loading-cell">Error: ${error.message}</td></tr>`;
+    document.getElementById('rosterBody').innerHTML = `<div class="loading-cell">Error: ${error.message}</div>`;
     return;
   }
   allAthletes = data || [];
@@ -393,30 +380,76 @@ function statusBadge(status) {
   return `<span class="badge ${map[status]||'badge-neutral'}">${status}</span>`;
 }
 
+// Attendance state: athleteId -> current status or null
+const attState = {};
+
+function attClass(status) {
+  return { Present:'att-present', Late:'att-late', Excused:'att-excused', Unexcused:'att-unexcused' }[status] || '';
+}
+
+async function markAttendance(athleteId, status) {
+  const prev = attState[athleteId];
+  const next  = prev === status ? null : status;
+  attState[athleteId] = next;
+
+  // Re-render just the attendance buttons for this row
+  const attEl = document.getElementById(`att-${athleteId}`);
+  if (attEl) attEl.innerHTML = attButtons(athleteId, next);
+
+  // Save to Supabase
+  const today = new Date().toISOString().split('T')[0];
+  if (next) {
+    await supabase.from('attendance').upsert(
+      [{ practice_date: today, athlete_id: athleteId, status: next }],
+      { onConflict: 'practice_date,athlete_id' }
+    );
+  } else {
+    await supabase.from('attendance')
+      .delete()
+      .eq('practice_date', today)
+      .eq('athlete_id', athleteId);
+  }
+}
+
+function attButtons(id, current) {
+  return ['P','L','E','U'].map((lbl, i) => {
+    const statuses = ['Present','Late','Excused','Unexcused'];
+    const s = statuses[i];
+    const cls = current === s ? attClass(s) + ' att-active' : '';
+    return `<button class="att-btn ${cls}" onclick="event.stopPropagation();markAttendance('${id}','${s}')">${lbl}</button>`;
+  }).join('');
+}
+
 function renderTable(athletes) {
-  const tbody  = document.getElementById('rosterBody');
+  const list    = document.getElementById('rosterBody');
   const countEl = document.getElementById('rosterCount');
   countEl.textContent = `${athletes.length} athlete${athletes.length !== 1 ? 's' : ''}`;
 
   if (!athletes.length) {
-    tbody.innerHTML = '<tr><td colspan="7" class="loading-cell">No athletes match.</td></tr>';
+    list.innerHTML = '<div class="loading-cell">No athletes match.</div>';
     return;
   }
 
-  tbody.innerHTML = athletes.map(a => {
-    const dimmed = ['Quit','Cut'].includes(a.status) ? 'row-dim' : '';
-    return `<tr class="${dimmed}" onclick="openDossier('${a.id}')">
-      <td><div class="name-cell">
-        <div class="av ${EV_COLOR[a.event_group]||'ev-default'}">${a.first_name[0]}${a.last_name[0]}</div>
-        <div><div class="name-main">${a.last_name}, ${a.first_name}</div><div class="name-sub">Gr. ${a.grade} &middot; ${a.team}</div></div>
-      </div></td>
-      <td>${a.grade}</td>
-      <td><span class="badge ${a.team==='Boys'?'badge-boys':'badge-girls'}">${a.team}</span></td>
-      <td>${a.event_group ? `<span class="badge ${EV_COLOR[a.event_group]||''}-badge">${a.event_group}</span>` : '<span class="muted">—</span>'}</td>
-      <td>${statusBadge(a.status||'Active')}</td>
-      <td>${paperworkBadge(a.paperwork_status)}</td>
-      <td onclick="event.stopPropagation()"><button class="row-btn" onclick="openDossier('${a.id}')"><i class="fa-solid fa-pen-to-square"></i></button></td>
-    </tr>`;
+  list.innerHTML = athletes.map(a => {
+    const dim = ['Quit','Cut'].includes(a.status) ? 'row-dim' : '';
+    const cur = attState[a.id] || null;
+    const ev  = a.event_group;
+    return `
+      <div class="flight-row ${dim}" onclick="openDossier('${a.id}')">
+        <div class="av ${EV_COLOR[ev]||'ev-default'}">${a.first_name[0]}${a.last_name[0]}</div>
+        <div class="row-name">${a.first_name} ${a.last_name}</div>
+        <div class="row-badges">
+          ${statusBadge(a.status||'Active')}
+          ${ev ? `<span class="badge ${EV_COLOR[ev]}-badge">${ev}</span>` : ''}
+          ${paperworkBadge(a.paperwork_status)}
+        </div>
+        <div class="row-att" id="att-${a.id}" onclick="event.stopPropagation()">
+          ${attButtons(a.id, cur)}
+        </div>
+        <button class="row-edit-btn" onclick="event.stopPropagation();openDossier('${a.id}')">
+          <i class="fa-solid fa-pen-to-square"></i>
+        </button>
+      </div>`;
   }).join('');
 }
 
@@ -990,29 +1023,57 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); -web
 .search-wrap input::placeholder { color: var(--muted); }
 
 /* ── Table ──────────────────────────────────────────────────────────────── */
-.tbl-wrap { overflow-x: auto; flex: 1; }
-table.roster-tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
-thead { background: var(--white); position: sticky; top: 54px; z-index: 5; }
-th { padding: 0 16px; height: 36px; text-align: left; font-size: 10px; font-weight: 600; letter-spacing: 0.6px; color: var(--muted); border-bottom: 1px solid var(--border); white-space: nowrap; }
-td { padding: 0 16px; height: 48px; border-bottom: 1px solid var(--border); vertical-align: middle; }
-tbody tr { cursor: pointer; transition: background 0.1s; }
-tbody tr:hover td { background: rgba(0,26,110,0.02); }
-tbody tr:last-child td { border-bottom: none; }
-tbody tr.row-dim td { opacity: 0.45; }
+/* ── Flight sheet ───────────────────────────────────────────────────────── */
+.flight-wrap { padding: 12px; flex: 1; }
+.flight-list { display: flex; flex-direction: column; gap: 6px; }
 .loading-cell { text-align: center; color: var(--muted); padding: 3rem; font-size: 13px; }
 
-/* ── Name cell ──────────────────────────────────────────────────────────── */
-.name-cell { display: flex; align-items: center; gap: 10px; }
+.flight-row {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: box-shadow 0.12s, border-color 0.12s;
+}
+.flight-row:hover { box-shadow: 0 3px 10px rgba(0,0,0,0.07); border-color: rgba(0,0,0,0.14); }
+.flight-row.row-dim { opacity: 0.4; }
+
 .av { width: 32px; height: 32px; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; flex-shrink: 0; font-family: var(--mono); }
 .ev-sprints  { background: var(--c-sprints-bg);  color: var(--c-sprints-txt); }
 .ev-distance { background: var(--c-distance-bg); color: var(--c-distance-txt); }
 .ev-throws   { background: var(--c-throws-bg);   color: var(--c-throws-txt); }
 .ev-default  { background: var(--c-default-bg);  color: var(--c-default-txt); }
-.name-main { font-size: 13px; font-weight: 500; color: var(--text); }
-.name-sub  { font-size: 11px; color: var(--muted); }
+
+.row-name { font-size: 13px; font-weight: 500; color: var(--text); min-width: 160px; white-space: nowrap; }
+.row-badges { display: flex; align-items: center; gap: 5px; flex: 1; flex-wrap: wrap; }
 .muted { color: var(--muted); font-size: 12px; }
-.row-btn { width: 28px; height: 28px; border-radius: 6px; border: 1px solid var(--border); background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 12px; color: var(--muted); transition: all 0.12s; }
-.row-btn:hover { border-color: var(--orange); color: var(--orange); background: #fff7ed; }
+
+.row-att { display: flex; gap: 4px; flex-shrink: 0; }
+.att-btn {
+  width: 32px; height: 32px; border-radius: 7px;
+  border: 1px solid var(--border); background: var(--bg);
+  font-size: 11px; font-weight: 600; font-family: var(--font);
+  cursor: pointer; color: var(--muted);
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.1s;
+}
+.att-btn:hover { transform: translateY(-1px); }
+.att-btn:first-child:hover  { background: #dcfce7; border-color: #22c55e; color: #166534; }
+.att-btn:nth-child(2):hover { background: #fef3c7; border-color: #eab308; color: #92400e; }
+.att-btn:nth-child(3):hover { background: #e0e7ff; border-color: #6366f1; color: #3730a3; }
+.att-btn:nth-child(4):hover { background: #fee2e2; border-color: #ef4444; color: #991b1b; }
+.att-present { background: #dcfce7; border-color: #22c55e; color: #166534; }
+.att-late    { background: #fef3c7; border-color: #eab308; color: #92400e; }
+.att-excused { background: #e0e7ff; border-color: #6366f1; color: #3730a3; }
+.att-unexcused { background: #fee2e2; border-color: #ef4444; color: #991b1b; }
+.att-active  { font-weight: 700; }
+
+.row-edit-btn { width: 28px; height: 28px; border-radius: 6px; border: 1px solid var(--border); background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 11px; color: var(--muted); transition: all 0.12s; flex-shrink: 0; }
+.row-edit-btn:hover { border-color: var(--orange); color: var(--orange); background: #fff7ed; }
 
 /* ── Badges ─────────────────────────────────────────────────────────────── */
 .badge { display: inline-flex; align-items: center; height: 20px; padding: 0 8px; border-radius: 999px; font-size: 11px; font-weight: 500; white-space: nowrap; }
