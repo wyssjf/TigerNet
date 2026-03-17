@@ -1,11 +1,11 @@
 ---
-// src/pages/dashboard/attendance.astro
+// src/pages/dashboard/roster.astro
 ---
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>JRTXCTF | Attendance</title>
+  <title>JRTXCTF | Roster</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
 </head>
@@ -29,8 +29,8 @@
     </div>
     <div class="sb-section">PROGRAM</div>
     <nav class="sb-nav">
-      <a href="/dashboard/roster" class="nav-item"><i class="fa-solid fa-users nav-icon"></i> Roster</a>
-      <a href="/dashboard/attendance" class="nav-item active"><i class="fa-solid fa-calendar-check nav-icon"></i> Attendance</a>
+      <a href="/dashboard/roster" class="nav-item active"><i class="fa-solid fa-users nav-icon"></i> Roster</a>
+      <a href="/dashboard/attendance" class="nav-item"><i class="fa-solid fa-calendar-check nav-icon"></i> Attendance</a>
     </nav>
     <div class="sb-foot">
       <div class="user-chip">
@@ -44,177 +44,768 @@
   <main class="main">
     <div class="topbar">
       <div class="topbar-left">
-        <h1>Attendance</h1>
-        <span class="page-meta">Daily practice log</span>
+        <h1>Roster</h1>
+        <span class="page-meta" id="rosterCount">—</span>
       </div>
       <div class="topbar-right">
-        <input type="date" id="practiceDate" class="date-picker" />
-        <select id="filterTeam" class="team-filter">
-          <option value="">All Teams</option>
-          <option value="Boys">Boys</option>
-          <option value="Girls">Girls</option>
-        </select>
+        <button class="tbtn" id="importBtn"><i class="fa-solid fa-file-arrow-up"></i> Import</button>
+        <button class="tbtn" id="addAthleteBtn"><i class="fa-solid fa-user-plus"></i> Add</button>
+        <button class="tbtn accent" id="exportBtn"><i class="fa-solid fa-download"></i> Export</button>
       </div>
     </div>
 
-    <div class="summary-bar" id="summaryBar">
-      <div class="sum-item"><span class="sum-num" id="sumPresent">—</span><span class="sum-label present">Present</span></div>
-      <div class="sum-item"><span class="sum-num" id="sumLate">—</span><span class="sum-label late">Late</span></div>
-      <div class="sum-item"><span class="sum-num" id="sumExcused">—</span><span class="sum-label excused">Excused</span></div>
-      <div class="sum-item"><span class="sum-num" id="sumUnexcused">—</span><span class="sum-label unexcused">Unexcused</span></div>
-      <div class="sum-item"><span class="sum-num" id="sumUnmarked">—</span><span class="sum-label unmarked">Unmarked</span></div>
-      <button class="btn-save-all" id="saveAllBtn"><i class="fa-solid fa-floppy-disk"></i> Save All</button>
+    <div class="filter-bar">
+      <button class="fpill active" onclick="setFilter(this,'all')">All</button>
+      <div class="fsep"></div>
+      <button class="fpill" onclick="setFilter(this,'team:Boys')">Boys</button>
+      <button class="fpill" onclick="setFilter(this,'team:Girls')">Girls</button>
+      <div class="fsep"></div>
+      <button class="fpill" onclick="setFilter(this,'status:Active')">Active</button>
+      <button class="fpill" onclick="setFilter(this,'status:Suspended')">Suspended</button>
+      <button class="fpill" onclick="setFilter(this,'status:Ineligible')">Ineligible</button>
+      <button class="fpill" onclick="setFilter(this,'status:Cut')">Cut</button>
+      <div class="fsep"></div>
+      <button class="fpill" onclick="setFilter(this,'season:Cross Country')">XC</button>
+      <button class="fpill" onclick="setFilter(this,'season:Indoor Track & Field')">Indoor</button>
+      <button class="fpill" onclick="setFilter(this,'season:Outdoor Track & Field')">Outdoor</button>
+      <div class="fsep"></div>
+      <button class="fpill" onclick="setFilter(this,'paperwork:No Physical')">No Physical</button>
+      <button class="fpill" onclick="setFilter(this,'paperwork:Missing Docs')">Missing Docs</button>
+      <div class="search-wrap"><i class="fa-solid fa-magnifying-glass"></i><input type="text" id="searchInput" placeholder="Search..." /></div>
     </div>
 
-    <div class="att-list" id="attBody">
-      <div class="loading-cell"><i class="fa-solid fa-paw fa-spin"></i> Loading...</div>
+    <div class="flight-wrap">
+      <div class="flight-list" id="rosterBody">
+        <div class="loading-cell"><i class="fa-solid fa-paw fa-spin"></i> Loading...</div>
+      </div>
     </div>
   </main>
 </div>
 
-<button class="save-float hidden" id="saveFloat" onclick="document.getElementById('saveAllBtn').click()">
-  <i class="fa-solid fa-floppy-disk"></i> Save
-</button>
+<!-- ADD / EDIT MODAL -->
+<div class="overlay hidden" id="athleteFormOverlay">
+  <div class="modal modal-form">
+    <div class="modal-hd">
+      <div><div class="modal-title" id="formModalTitle">Add Athlete</div><div class="modal-sub" id="formModalSub">Manually add to roster</div></div>
+      <button class="modal-x" onclick="closeAthleteForm()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-section-label">Athlete Details</div>
+      <div class="frow">
+        <div class="fg"><label>First Name *</label><input type="text" id="f_fn" /></div>
+        <div class="fg"><label>Last Name *</label><input type="text" id="f_ln" /></div>
+      </div>
+      <div class="frow">
+        <div class="fg"><label>Grade *</label><select id="f_gr"><option value="">—</option><option value="9">9th</option><option value="10">10th</option><option value="11">11th</option><option value="12">12th</option></select></div>
+        <div class="fg"><label>Birthday</label><input type="date" id="f_bday" /></div>
+      </div>
+      <div class="frow">
+        <div class="fg"><label>Email *</label><input type="email" id="f_em" placeholder="athlete@example.com" /></div>
+        <div class="fg"><label>Phone *</label><input type="tel" id="f_ph" placeholder="(555) 555-5555" /></div>
+      </div>
+      <div class="frow">
+        <div class="fg"><label>Team *</label><select id="f_tm"><option value="">—</option><option>Boys</option><option>Girls</option></select></div>
+        <div class="fg"><label>Athlete Type *</label><select id="f_type"><option value="New Athlete">New Athlete</option><option value="Returning Athlete">Returning Athlete</option></select></div>
+      </div>
+      <div class="form-section-label">Season & Events</div>
+      <div class="fg"><label>Season(s) *</label>
+        <div class="check-row">
+          <label class="ck"><input type="checkbox" name="f_s" value="Cross Country" /> Cross Country</label>
+          <label class="ck"><input type="checkbox" name="f_s" value="Indoor Track & Field" /> Indoor T&F</label>
+          <label class="ck"><input type="checkbox" name="f_s" value="Outdoor Track & Field" /> Outdoor T&F</label>
+        </div>
+      </div>
+      <div class="frow">
+        <div class="fg"><label>Event Group</label><select id="f_ev"><option value="">—</option><option>Sprints</option><option>Distance</option><option>Throws</option></select></div>
+        <div class="fg"><label>Sprint Add-ons</label><div class="check-row" style="margin-top:6px;"><label class="ck"><input type="checkbox" name="f_sa" value="Hurdles" /> Hurdles</label><label class="ck"><input type="checkbox" name="f_sa" value="Jumps" /> Jumps</label></div></div>
+      </div>
+      <div class="form-section-label">Academic</div>
+      <div class="fg"><label>Middle School *</label><select id="f_ms"><option value="">Select...</option><option value="Brookland Middle">Brookland Middle</option><option value="Elko Middle">Elko Middle</option><option value="Fairfield Middle">Fairfield Middle</option><option value="George H. Moody Middle">George H. Moody Middle</option><option value="Holman Middle">Holman Middle</option><option value="Hungary Creek Middle">Hungary Creek Middle</option><option value="L. Douglas Wilder Middle">L. Douglas Wilder Middle</option><option value="Pocohontas Middle">Pocohontas Middle</option><option value="Quioccasin Middle">Quioccasin Middle</option><option value="John Rolfe Middle">John Rolfe Middle</option><option value="Short Pump Middle">Short Pump Middle</option><option value="Tuckahoe Middle">Tuckahoe Middle</option><option value="Other">Other</option></select></div>
+      <div class="fg hidden" id="f_ms_other_wrap"><label>Other Middle School *</label><input type="text" id="f_ms_other" placeholder="School name" /></div>
+      <div class="frow">
+        <div class="fg"><label>Specialty Center?</label><select id="f_spec"><option value="no">No</option><option value="yes">Yes</option></select></div>
+        <div class="fg hidden" id="f_spec_prog_wrap"><label>Program</label><select id="f_spec_prog"><option value="">Select...</option><option value="Advance College Academy">Advance College Academy</option><option value="International Baccalaureate">International Baccalaureate</option><option value="Spanish Language Immersion">Spanish Language Immersion</option></select></div>
+      </div>
+      <div class="form-section-label">Prior Activities</div>
+      <div class="fg"><label>Other activities this year?</label><select id="f_hact"><option value="no">No</option><option value="yes">Yes</option></select></div>
+      <div class="fg hidden" id="f_activities_wrap"><label>Select all that apply</label>
+        <div class="activities-grid">
+          <label class="ck"><input type="checkbox" name="f_act" value="Basketball" /> Basketball</label>
+          <label class="ck"><input type="checkbox" name="f_act" value="Competition Cheer" /> Competition Cheer</label>
+          <label class="ck"><input type="checkbox" name="f_act" value="Dance Team" /> Dance Team</label>
+          <label class="ck"><input type="checkbox" name="f_act" value="Debate" /> Debate</label>
+          <label class="ck"><input type="checkbox" name="f_act" value="Field Hockey" /> Field Hockey</label>
+          <label class="ck"><input type="checkbox" name="f_act" value="Football" /> Football</label>
+          <label class="ck"><input type="checkbox" name="f_act" value="Forensics" /> Forensics</label>
+          <label class="ck"><input type="checkbox" name="f_act" value="Golf" /> Golf</label>
+          <label class="ck"><input type="checkbox" name="f_act" value="Gymnastics" /> Gymnastics</label>
+          <label class="ck"><input type="checkbox" name="f_act" value="JROTC" /> JROTC</label>
+          <label class="ck"><input type="checkbox" name="f_act" value="Marching Band" /> Marching Band</label>
+          <label class="ck"><input type="checkbox" name="f_act" value="Sideline Cheer" /> Sideline Cheer</label>
+          <label class="ck"><input type="checkbox" name="f_act" value="Step Team" /> Step Team</label>
+          <label class="ck"><input type="checkbox" name="f_act" value="Swim" /> Swim</label>
+          <label class="ck"><input type="checkbox" name="f_act" value="Volleyball" /> Volleyball</label>
+          <label class="ck"><input type="checkbox" name="f_act" value="Wrestling" /> Wrestling</label>
+        </div>
+      </div>
+      <div class="form-section-label">Parent / Guardian</div>
+      <div class="fg"><label>Parent 1 Name *</label><input type="text" id="f_p1n" /></div>
+      <div class="frow">
+        <div class="fg"><label>Parent 1 Phone *</label><input type="tel" id="f_p1p" placeholder="(555) 555-5555" /></div>
+        <div class="fg"><label>Parent 1 Email *</label><input type="email" id="f_p1e" placeholder="parent@example.com" /></div>
+      </div>
+      <div class="fg"><label class="ck" style="text-transform:none;letter-spacing:normal;font-weight:500;"><input type="checkbox" id="f_add_p2" onchange="toggleP2()" /> Add second parent / guardian</label></div>
+      <div class="hidden" id="f_p2_wrap">
+        <div class="fg"><label>Parent 2 Name</label><input type="text" id="f_p2n" /></div>
+        <div class="frow">
+          <div class="fg"><label>Parent 2 Phone</label><input type="tel" id="f_p2p" placeholder="(555) 555-5555" /></div>
+          <div class="fg"><label>Parent 2 Email</label><input type="email" id="f_p2e" placeholder="parent@example.com" /></div>
+        </div>
+      </div>
+      <div class="form-section-label">Notes</div>
+      <div class="fg"><label>Additional Information <span style="font-weight:400;color:var(--text-muted)">(optional)</span></label>
+        <textarea id="f_notes" maxlength="256" rows="3" placeholder="Previous athletic experience..."></textarea>
+        <div style="text-align:right;font-size:10px;color:var(--text-muted);margin-top:3px;"><span id="f_notes_count">0</span>/256</div>
+      </div>
+      <div class="form-error hidden" id="athleteFormError"></div>
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeAthleteForm()">Cancel</button>
+        <button class="btn-orange" id="athleteFormSaveBtn"><i class="fa-solid fa-check"></i> Save Athlete</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- IMPORT MODAL -->
+<div class="overlay hidden" id="importOverlay">
+  <div class="modal">
+    <div class="modal-hd">
+      <div><div class="modal-title">Import CSV</div><div class="modal-sub">Bulk add athletes</div></div>
+      <button class="modal-x" onclick="closeOverlay('importOverlay')"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="template-bar">
+        <i class="fa-solid fa-file-csv"></i>
+        <div><div class="template-label">Need the format?</div><button class="btn-link" id="downloadTemplateBtn">Download CSV template</button></div>
+      </div>
+      <div class="upload-area" id="uploadArea">
+        <i class="fa-solid fa-cloud-arrow-up"></i>
+        <p>Drag & drop or <label class="btn-link" style="cursor:pointer;">browse<input type="file" id="csvFileInput" accept=".csv" style="display:none;" /></label></p>
+      </div>
+      <div class="hidden" id="importPreview">
+        <div class="preview-hd"><span id="previewCount"></span><button class="btn-link" onclick="clearImport()">Clear</button></div>
+        <div class="preview-scroll"><table class="preview-tbl" id="previewTable"></table></div>
+      </div>
+      <div class="form-error hidden" id="importError"></div>
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeOverlay('importOverlay')">Cancel</button>
+        <button class="btn-orange hidden" id="importSaveBtn"><i class="fa-solid fa-file-arrow-up"></i> Import</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DOSSIER WIZARD MODAL -->
+<div class="overlay hidden" id="dossierOverlay" onclick="overlayBgClick(event)">
+  <div class="dossier-modal" id="dossierModal">
+    <div id="dossierContent"></div>
+  </div>
+</div>
 
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 (async () => {
+
 const supabase = createClient(
   'https://kbewlrudpdqmvdsbljen.supabase.co',
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiZXdscnVkcGRxbXZkc2JsamVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM2ODkxNDQsImV4cCI6MjA4OTI2NTE0NH0.RYeII_T640_x4AVrThyYgy3nJcHfHc6iUVkWy2R9GgI'
 );
 
+// ── Constants ─────────────────────────────────────────────────────────────────
+const EV_COLOR = { Sprints:'ev-sprints', Distance:'ev-distance', Throws:'ev-throws' };
+const attState = {};
+const PAPERWORK_FIELDS = [
+  { key:'physical_exam',       label:'Physical Exam' },
+  { key:'activities_contract', label:'Activities Contract' },
+  { key:'concussion_form',     label:'Concussion Form' },
+  { key:'heat_illness_form',   label:'Heat Illness Form' },
+  { key:'cardiac_arrest_form', label:'Cardiac Arrest Form' },
+  { key:'emergency_card',      label:'Emergency Card' },
+  { key:'team_contract',       label:'Team Contract' },
+];
+
+// ── Auth ──────────────────────────────────────────────────────────────────────
 const { data: { session } } = await supabase.auth.getSession();
 if (!session) { window.location.href = '/dashboard'; return; }
-
+const { data: profile } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
 const email = session.user.email;
 document.getElementById('userEmail').textContent = email;
 document.getElementById('userAv').textContent = email.slice(0,2).toUpperCase();
 
+if (profile?.role === 'manager') {
+  document.getElementById('rosterBody').innerHTML = '<div class="loading-cell"><i class="fa-solid fa-lock"></i> Managers cannot view the full roster.</div>';
+  document.getElementById('rosterCount').textContent = '';
+  ['exportBtn','addAthleteBtn','importBtn'].forEach(id => document.getElementById(id).style.display = 'none');
+  return;
+}
+
+// ── Drawer ─────────────────────────────────────────────────────────────────────
 window.openDrawer  = () => { document.getElementById('sidebar').classList.add('open'); document.getElementById('drawerOverlay').classList.add('visible'); document.body.style.overflow='hidden'; };
 window.closeDrawer = () => { document.getElementById('sidebar').classList.remove('open'); document.getElementById('drawerOverlay').classList.remove('visible'); document.body.style.overflow=''; };
 document.getElementById('signoutBtn').addEventListener('click', async () => { await supabase.auth.signOut(); window.location.href = '/dashboard'; });
 
-const datePicker = document.getElementById('practiceDate');
-datePicker.value = new Date().toISOString().split('T')[0];
-datePicker.addEventListener('change', loadAttendance);
-document.getElementById('filterTeam').addEventListener('change', () => renderList(allAthletes.filter(teamFilter)));
-
+// ── Load ───────────────────────────────────────────────────────────────────────
 let allAthletes = [];
-let attendanceMap = {};
-let pendingChanges = {};
+let activeFilter = 'all';
 
-const { data: athletes } = await supabase.from('registrations').select('id,first_name,last_name,team,event_group,grade').order('last_name');
-allAthletes = athletes || [];
-await loadAttendance();
+async function loadRoster() {
+  const { data, error } = await supabase.from('athlete_summary').select('*').order('last_name');
+  if (error) { document.getElementById('rosterBody').innerHTML = `<div class="loading-cell">Error: ${error.message}</div>`; return; }
+  allAthletes = data || [];
+  applyFilters();
+}
+await loadRoster();
 
-function teamFilter(a) {
-  const tf = document.getElementById('filterTeam').value;
-  return !tf || a.team === tf;
+// ── Filters ────────────────────────────────────────────────────────────────────
+window.setFilter = (btn, filter) => {
+  document.querySelectorAll('.fpill').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  activeFilter = filter;
+  applyFilters();
+};
+document.getElementById('searchInput').addEventListener('input', applyFilters);
+
+function applyFilters() {
+  const search = document.getElementById('searchInput').value.toLowerCase();
+  const filtered = allAthletes.filter(a => {
+    if (activeFilter !== 'all') {
+      const [type, val] = activeFilter.split(':');
+      if (type === 'team'      && a.team !== val)                    return false;
+      if (type === 'status'    && a.status !== val)                  return false;
+      if (type === 'season'    && !(a.season||[]).includes(val))     return false;
+      if (type === 'paperwork' && a.paperwork_status !== val)        return false;
+    }
+    if (search) {
+      const name = `${a.first_name} ${a.last_name}`.toLowerCase();
+      if (!name.includes(search) && !(a.email||'').toLowerCase().includes(search)) return false;
+    }
+    return true;
+  });
+  renderTable(filtered);
 }
 
-async function loadAttendance() {
-  const date = datePicker.value;
-  const { data: records } = await supabase.from('attendance').select('*').eq('practice_date', date);
-  attendanceMap = {};
-  (records || []).forEach(r => { attendanceMap[r.athlete_id] = r; });
-  pendingChanges = {};
-  renderList(allAthletes.filter(teamFilter));
+// ── Badges ─────────────────────────────────────────────────────────────────────
+function paperworkBadge(status) {
+  if (status === 'No Physical')        return '<span class="badge badge-danger">No Physical</span>';
+  if (status === 'Missing Docs')       return '<span class="badge badge-warn">Missing Docs</span>';
+  if (status === 'Paperwork Complete') return '<span class="badge badge-ok">Complete</span>';
+  return '<span class="badge badge-neutral">—</span>';
+}
+function statusBadge(status) {
+  const map = { Active:'badge-active', Suspended:'badge-warn', Ineligible:'badge-danger', Quit:'badge-neutral', Cut:'badge-neutral' };
+  return `<span class="badge ${map[status]||'badge-neutral'}">${status||'Active'}</span>`;
 }
 
-const EV_COLOR = { Sprints:'ev-sp', Distance:'ev-di', Throws:'ev-th' };
+// ── Attendance ─────────────────────────────────────────────────────────────────
+function attClass(s) {
+  return { Present:'att-present', Late:'att-late', Excused:'att-excused', Unexcused:'att-unexcused' }[s] || '';
+}
+function attButtons(id, current) {
+  return ['P','L','E','U'].map((lbl, i) => {
+    const s = ['Present','Late','Excused','Unexcused'][i];
+    const cls = current === s ? attClass(s) + ' att-active' : '';
+    return `<button class="att-btn ${cls}" onclick="event.stopPropagation();markAttendance('${id}','${s}')">${lbl}</button>`;
+  }).join('');
+}
+async function markAttendance(athleteId, status) {
+  const prev = attState[athleteId];
+  const next  = prev === status ? null : status;
+  attState[athleteId] = next;
+  const attEl = document.getElementById(`att-${athleteId}`);
+  if (attEl) attEl.innerHTML = attButtons(athleteId, next);
+  const today = new Date().toISOString().split('T')[0];
+  if (next) {
+    await supabase.from('attendance').upsert([{ practice_date: today, athlete_id: athleteId, status: next }], { onConflict: 'practice_date,athlete_id' });
+  } else {
+    await supabase.from('attendance').delete().eq('practice_date', today).eq('athlete_id', athleteId);
+  }
+}
 
-function renderList(athletes) {
-  const body = document.getElementById('attBody');
-  if (!athletes.length) { body.innerHTML = '<div class="loading-cell">No athletes found.</div>'; return; }
-
-  body.innerHTML = athletes.map(a => {
-    const cur = pendingChanges[a.id]?.status || attendanceMap[a.id]?.status || '';
-    const note = pendingChanges[a.id]?.notes !== undefined ? pendingChanges[a.id].notes : (attendanceMap[a.id]?.notes || '');
-    const pending = pendingChanges[a.id] ? 'pending' : '';
-    return `<div class="att-row ${pending}" id="row-${a.id}">
-      <div class="att-av ${EV_COLOR[a.event_group]||'ev-def'}">${a.first_name[0]}${a.last_name[0]}</div>
-      <div class="att-name">${a.first_name} ${a.last_name}<span class="att-grade">Gr. ${a.grade}</span></div>
-      <div class="att-btns" id="att-${a.id}">
-        ${['Present','Late','Excused','Unexcused'].map((s,i) => {
-          const labels = ['P','L','E','U'];
-          const cls = cur === s ? `att-btn-active att-${s.toLowerCase()}` : '';
-          return `<button class="att-btn ${cls}" onclick="markStatus('${a.id}','${s}')">${labels[i]}</button>`;
-        }).join('')}
+// ── Render flight sheet ────────────────────────────────────────────────────────
+function renderTable(athletes) {
+  const list = document.getElementById('rosterBody');
+  document.getElementById('rosterCount').textContent = `${athletes.length} athlete${athletes.length !== 1 ? 's' : ''}`;
+  if (!athletes.length) { list.innerHTML = '<div class="loading-cell">No athletes match.</div>'; return; }
+  list.innerHTML = athletes.map(a => {
+    const dim = ['Quit','Cut'].includes(a.status) ? 'row-dim' : '';
+    const cur = attState[a.id] || null;
+    const ev  = a.event_group;
+    return `<div class="flight-row ${dim}" onclick="openDossier('${a.id}')">
+      <div class="av ${EV_COLOR[ev]||'ev-default'}">${a.first_name[0]}${a.last_name[0]}</div>
+      <div class="row-name">${a.first_name} ${a.last_name}</div>
+      <div class="row-badges">
+        ${statusBadge(a.status||'Active')}
+        ${ev ? `<span class="badge ${EV_COLOR[ev]}-badge">${ev}</span>` : ''}
+        ${paperworkBadge(a.paperwork_status)}
       </div>
-      <input class="att-note" type="text" placeholder="Note..." value="${note}" onchange="setNote('${a.id}',this.value)" />
+      <div class="row-att" id="att-${a.id}" onclick="event.stopPropagation()">${attButtons(a.id, cur)}</div>
+      <button class="row-edit-btn" onclick="event.stopPropagation();openDossier('${a.id}')"><i class="fa-solid fa-pen-to-square"></i></button>
     </div>`;
   }).join('');
-  updateSummary(athletes);
 }
 
-window.markStatus = (id, status) => {
-  if (!pendingChanges[id]) pendingChanges[id] = {};
-  const prev = pendingChanges[id].status || attendanceMap[id]?.status;
-  pendingChanges[id].status = prev === status ? null : status;
-  document.getElementById(`row-${id}`).classList.add('pending');
+// ── DOSSIER WIZARD ─────────────────────────────────────────────────────────────
+let currentAthleteId = null;
+let dossierPhase = 1;
+const DOSSIER_TOTAL = 8;
+const DOSSIER_PHASES = ['Info','Athlete','School','Athletics','Family','Status','Paperwork','Notes'];
 
-  const btns = document.getElementById(`att-${id}`);
-  const cur = pendingChanges[id].status;
-  btns.innerHTML = ['Present','Late','Excused','Unexcused'].map((s,i) => {
-    const labels = ['P','L','E','U'];
-    const cls = cur === s ? `att-btn-active att-${s.toLowerCase()}` : '';
-    return `<button class="att-btn ${cls}" onclick="markStatus('${id}','${s}')">${labels[i]}</button>`;
-  }).join('');
-  updateSummary(allAthletes.filter(teamFilter));
+window.overlayBgClick = (e) => { if (e.target === document.getElementById('dossierOverlay')) closeDossier(); };
+window.closeDossier = () => { document.getElementById('dossierOverlay').classList.add('hidden'); document.body.style.overflow = ''; };
+
+window.openDossier = async (id) => {
+  currentAthleteId = id;
+  const a = allAthletes.find(x => x.id === id);
+  if (!a) return;
+  dossierPhase = 1;
+  renderDossier(a);
+  document.getElementById('dossierOverlay').classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
 };
 
-window.setNote = (id, notes) => {
-  if (!pendingChanges[id]) pendingChanges[id] = {};
-  pendingChanges[id].notes = notes;
-  document.getElementById(`row-${id}`).classList.add('pending');
-};
+function dossierProgress() {
+  const pct = ((dossierPhase - 1) / (DOSSIER_TOTAL - 1)) * 100;
+  return `<div class="d-progress-bar"><div class="d-progress-fill" style="width:${pct}%"></div></div>
+    <div class="d-phase-indicators">${DOSSIER_PHASES.map((p,i) => `<span class="${i < dossierPhase ? 'active' : ''}">${p}</span>`).join('')}</div>`;
+}
 
-document.getElementById('saveAllBtn').addEventListener('click', async () => {
-  const btn = document.getElementById('saveAllBtn');
-  btn.disabled = true;
-  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
-  const date = datePicker.value;
-  const upserts = Object.entries(pendingChanges).map(([athleteId, changes]) => {
-    const existing = attendanceMap[athleteId];
-    return {
-      ...(existing ? { id: existing.id } : {}),
-      practice_date: date, athlete_id: athleteId,
-      status: changes.status || existing?.status || 'Present',
-      notes: changes.notes !== undefined ? changes.notes : (existing?.notes || null),
-    };
-  }).filter(u => u.status);
-  if (upserts.length) {
-    const { error } = await supabase.from('attendance').upsert(upserts, { onConflict: 'practice_date,athlete_id' });
-    if (!error) {
-      upserts.forEach(u => { attendanceMap[u.athlete_id] = { ...attendanceMap[u.athlete_id], ...u }; });
-      pendingChanges = {};
-      document.querySelectorAll('.att-row.pending').forEach(r => r.classList.remove('pending'));
+function dossierHeader(a) {
+  return `<div class="d-header">
+    <div class="d-brand-badge">JRTXCTF // TIGER NET</div>
+    <div class="d-athlete-name">${a.first_name} ${a.last_name}</div>
+    ${dossierProgress()}
+    <button class="d-close-btn" onclick="closeDossier()"><i class="fa-solid fa-xmark"></i></button>
+  </div>`;
+}
+
+function renderDossier(a) {
+  document.getElementById('dossierContent').innerHTML = dossierHeader(a) + `<div class="d-body" id="dossierBody">${buildPhase(a, dossierPhase)}</div>`;
+}
+
+function buildPhase(a, phase) {
+  const seasons = a.season || [];
+  const activities = a.activities || [];
+  const sprint_addons = a.sprint_addons || [];
+
+  if (phase === 1) return `
+    <div class="d-phase">
+      <h2 class="d-step-title">Athlete Overview</h2>
+      <p class="d-step-desc">Review and confirm this athlete's current information.</p>
+      <div class="d-info-grid">
+        <div class="d-info-row"><span>Name</span><span>${a.first_name} ${a.last_name}</span></div>
+        <div class="d-info-row"><span>Grade</span><span>${a.grade}</span></div>
+        <div class="d-info-row"><span>Team</span><span>${a.team}</span></div>
+        <div class="d-info-row"><span>Event Group</span><span>${a.event_group || '—'}</span></div>
+        <div class="d-info-row"><span>Status</span><span>${statusBadge(a.status||'Active')}</span></div>
+        <div class="d-info-row"><span>Paperwork</span><span>${paperworkBadge(a.paperwork_status)}</span></div>
+        <div class="d-info-row"><span>Season(s)</span><span>${seasons.join(', ') || '—'}</span></div>
+        <div class="d-info-row"><span>Email</span><span>${a.email}</span></div>
+        <div class="d-info-row"><span>Phone</span><span>${a.phone}</span></div>
+      </div>
+      <div class="d-action-row right"><button class="d-btn-primary" onclick="dossierNext()">Edit Information &rarr;</button></div>
+    </div>`;
+
+  if (phase === 2) return `
+    <div class="d-phase">
+      <h2 class="d-step-title">Athlete Details</h2>
+      <p class="d-step-desc">Basic information and contact details.</p>
+      <div class="d-input-grid">
+        <div class="d-input-group"><label>First Name</label><input type="text" id="d_fn" value="${a.first_name}" /></div>
+        <div class="d-input-group"><label>Last Name</label><input type="text" id="d_ln" value="${a.last_name}" /></div>
+      </div>
+      <div class="d-input-grid">
+        <div class="d-input-group"><label>Grade</label><select id="d_gr">${[9,10,11,12].map(g=>`<option value="${g}" ${a.grade==g?'selected':''}>${g}th Grade</option>`).join('')}</select></div>
+        <div class="d-input-group"><label>Birthday</label><input type="date" id="d_bday" value="${a.birthday||''}" /></div>
+      </div>
+      <div class="d-input-grid">
+        <div class="d-input-group"><label>Phone</label><input type="tel" id="d_ph" value="${a.phone||''}" placeholder="(555) 555-5555" /></div>
+        <div class="d-input-group"><label>Email</label><input type="email" id="d_em" value="${a.email||''}" placeholder="athlete@example.com" /></div>
+      </div>
+      <div class="d-input-grid">
+        <div class="d-input-group"><label>Team</label><select id="d_tm"><option value="Boys" ${a.team==='Boys'?'selected':''}>Boys</option><option value="Girls" ${a.team==='Girls'?'selected':''}>Girls</option></select></div>
+        <div class="d-input-group"><label>Athlete Type</label><select id="d_type"><option value="New Athlete" ${a.athlete_type==='New Athlete'?'selected':''}>New Athlete</option><option value="Returning Athlete" ${a.athlete_type==='Returning Athlete'?'selected':''}>Returning Athlete</option></select></div>
+      </div>
+      <div class="d-action-row space-between"><button class="d-btn-secondary" onclick="dossierPrev()">&larr; Back</button><button class="d-btn-primary" onclick="dossierNext()">Next: School &rarr;</button></div>
+    </div>`;
+
+  if (phase === 3) {
+    const ms = a.middle_school || '';
+    const isOther = ms === 'Other';
+    const isSpec = a.is_specialty;
+    const MIDDLE_SCHOOLS = ['Brookland Middle','Elko Middle','Fairfield Middle','George H. Moody Middle','Holman Middle','Hungary Creek Middle','L. Douglas Wilder Middle','Pocohontas Middle','Quioccasin Middle','John Rolfe Middle','Short Pump Middle','Tuckahoe Middle','Other'];
+    return `<div class="d-phase">
+      <h2 class="d-step-title">Academic Background</h2>
+      <p class="d-step-desc">School information and specialty programs.</p>
+      <div class="d-input-group">
+        <label>Middle School Attended</label>
+        <select id="d_ms" onchange="document.getElementById('d_ms_other_wrap').classList.toggle('hidden', this.value !== 'Other')">
+          <option value="">Select...</option>
+          ${MIDDLE_SCHOOLS.map(s=>`<option value="${s}" ${ms===s?'selected':''}>${s}</option>`).join('')}
+        </select>
+      </div>
+      <div class="d-input-group ${isOther ? '' : 'hidden'}" id="d_ms_other_wrap">
+        <label>Please specify</label><input type="text" id="d_ms_other" value="${a.other_middle_school||''}" placeholder="School name" />
+      </div>
+      <div class="d-highlight-panel">
+        <label class="d-long-label">Are you a student in a specialty center?</label>
+        <div class="d-radio-group">
+          <label class="d-radio-label"><input type="radio" name="d_spec" value="yes" ${isSpec?'checked':''} onchange="document.getElementById('d_spec_prog_wrap').classList.toggle('hidden', this.value!=='yes')" /> <span>Yes</span></label>
+          <label class="d-radio-label"><input type="radio" name="d_spec" value="no" ${!isSpec?'checked':''} onchange="document.getElementById('d_spec_prog_wrap').classList.add('hidden')" /> <span>No</span></label>
+        </div>
+      </div>
+      <div class="d-input-group ${isSpec ? '' : 'hidden'}" id="d_spec_prog_wrap">
+        <label>Program</label>
+        <select id="d_spec_prog">
+          <option value="">Select...</option>
+          ${['Advance College Academy','International Baccalaureate','Spanish Language Immersion'].map(p=>`<option value="${p}" ${a.specialty_program===p?'selected':''}>${p}</option>`).join('')}
+        </select>
+      </div>
+      <div class="d-action-row space-between"><button class="d-btn-secondary" onclick="dossierPrev()">&larr; Back</button><button class="d-btn-primary" onclick="dossierNext()">Next: Athletics &rarr;</button></div>
+    </div>`;
+  }
+
+  if (phase === 4) {
+    const ACTS = ['Basketball','Competition Cheer','Dance Team','Debate','Field Hockey','Football','Forensics','Golf','Gymnastics','JROTC','Marching Band','Sideline Cheer','Step Team','Swim','Volleyball','Wrestling'];
+    const hasAct = a.has_activities;
+    return `<div class="d-phase">
+      <h2 class="d-step-title">Athletic Profile</h2>
+      <p class="d-step-desc">Team and prior activity this academic year.</p>
+      <div class="d-highlight-panel">
+        <label class="d-long-label">Has this athlete participated in other sports or activities this year?</label>
+        <div class="d-radio-group">
+          <label class="d-radio-label"><input type="radio" name="d_hact" value="yes" ${hasAct?'checked':''} onchange="document.getElementById('d_acts_wrap').classList.toggle('hidden',false)" /> <span>Yes</span></label>
+          <label class="d-radio-label"><input type="radio" name="d_hact" value="no" ${!hasAct?'checked':''} onchange="document.getElementById('d_acts_wrap').classList.add('hidden')" /> <span>No</span></label>
+        </div>
+      </div>
+      <div class="d-input-group ${hasAct ? '' : 'hidden'}" id="d_acts_wrap">
+        <label>Select all that apply</label>
+        <div class="d-checkbox-grid">${ACTS.map(act=>`<label class="d-checkbox-label"><input type="checkbox" name="d_act" value="${act}" ${activities.includes(act)?'checked':''} /> <span>${act}</span></label>`).join('')}</div>
+      </div>
+      <div class="d-action-row space-between"><button class="d-btn-secondary" onclick="dossierPrev()">&larr; Back</button><button class="d-btn-primary" onclick="dossierNext()">Next: Family &rarr;</button></div>
+    </div>`;
+  }
+
+  if (phase === 5) {
+    const hasP2 = !!a.parent2_name;
+    return `<div class="d-phase">
+      <h2 class="d-step-title">Parent / Guardian</h2>
+      <p class="d-step-desc">Emergency contact information.</p>
+      <div class="d-input-group"><label>Parent / Guardian 1 Full Name</label><input type="text" id="d_p1n" value="${a.parent1_name||''}" /></div>
+      <div class="d-input-grid">
+        <div class="d-input-group"><label>Phone</label><input type="tel" id="d_p1p" value="${a.parent1_phone||''}" placeholder="(555) 555-5555" /></div>
+        <div class="d-input-group"><label>Email</label><input type="email" id="d_p1e" value="${a.parent1_email||''}" placeholder="parent@example.com" /></div>
+      </div>
+      <div class="d-toggle-container">
+        <label class="d-toggle-label"><input type="checkbox" id="d_add_p2" ${hasP2?'checked':''} onchange="document.getElementById('d_p2_wrap').classList.toggle('hidden', !this.checked)" /><span class="d-toggle-text">+ Add secondary contact</span></label>
+      </div>
+      <div class="d-highlight-panel ${hasP2 ? '' : 'hidden'}" id="d_p2_wrap">
+        <div class="d-input-group"><label>Parent / Guardian 2 Full Name</label><input type="text" id="d_p2n" value="${a.parent2_name||''}" /></div>
+        <div class="d-input-grid">
+          <div class="d-input-group"><label>Phone</label><input type="tel" id="d_p2p" value="${a.parent2_phone||''}" placeholder="(555) 555-5555" /></div>
+          <div class="d-input-group"><label>Email</label><input type="email" id="d_p2e" value="${a.parent2_email||''}" placeholder="parent2@example.com" /></div>
+        </div>
+      </div>
+      <div class="d-action-row space-between"><button class="d-btn-secondary" onclick="dossierPrev()">&larr; Back</button><button class="d-btn-primary" onclick="dossierNext()">Next: Status &rarr;</button></div>
+    </div>`;
+  }
+
+  if (phase === 6) {
+    const STATUS_OPTIONS = ['Active','Suspended','Ineligible','Quit','Cut'];
+    const curStatus = a.status || 'Active';
+    return `<div class="d-phase">
+      <h2 class="d-step-title">Athlete Status</h2>
+      <p class="d-step-desc">Set this athlete's current program status.</p>
+      <div class="d-status-grid">
+        ${STATUS_OPTIONS.map(s => {
+          const icons = { Active:'fa-circle-check', Suspended:'fa-circle-pause', Ineligible:'fa-circle-xmark', Quit:'fa-circle-minus', Cut:'fa-scissors' };
+          const colors = { Active:'status-active', Suspended:'status-warn', Ineligible:'status-danger', Quit:'status-neutral', Cut:'status-neutral' };
+          return `<label class="d-status-card">
+            <input type="radio" name="d_status" value="${s}" ${curStatus===s?'checked':''} class="d-hidden-radio" />
+            <div class="d-card-content">
+              <i class="fa-solid ${icons[s]} d-status-icon ${colors[s]}"></i>
+              <span class="d-status-label">${s}</span>
+            </div>
+          </label>`;
+        }).join('')}
+      </div>
+      <div class="d-input-group" style="margin-top:1.5rem;"><label>Status Notes (optional)</label><input type="text" id="d_status_notes" value="${a.status_notes||''}" placeholder="Reason for status change..." /></div>
+      <div class="d-action-row space-between"><button class="d-btn-secondary" onclick="dossierPrev()">&larr; Back</button><button class="d-btn-primary" onclick="dossierNext()">Next: Paperwork &rarr;</button></div>
+    </div>`;
+  }
+
+  if (phase === 7) {
+    return `<div class="d-phase">
+      <h2 class="d-step-title">Paperwork Checklist</h2>
+      <p class="d-step-desc">Mark off documents that have been received.</p>
+      <div class="d-paperwork-list">
+        ${PAPERWORK_FIELDS.map(f => {
+          const checked = a[f.key];
+          return `<label class="d-pw-item ${checked ? 'pw-complete' : 'pw-missing'}">
+            <input type="checkbox" name="d_pw" data-key="${f.key}" ${checked?'checked':''} onchange="this.closest('.d-pw-item').classList.toggle('pw-complete',this.checked);this.closest('.d-pw-item').classList.toggle('pw-missing',!this.checked)" />
+            <div class="d-pw-info">
+              <span class="d-pw-label">${f.label}</span>
+              <span class="d-pw-status">${checked ? '<i class="fa-solid fa-check"></i> Received' : '<i class="fa-solid fa-xmark"></i> Missing'}</span>
+            </div>
+          </label>`;
+        }).join('')}
+      </div>
+      <div class="d-action-row space-between"><button class="d-btn-secondary" onclick="dossierPrev()">&larr; Back</button><button class="d-btn-primary" onclick="dossierNext()">Next: Notes &rarr;</button></div>
+    </div>`;
+  }
+
+  if (phase === 8) {
+    return `<div class="d-phase">
+      <h2 class="d-step-title">Additional Notes</h2>
+      <p class="d-step-desc">Any additional information about this athlete.</p>
+      <div class="d-input-group">
+        <label>Notes <span style="font-weight:400;color:var(--text-muted)">(optional, max 256 chars)</span></label>
+        <textarea id="d_notes" maxlength="256" rows="5" placeholder="Previous athletic experience, injuries, anything else...">${a.notes||''}</textarea>
+        <div class="d-char-counter"><span id="d_notes_count">${(a.notes||'').length}</span> / 256</div>
+      </div>
+      <div class="d-form-error hidden" id="dossierError"></div>
+      <div class="d-action-row space-between">
+        <button class="d-btn-secondary" onclick="dossierPrev()">&larr; Back</button>
+        <button class="d-btn-primary" id="dossierSaveBtn" onclick="saveDossier()"><i class="fa-solid fa-floppy-disk"></i> Save Changes</button>
+      </div>
+    </div>`;
+  }
+  return '';
+}
+
+window.dossierNext = () => {
+  if (dossierPhase < DOSSIER_TOTAL) {
+    dossierPhase++;
+    const a = allAthletes.find(x => x.id === currentAthleteId);
+    document.getElementById('dossierBody').innerHTML = buildPhase(a, dossierPhase);
+    document.querySelector('.d-progress-fill').style.width = `${((dossierPhase-1)/(DOSSIER_TOTAL-1))*100}%`;
+    document.querySelectorAll('.d-phase-indicators span').forEach((s,i) => s.classList.toggle('active', i < dossierPhase));
+    if (dossierPhase === 8) {
+      const ta = document.getElementById('d_notes');
+      if (ta) ta.addEventListener('input', () => { document.getElementById('d_notes_count').textContent = ta.value.length; });
     }
   }
-  btn.disabled = false;
-  btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Save All';
-});
+};
+window.dossierPrev = () => {
+  if (dossierPhase > 1) {
+    dossierPhase--;
+    const a = allAthletes.find(x => x.id === currentAthleteId);
+    document.getElementById('dossierBody').innerHTML = buildPhase(a, dossierPhase);
+    document.querySelector('.d-progress-fill').style.width = `${((dossierPhase-1)/(DOSSIER_TOTAL-1))*100}%`;
+    document.querySelectorAll('.d-phase-indicators span').forEach((s,i) => s.classList.toggle('active', i < dossierPhase));
+  }
+};
 
-function updateSummary(athletes) {
-  const counts = { Present:0, Late:0, Excused:0, Unexcused:0, unmarked:0 };
-  athletes.forEach(a => {
-    const s = pendingChanges[a.id]?.status || attendanceMap[a.id]?.status;
-    if (!s) counts.unmarked++; else counts[s] = (counts[s]||0)+1;
+async function saveDossier() {
+  const btn = document.getElementById('dossierSaveBtn');
+  const errEl = document.getElementById('dossierError');
+  if (errEl) errEl.classList.add('hidden');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+
+  // Collect all data from all phases (read from DOM where available)
+  const get = id => { const el = document.getElementById(id); return el ? el.value.trim() : null; };
+  const getAll = name => [...document.querySelectorAll(`input[name="${name}"]:checked`)].map(i => i.value);
+
+  const regUpdate = {
+    first_name:    get('d_fn'),    last_name: get('d_ln'),
+    grade:         parseInt(get('d_gr')||'0')||null,
+    birthday:      get('d_bday')  || null,
+    phone:         get('d_ph'),    email:     get('d_em'),
+    team:          get('d_tm'),    athlete_type: get('d_type'),
+    middle_school: get('d_ms'),    other_middle_school: get('d_ms_other') || null,
+    is_specialty:  document.querySelector('input[name="d_spec"]:checked')?.value === 'yes',
+    specialty_program: get('d_spec_prog') || null,
+    has_activities: document.querySelector('input[name="d_hact"]:checked')?.value === 'yes',
+    activities:    getAll('d_act'),
+    parent1_name:  get('d_p1n'),   parent1_phone: get('d_p1p'), parent1_email: get('d_p1e'),
+    parent2_name:  get('d_p2n')  || null, parent2_phone: get('d_p2p') || null, parent2_email: get('d_p2e') || null,
+    notes:         get('d_notes') || null,
+  };
+
+  // Remove null keys to avoid overwriting with null
+  Object.keys(regUpdate).forEach(k => { if (regUpdate[k] === null || regUpdate[k] === '') delete regUpdate[k]; });
+
+  const { error: regErr } = await supabase.from('registrations').update(regUpdate).eq('id', currentAthleteId);
+  if (regErr) {
+    if (errEl) { errEl.textContent = regErr.message; errEl.classList.remove('hidden'); }
+    btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Save Changes';
+    return;
+  }
+
+  // Update athlete_records
+  const pwUpdate = {};
+  PAPERWORK_FIELDS.forEach(f => {
+    const cb = document.querySelector(`input[name="d_pw"][data-key="${f.key}"]`);
+    if (cb) pwUpdate[f.key] = cb.checked;
   });
-  document.getElementById('sumPresent').textContent   = counts.Present;
-  document.getElementById('sumLate').textContent      = counts.Late;
-  document.getElementById('sumExcused').textContent   = counts.Excused;
-  document.getElementById('sumUnexcused').textContent = counts.Unexcused;
-  document.getElementById('sumUnmarked').textContent  = counts.unmarked;
+  const statusEl = document.querySelector('input[name="d_status"]:checked');
+  if (statusEl) { pwUpdate.status = statusEl.value; pwUpdate.status_changed_by = session.user.id; }
+  const statusNotes = get('d_status_notes');
+  if (statusNotes !== null) pwUpdate.status_notes = statusNotes;
+
+  if (Object.keys(pwUpdate).length) {
+    await supabase.from('athlete_records').update(pwUpdate).eq('athlete_id', currentAthleteId);
+  }
+
+  await loadRoster();
+  closeDossier();
 }
 
-// Mobile float button
-if (window.innerWidth <= 768) document.getElementById('saveFloat').classList.remove('hidden');
-window.addEventListener('resize', () => {
-  document.getElementById('saveFloat').classList.toggle('hidden', window.innerWidth > 768);
+// ── Unified add form ───────────────────────────────────────────────────────────
+let formMode = 'add';
+window.closeOverlay = (id) => { document.getElementById(id).classList.add('hidden'); document.body.style.overflow = ''; };
+window.closeAthleteForm = () => closeOverlay('athleteFormOverlay');
+window.toggleP2 = () => { document.getElementById('f_p2_wrap').classList.toggle('hidden', !document.getElementById('f_add_p2').checked); };
+
+document.getElementById('f_ms').addEventListener('change', e => { document.getElementById('f_ms_other_wrap').classList.toggle('hidden', e.target.value !== 'Other'); });
+document.getElementById('f_spec').addEventListener('change', e => { document.getElementById('f_spec_prog_wrap').classList.toggle('hidden', e.target.value !== 'yes'); });
+document.getElementById('f_hact').addEventListener('change', e => { document.getElementById('f_activities_wrap').classList.toggle('hidden', e.target.value !== 'yes'); });
+document.getElementById('f_notes').addEventListener('input', e => { document.getElementById('f_notes_count').textContent = e.target.value.length; });
+
+function openAthleteForm(mode, athlete) {
+  formMode = mode;
+  document.getElementById('formModalTitle').textContent = mode === 'add' ? 'Add Athlete' : 'Edit Athlete';
+  document.getElementById('formModalSub').textContent   = mode === 'add' ? 'Manually add to roster' : 'Update athlete information';
+  document.getElementById('athleteFormSaveBtn').innerHTML = mode === 'add' ? '<i class="fa-solid fa-check"></i> Save Athlete' : '<i class="fa-solid fa-floppy-disk"></i> Save Changes';
+
+  // Reset
+  document.getElementById('athleteFormOverlay').querySelectorAll('input[type=text],input[type=email],input[type=tel],input[type=date],select,textarea').forEach(el => el.value = '');
+  document.querySelectorAll('input[name=f_s],input[name=f_sa],input[name=f_act]').forEach(c => c.checked = false);
+  document.getElementById('f_add_p2').checked = false;
+  ['f_p2_wrap','f_ms_other_wrap','f_spec_prog_wrap','f_activities_wrap'].forEach(id => document.getElementById(id).classList.add('hidden'));
+  document.getElementById('f_notes_count').textContent = '0';
+  document.getElementById('athleteFormError').classList.add('hidden');
+
+  if (mode === 'edit' && athlete) {
+    const set = (id, val) => { const el = document.getElementById(id); if (el && val !== null && val !== undefined) el.value = val; };
+    set('f_fn', athlete.first_name); set('f_ln', athlete.last_name);
+    set('f_gr', String(athlete.grade||'')); set('f_bday', athlete.birthday||'');
+    set('f_em', athlete.email); set('f_ph', athlete.phone);
+    set('f_tm', athlete.team); set('f_type', athlete.athlete_type||'New Athlete');
+    set('f_ev', athlete.event_group||''); set('f_ms', athlete.middle_school||'');
+    set('f_spec', athlete.is_specialty ? 'yes' : 'no');
+    set('f_hact', athlete.has_activities ? 'yes' : 'no');
+    set('f_notes', athlete.notes||'');
+    document.getElementById('f_notes_count').textContent = (athlete.notes||'').length;
+    set('f_p1n', athlete.parent1_name); set('f_p1p', athlete.parent1_phone); set('f_p1e', athlete.parent1_email);
+    if (athlete.parent2_name) {
+      document.getElementById('f_add_p2').checked = true;
+      document.getElementById('f_p2_wrap').classList.remove('hidden');
+      set('f_p2n', athlete.parent2_name); set('f_p2p', athlete.parent2_phone); set('f_p2e', athlete.parent2_email);
+    }
+    (athlete.season||[]).forEach(s => { const cb = document.querySelector(`input[name=f_s][value="${s}"]`); if (cb) cb.checked = true; });
+    (athlete.sprint_addons||[]).forEach(s => { const cb = document.querySelector(`input[name=f_sa][value="${s}"]`); if (cb) cb.checked = true; });
+    (athlete.activities||[]).forEach(v => { const cb = document.querySelector(`input[name=f_act][value="${v}"]`); if (cb) cb.checked = true; });
+    if (athlete.middle_school === 'Other') { document.getElementById('f_ms_other_wrap').classList.remove('hidden'); set('f_ms_other', athlete.other_middle_school); }
+    if (athlete.is_specialty) { document.getElementById('f_spec_prog_wrap').classList.remove('hidden'); set('f_spec_prog', athlete.specialty_program); }
+    if (athlete.has_activities) document.getElementById('f_activities_wrap').classList.remove('hidden');
+  }
+  document.getElementById('athleteFormOverlay').classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+}
+
+document.getElementById('addAthleteBtn').addEventListener('click', () => openAthleteForm('add'));
+
+document.getElementById('athleteFormSaveBtn').addEventListener('click', async () => {
+  const btn = document.getElementById('athleteFormSaveBtn');
+  const errEl = document.getElementById('athleteFormError');
+  errEl.classList.add('hidden');
+  const fn=document.getElementById('f_fn').value.trim(), ln=document.getElementById('f_ln').value.trim();
+  const gr=parseInt(document.getElementById('f_gr').value), tm=document.getElementById('f_tm').value;
+  const em=document.getElementById('f_em').value.trim(), ph=document.getElementById('f_ph').value.trim();
+  const p1n=document.getElementById('f_p1n').value.trim(), p1p=document.getElementById('f_p1p').value.trim(), p1e=document.getElementById('f_p1e').value.trim();
+  const ev=document.getElementById('f_ev').value||null, ms=document.getElementById('f_ms').value;
+  const mso=document.getElementById('f_ms_other').value.trim();
+  const spec=document.getElementById('f_spec').value==='yes', sp=document.getElementById('f_spec_prog').value||null;
+  const hact=document.getElementById('f_hact').value==='yes';
+  const acts=[...document.querySelectorAll('input[name=f_act]:checked')].map(i=>i.value);
+  const sa=[...document.querySelectorAll('input[name=f_sa]:checked')].map(i=>i.value);
+  const s=[...document.querySelectorAll('input[name=f_s]:checked')].map(i=>i.value);
+  const bday=document.getElementById('f_bday').value||null, type=document.getElementById('f_type').value;
+  const notes=document.getElementById('f_notes').value.trim()||null;
+  const p2n=document.getElementById('f_p2n').value.trim()||null, p2p=document.getElementById('f_p2p').value.trim()||null, p2e=document.getElementById('f_p2e').value.trim()||null;
+  if (!fn||!ln||!gr||!tm||!em||!ph||!p1n||!p1p||!p1e||!ms) { errEl.textContent='Please fill in all required fields.'; errEl.classList.remove('hidden'); return; }
+  if (!s.length) { errEl.textContent='Select at least one season.'; errEl.classList.remove('hidden'); return; }
+  if (ms==='Other'&&!mso) { errEl.textContent='Please specify the middle school.'; errEl.classList.remove('hidden'); return; }
+  btn.disabled=true; btn.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+  const record = { athlete_type:type, first_name:fn, last_name:ln, grade:gr, team:tm, email:em, phone:ph, season:s, event_group:ev, sprint_addons:sa, birthday:bday, middle_school:ms, other_middle_school:mso||null, is_specialty:spec, specialty_program:sp, has_activities:hact, activities:acts, parent1_name:p1n, parent1_phone:p1p, parent1_email:p1e, parent2_name:p2n, parent2_phone:p2p, parent2_email:p2e, notes };
+  let error;
+  if (formMode==='add') ({ error } = await supabase.from('registrations').insert([record]));
+  else ({ error } = await supabase.from('registrations').update(record).eq('id', currentAthleteId));
+  if (error) { errEl.textContent=error.message; errEl.classList.remove('hidden'); btn.disabled=false; btn.innerHTML=formMode==='add'?'<i class="fa-solid fa-check"></i> Save Athlete':'<i class="fa-solid fa-floppy-disk"></i> Save Changes'; return; }
+  await loadRoster();
+  closeAthleteForm();
+  btn.disabled=false; btn.innerHTML=formMode==='add'?'<i class="fa-solid fa-check"></i> Save Athlete':'<i class="fa-solid fa-floppy-disk"></i> Save Changes';
 });
-})();
+
+// ── Export CSV ─────────────────────────────────────────────────────────────────
+document.getElementById('exportBtn').addEventListener('click', () => {
+  const headers = ['Last Name','First Name','Grade','Birthday','Team','Season','Event','Status','Paperwork','Email','Phone','Parent','Parent Phone','Parent Email'];
+  const rows = allAthletes.map(a => [a.last_name,a.first_name,a.grade,a.birthday||'',a.team,(a.season||[]).join('; '),a.event_group||'',a.status||'',a.paperwork_status||'',a.email,a.phone,a.parent1_name,a.parent1_phone,a.parent1_email]);
+  const csv = [headers,...rows].map(r=>r.map(v=>`"${String(v||'').replace(/"/g,'""')}"`).join(',')).join('\n');
+  const url = URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  const a = document.createElement('a'); a.href=url; a.download=`jrtxctf-roster-${new Date().toISOString().split('T')[0]}.csv`; a.click();
+  URL.revokeObjectURL(url);
+});
+
+// ── Import CSV ─────────────────────────────────────────────────────────────────
+document.getElementById('importBtn').addEventListener('click', () => { document.getElementById('importOverlay').classList.remove('hidden'); document.body.style.overflow='hidden'; });
+document.getElementById('downloadTemplateBtn').addEventListener('click', () => {
+  const headers = ['first_name','last_name','grade','team','season (semicolon separated)','event_group','email','phone','parent1_name','parent1_phone','parent1_email'];
+  const example = ['Jane','Smith','10','Girls','Cross Country; Outdoor Track & Field','Distance','jane@example.com','(555) 555-5555','Bob Smith','(555) 555-5556','bob@example.com'];
+  const csv = [headers,example].map(r=>r.map(v=>`"${v}"`).join(',')).join('\n');
+  const url = URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  const a = document.createElement('a'); a.href=url; a.download='jrtxctf-import-template.csv'; a.click();
+  URL.revokeObjectURL(url);
+});
+const uploadArea = document.getElementById('uploadArea');
+uploadArea.addEventListener('dragover', e=>{e.preventDefault();uploadArea.classList.add('drag-over');});
+uploadArea.addEventListener('dragleave', ()=>uploadArea.classList.remove('drag-over'));
+uploadArea.addEventListener('drop', e=>{e.preventDefault();uploadArea.classList.remove('drag-over');const f=e.dataTransfer.files[0];if(f)parseCSV(f);});
+document.getElementById('csvFileInput').addEventListener('change', e=>{const f=e.target.files[0];if(f)parseCSV(f);});
+let parsedAthletes = [];
+function parseCSV(file) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    const lines = e.target.result.split('\n').filter(l=>l.trim());
+    const headers = lines[0].split(',').map(h=>h.replace(/"/g,'').trim().toLowerCase());
+    parsedAthletes = lines.slice(1).map(row => {
+      const vals = row.match(/(".*?"|[^,]+)/g)||[];
+      const clean = vals.map(v=>v.replace(/^"|"$/g,'').trim());
+      const obj = {}; headers.forEach((h,i)=>{obj[h]=clean[i]||'';});
+      const seasonRaw = obj['season (semicolon separated)']||obj['season']||'';
+      return { athlete_type:'New Athlete', first_name:obj.first_name, last_name:obj.last_name, grade:parseInt(obj.grade)||null, team:obj.team, season:seasonRaw.split(';').map(s=>s.trim()).filter(Boolean), event_group:obj.event_group||null, email:obj.email, phone:obj.phone, parent1_name:obj.parent1_name, parent1_phone:obj.parent1_phone, parent1_email:obj.parent1_email, middle_school:'Other', is_specialty:false, has_activities:false };
+    }).filter(a=>a.first_name&&a.last_name);
+    if (!parsedAthletes.length) { const e=document.getElementById('importError'); e.textContent='No valid rows found.'; e.classList.remove('hidden'); return; }
+    document.getElementById('previewCount').textContent = `${parsedAthletes.length} athlete${parsedAthletes.length!==1?'s':''} ready`;
+    document.getElementById('previewTable').innerHTML = `<thead><tr>${['Name','Grade','Team','Season(s)','Event','Email'].map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${parsedAthletes.map(a=>`<tr><td>${a.first_name} ${a.last_name}</td><td>${a.grade||'—'}</td><td>${a.team||'—'}</td><td>${(a.season||[]).join(', ')||'—'}</td><td>${a.event_group||'—'}</td><td>${a.email||'—'}</td></tr>`).join('')}</tbody>`;
+    document.getElementById('importPreview').classList.remove('hidden');
+    document.getElementById('importSaveBtn').classList.remove('hidden');
+    uploadArea.classList.add('hidden');
+  };
+  reader.readAsText(file);
+}
+window.clearImport = () => { parsedAthletes=[]; document.getElementById('importPreview').classList.add('hidden'); document.getElementById('importSaveBtn').classList.add('hidden'); uploadArea.classList.remove('hidden'); document.getElementById('csvFileInput').value=''; };
+document.getElementById('importSaveBtn').addEventListener('click', async () => {
+  const btn=document.getElementById('importSaveBtn');
+  btn.disabled=true; btn.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Importing...';
+  const { error } = await supabase.from('registrations').insert(parsedAthletes);
+  if (error) { const e=document.getElementById('importError'); e.textContent='Import failed: '+error.message; e.classList.remove('hidden'); btn.disabled=false; btn.innerHTML='<i class="fa-solid fa-file-arrow-up"></i> Import'; return; }
+  await loadRoster(); closeOverlay('importOverlay'); clearImport();
+  btn.disabled=false; btn.innerHTML='<i class="fa-solid fa-file-arrow-up"></i> Import';
+});
+
+})(); // end IIFE
 </script>
 </body>
 </html>
@@ -236,8 +827,8 @@ window.addEventListener('resize', () => {
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: var(--font-ui); background: var(--bg-dark); color: var(--text-main); min-height: 100vh; -webkit-font-smoothing: antialiased; }
-.bg-mesh { position: fixed; inset: 0; z-index: -1; background: linear-gradient(-45deg, #020617, #0f172a, var(--primary-blue), #020617); background-size: 400% 400%; animation: gradientBG 15s ease infinite; }
-@keyframes gradientBG { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+.bg-mesh { position: fixed; inset: 0; z-index: -1; background: linear-gradient(-45deg, #020617, #0f172a, var(--primary-blue), #020617); background-size: 400% 400%;  }
+background-position: 0% 50%; 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
 .layout { display: flex; min-height: 100vh; }
 .sidebar { width: var(--sidebar-w); background: rgba(2,6,23,0.9); backdrop-filter: blur(24px); border-right: 1px solid var(--border-light); display: flex; flex-direction: column; padding: 1.5rem 1rem; position: fixed; top:0;left:0;bottom:0;z-index:100; }
 .sb-brand { display: flex; align-items: center; gap: 10px; padding-bottom: 1.25rem; margin-bottom: 0.5rem; border-bottom: 1px solid var(--border-light); }
@@ -245,7 +836,7 @@ body { font-family: var(--font-ui); background: var(--bg-dark); color: var(--tex
 .sb-sub  { color: var(--text-muted); font-size: 10px; }
 .sb-section { font-size: 9px; color: rgba(255,255,255,0.3); letter-spacing: 2px; padding: 0.75rem 0.5rem 0.3rem; }
 .sb-nav { display: flex; flex-direction: column; gap: 2px; flex: 1; }
-.nav-item { display: flex; align-items: center; gap: 10px; padding: 0.6rem 0.75rem; border-radius: 10px; color: var(--text-muted); font-size: 13px; text-decoration: none; transition: all 0.15s; }
+.nav-item { display: flex; align-items: center; gap: 10px; padding: 0.6rem 0.75rem; border-radius: 10px; color: var(--text-muted); font-size: 13px; text-decoration: none;  }
 .nav-item:hover  { background: rgba(255,255,255,0.06); color: white; }
 .nav-item.active { background: rgba(255,103,0,0.15); color: var(--accent-orange); border: 1px solid rgba(255,103,0,0.2); }
 .nav-icon { width: 16px; text-align: center; }
@@ -253,57 +844,201 @@ body { font-family: var(--font-ui); background: var(--bg-dark); color: var(--tex
 .user-chip { display: flex; align-items: center; gap: 8px; padding: 0.4rem 0.5rem; background: var(--input-bg); border-radius: 8px; }
 .user-av { width: 24px; height: 24px; border-radius: 50%; background: var(--accent-orange); color: white; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; flex-shrink: 0; }
 .user-em { font-size: 10px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.signout-btn { display: flex; align-items: center; gap: 6px; padding: 0.5rem 0.75rem; background: var(--input-bg); border: 1px solid var(--border-light); border-radius: 8px; color: var(--text-muted); font-size: 12px; font-family: var(--font-ui); cursor: pointer; transition: all 0.15s; }
+.signout-btn { display: flex; align-items: center; gap: 6px; padding: 0.5rem 0.75rem; background: var(--input-bg); border: 1px solid var(--border-light); border-radius: 8px; color: var(--text-muted); font-size: 12px; font-family: var(--font-ui); cursor: pointer;  }
 .signout-btn:hover { background: rgba(255,255,255,0.08); color: white; }
-.main { margin-left: var(--sidebar-w); flex: 1; display: flex; flex-direction: column; }
+.main { margin-left: var(--sidebar-w); flex: 1; }
 .topbar { background: rgba(2,6,23,0.8); backdrop-filter: blur(24px); border-bottom: 1px solid var(--border-light); padding: 0 1.5rem; height: 60px; display: flex; align-items: center; justify-content: space-between; position: sticky; top:0; z-index:10; }
 .topbar-left { display: flex; align-items: baseline; gap: 10px; }
 .topbar h1 { font-size: 18px; font-weight: 700; color: white; letter-spacing: -0.02em; }
 .page-meta { font-size: 12px; color: var(--text-muted); }
-.topbar-right { display: flex; gap: 8px; align-items: center; }
-.date-picker, .team-filter { padding: 0.5rem 0.75rem; border: 1px solid var(--border-light); border-radius: 8px; font-size: 12px; font-family: var(--font-ui); background: var(--input-bg); color: var(--text-main); outline: none; }
-.date-picker:focus, .team-filter:focus { border-color: var(--accent-orange); }
-.date-picker::-webkit-calendar-picker-indicator { filter: invert(1); }
-.team-filter option { background: #0f172a; }
-.summary-bar { background: rgba(15,23,42,0.6); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border-light); padding: 0.75rem 1.5rem; display: flex; align-items: center; gap: 1px; }
-.sum-item { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 0.5rem; }
-.sum-num { font-size: 1.5rem; font-weight: 700; color: white; }
-.sum-label { font-size: 9px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-top: 2px; }
-.sum-label.present   { color: #4ade80; }
-.sum-label.late      { color: #fbbf24; }
-.sum-label.excused   { color: #818cf8; }
-.sum-label.unexcused { color: #f87171; }
-.sum-label.unmarked  { color: var(--text-muted); }
-.btn-save-all { display: flex; align-items: center; gap: 6px; padding: 0.6rem 1.25rem; background: var(--accent-orange); color: white; border: none; border-radius: 20px; font-size: 12px; font-weight: 700; font-family: var(--font-ui); cursor: pointer; margin-left: auto; box-shadow: 0 4px 15px rgba(255,103,0,0.3); transition: all 0.15s; }
-.btn-save-all:hover { background: var(--accent-orange-hover); transform: translateY(-1px); }
-.btn-save-all:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
-.att-list { padding: 1rem 1.5rem; display: flex; flex-direction: column; gap: 6px; }
+.topbar-right { display: flex; gap: 8px; }
+.tbtn { display: flex; align-items: center; gap: 5px; padding: 0 12px; height: 30px; border: 1px solid var(--border-light); border-radius: 20px; font-size: 12px; font-family: var(--font-ui); font-weight: 500; background: var(--input-bg); color: var(--text-main); cursor: pointer;  }
+.tbtn:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.25); }
+.tbtn.accent { background: var(--accent-orange); color: white; border-color: var(--accent-orange); }
+.tbtn.accent:hover { background: var(--accent-orange-hover); }
+.filter-bar { background: rgba(2,6,23,0.6); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border-light); padding: 0 1.5rem; height: 44px; display: flex; align-items: center; gap: 4px; overflow-x: auto; }
+.filter-bar::-webkit-scrollbar { display: none; }
+.fpill { display: flex; align-items: center; height: 22px; padding: 0 10px; border: 1px solid var(--border-light); border-radius: 999px; font-size: 11px; font-family: var(--font-ui); font-weight: 500; color: var(--text-muted); background: transparent; cursor: pointer; white-space: nowrap;  }
+.fpill:hover  { border-color: rgba(255,255,255,0.3); color: white; }
+.fpill.active { background: var(--accent-orange); color: white; border-color: var(--accent-orange); }
+.fsep { width: 1px; height: 14px; background: var(--border-light); margin: 0 2px; flex-shrink: 0; }
+.search-wrap { display: flex; align-items: center; gap: 6px; height: 24px; padding: 0 10px; border: 1px solid var(--border-light); border-radius: 999px; margin-left: auto; min-width: 160px; flex-shrink: 0; background: var(--input-bg); }
+.search-wrap i { font-size: 10px; color: var(--text-muted); }
+.search-wrap input { border: none; outline: none; font-size: 11px; font-family: var(--font-ui); color: var(--text-main); background: transparent; width: 100%; }
+.search-wrap input::placeholder { color: var(--text-muted); }
+
+/* Flight sheet */
+.flight-wrap { padding: 12px; }
+.flight-list { display: flex; flex-direction: column; gap: 6px; }
 .loading-cell { text-align: center; color: var(--text-muted); padding: 3rem; font-size: 13px; }
-.att-row { background: var(--card-bg); backdrop-filter: blur(12px); border: 1px solid var(--border-light); border-radius: 12px; padding: 10px 16px; display: flex; align-items: center; gap: 12px; transition: border-color 0.15s; }
-.att-row.pending { border-color: rgba(255,103,0,0.4); background: rgba(255,103,0,0.05); }
-.att-av { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; font-family: monospace; }
-.ev-sp  { background: rgba(250,238,218,0.15); color: #fbbf24; }
-.ev-di  { background: rgba(225,245,238,0.15); color: #34d399; }
-.ev-th  { background: rgba(250,236,231,0.15); color: #f87171; }
-.ev-def { background: rgba(238,237,254,0.15); color: #a78bfa; }
-.att-name { font-size: 13px; font-weight: 600; color: white; min-width: 160px; display: flex; align-items: center; gap: 8px; }
-.att-grade { font-size: 11px; color: var(--text-muted); font-weight: 400; }
-.att-btns { display: flex; gap: 4px; flex-shrink: 0; }
-.att-btn { width: 34px; height: 34px; border-radius: 8px; border: 1px solid var(--border-light); background: var(--input-bg); font-size: 11px; font-weight: 700; font-family: var(--font-ui); cursor: pointer; color: var(--text-muted); display: flex; align-items: center; justify-content: center; transition: all 0.12s; }
-.att-btn:hover { transform: translateY(-1px); }
-.att-btn-active { font-weight: 800; }
+.flight-row { background: var(--card-bg); backdrop-filter: blur(12px); border: 1px solid var(--border-light); border-radius: 12px; padding: 10px 14px; display: flex; align-items: center; gap: 12px; cursor: pointer;  }
+.flight-row:hover { border-color: rgba(255,255,255,0.25);  }
+.flight-row.row-dim { opacity: 0.35; }
+.av { width: 32px; height: 32px; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; font-family: monospace; }
+.ev-sprints  { background: rgba(250,238,218,0.15); color: #fbbf24; }
+.ev-distance { background: rgba(225,245,238,0.15); color: #34d399; }
+.ev-throws   { background: rgba(250,236,231,0.15); color: #f87171; }
+.ev-default  { background: rgba(238,237,254,0.15); color: #a78bfa; }
+.row-name { font-size: 13px; font-weight: 600; color: white; min-width: 160px; white-space: nowrap; }
+.row-badges { display: flex; align-items: center; gap: 5px; flex: 1; flex-wrap: wrap; }
+.row-att { display: flex; gap: 4px; flex-shrink: 0; }
+.att-btn { width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--border-light); background: var(--input-bg); font-size: 11px; font-weight: 700; font-family: var(--font-ui); cursor: pointer; color: var(--text-muted); display: flex; align-items: center; justify-content: center;  }
+.att-btn:hover {  }
 .att-present   { background: rgba(74,222,128,0.15); border-color: #4ade80; color: #4ade80; }
 .att-late      { background: rgba(251,191,36,0.15); border-color: #fbbf24; color: #fbbf24; }
 .att-excused   { background: rgba(129,140,248,0.15); border-color: #818cf8; color: #818cf8; }
 .att-unexcused { background: rgba(248,113,113,0.15); border-color: #f87171; color: #f87171; }
-.att-note { flex: 1; padding: 0.4rem 0.75rem; border: 1px solid var(--border-light); border-radius: 6px; font-size: 12px; font-family: var(--font-ui); background: var(--input-bg); color: var(--text-main); outline: none; transition: border-color 0.15s; }
-.att-note:focus { border-color: var(--accent-orange); }
-.att-note::placeholder { color: rgba(148,163,184,0.4); }
-.save-float { position: fixed; bottom: 1.5rem; right: 1.5rem; display: flex; align-items: center; gap: 6px; padding: 0.85rem 1.5rem; background: var(--accent-orange); color: white; border: none; border-radius: 30px; font-size: 13px; font-weight: 700; font-family: var(--font-ui); cursor: pointer; box-shadow: 0 4px 20px rgba(255,103,0,0.4); z-index: 50; }
-.save-float.hidden { display: none; }
+.att-active { font-weight: 800; }
+.row-edit-btn { width: 28px; height: 28px; border-radius: 6px; border: 1px solid var(--border-light); background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 11px; color: var(--text-muted);  flex-shrink: 0; }
+.row-edit-btn:hover { border-color: var(--accent-orange); color: var(--accent-orange); }
+
+/* Badges */
+.badge { display: inline-flex; align-items: center; height: 20px; padding: 0 8px; border-radius: 999px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+.badge-active  { background: rgba(74,222,128,0.15);  color: #4ade80; border: 1px solid rgba(74,222,128,0.3); }
+.badge-warn    { background: rgba(251,191,36,0.15);  color: #fbbf24; border: 1px solid rgba(251,191,36,0.3); }
+.badge-danger  { background: rgba(248,113,113,0.15); color: #f87171; border: 1px solid rgba(248,113,113,0.3); }
+.badge-ok      { background: rgba(74,222,128,0.15);  color: #4ade80; border: 1px solid rgba(74,222,128,0.3); }
+.badge-neutral { background: rgba(148,163,184,0.1);  color: var(--text-muted); border: 1px solid var(--border-light); }
+.ev-sprints-badge  { background: rgba(250,238,218,0.15); color: #fbbf24; border: 1px solid rgba(251,191,36,0.3); }
+.ev-distance-badge { background: rgba(225,245,238,0.15); color: #34d399; border: 1px solid rgba(52,211,153,0.3); }
+.ev-throws-badge   { background: rgba(250,236,231,0.15); color: #f87171; border: 1px solid rgba(248,113,113,0.3); }
+
+/* Modals */
+.overlay { position: fixed; inset: 0; background: rgba(2,6,23,0.85); backdrop-filter: blur(8px); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 1.5rem; }
+.overlay.hidden { display: none; }
+.modal { background: var(--card-bg); backdrop-filter: blur(24px); border: 1px solid var(--border-light); border-radius: 20px; width: 100%; max-width: 520px; max-height: 88vh; overflow-y: auto;  }
+.modal-form { max-width: 620px; }
+.modal-hd { display: flex; align-items: flex-start; justify-content: space-between; padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border-light); }
+.modal-title { font-size: 15px; font-weight: 700; color: white; }
+.modal-sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+.modal-x { width: 28px; height: 28px; border-radius: 6px; border: 1px solid var(--border-light); background: var(--input-bg); cursor: pointer; color: var(--text-muted); font-size: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.modal-x:hover { background: rgba(255,255,255,0.08); color: white; }
+.modal-body { padding: 1.25rem 1.5rem; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 8px; padding-top: 1rem; border-top: 1px solid var(--border-light); margin-top: 0.5rem; }
+.btn-cancel { padding: 0 14px; height: 32px; border: 1px solid var(--border-light); border-radius: 20px; background: transparent; font-size: 12px; font-family: var(--font-ui); color: var(--text-muted); cursor: pointer;  }
+.btn-cancel:hover { border-color: rgba(255,255,255,0.3); color: white; }
+.btn-orange { display: flex; align-items: center; gap: 5px; padding: 0 14px; height: 32px; border: none; border-radius: 20px; background: var(--accent-orange); color: white; font-size: 12px; font-family: var(--font-ui); font-weight: 600; cursor: pointer;   }
+.btn-orange:hover { background: var(--accent-orange-hover);  }
+.btn-orange:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+.btn-link { background: none; border: none; color: var(--accent-orange); font-size: 12px; font-family: var(--font-ui); cursor: pointer; text-decoration: underline; padding: 0; }
+
+/* Form in modals */
+.form-section-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--accent-orange); padding: 0.75rem 0 0.4rem; margin-top: 0.5rem; border-top: 1px solid var(--border-light); }
+.form-section-label:first-of-type { border-top: none; padding-top: 0; margin-top: 0; }
+.frow { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+.fg { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
+.frow .fg { margin-bottom: 0; }
+.fg label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; color: var(--text-muted); }
+.fg input, .fg select, .fg textarea { padding: 0 10px; height: 36px; border: 1px solid var(--border-light); border-radius: 8px; font-size: 12px; font-family: var(--font-ui); color: var(--text-main); background: var(--input-bg); outline: none;  width: 100%; }
+.fg textarea { height: auto; padding: 8px 10px; resize: vertical; }
+.fg input:focus, .fg select:focus, .fg textarea:focus { border-color: var(--accent-orange); box-shadow: 0 0 0 2px var(--focus-ring); }
+.fg select option { background: #0f172a; color: white; }
+.check-row { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 2px; }
+.ck { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--text-main); cursor: pointer; text-transform: none; letter-spacing: normal; font-weight: 400; }
+.ck input { accent-color: var(--accent-orange); width: 13px; height: 13px; }
+.activities-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 6px; margin-top: 6px; }
+.form-error { background: rgba(248,113,113,0.1); color: #f87171; border: 1px solid rgba(248,113,113,0.2); border-radius: 8px; padding: 8px 12px; font-size: 12px; margin-bottom: 8px; }
+.hidden { display: none !important; }
+
+/* Import */
+.template-bar { display: flex; align-items: center; gap: 10px; background: rgba(0,51,160,0.15); border: 1px solid rgba(0,51,160,0.3); border-radius: 10px; padding: 10px 14px; margin-bottom: 12px; }
+.template-bar i { color: #60a5fa; font-size: 18px; }
+.template-label { font-size: 10px; color: #60a5fa; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px; }
+.upload-area { border: 1.5px dashed var(--border-light); border-radius: 10px; padding: 2rem; text-align: center; color: var(--text-muted); font-size: 13px; margin-bottom: 12px;  }
+.upload-area i { font-size: 24px; display: block; margin-bottom: 8px; opacity: 0.4; }
+.upload-area.drag-over { border-color: var(--accent-orange); background: rgba(255,103,0,0.05); }
+.preview-hd { display: flex; justify-content: space-between; align-items: center; font-size: 12px; font-weight: 600; color: white; margin-bottom: 8px; }
+.preview-scroll { max-height: 220px; overflow-y: auto; border: 1px solid var(--border-light); border-radius: 8px; }
+.preview-tbl { width: 100%; border-collapse: collapse; font-size: 11px; }
+.preview-tbl th { padding: 6px 12px; background: var(--input-bg); font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; color: var(--text-muted); border-bottom: 1px solid var(--border-light); text-align: left; }
+.preview-tbl td { padding: 6px 12px; border-bottom: 1px solid var(--border-light); color: var(--text-main); }
+
+/* ── DOSSIER WIZARD ──────────────────────────────────────────────────────────── */
+.dossier-modal {
+  background: var(--card-bg); backdrop-filter: blur(24px);
+  border: 1px solid var(--border-light); border-radius: 20px;
+  width: 100%; max-width: 700px; max-height: 90vh; overflow-y: auto;
+  
+}
+.d-header { padding: 2rem 2rem 1.5rem; text-align: center; border-bottom: 1px solid var(--border-light); position: relative; }
+.d-brand-badge { color: var(--accent-orange); font-size: 0.75rem; font-weight: 700; letter-spacing: 2px; margin-bottom: 0.5rem; }
+.d-athlete-name { font-size: 1.5rem; font-weight: 800; color: white; letter-spacing: -0.02em; margin-bottom: 1.5rem; }
+.d-progress-bar { height: 4px; background: rgba(255,255,255,0.08); border-radius: 999px; margin-bottom: 0.75rem; overflow: hidden; }
+.d-progress-fill { height: 100%; background: var(--accent-orange); border-radius: 999px;   }
+.d-phase-indicators { display: flex; justify-content: space-between; font-size: 0.65rem; font-weight: 600; color: rgba(255,255,255,0.3); text-transform: uppercase; letter-spacing: 1px; }
+.d-phase-indicators span.active { color: white; }
+.d-close-btn { position: absolute; top: 1.25rem; right: 1.25rem; width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--border-light); background: var(--input-bg); cursor: pointer; color: var(--text-muted); font-size: 13px; display: flex; align-items: center; justify-content: center; }
+.d-close-btn:hover { background: rgba(255,255,255,0.08); color: white; }
+.d-body { padding: 2rem; }
+.d-phase {}
+.d-step-title { font-size: 1.25rem; font-weight: 700; color: white; margin-bottom: 0.25rem; }
+.d-step-desc { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.75rem; }
+.d-info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border: 1px solid var(--border-light); border-radius: 12px; overflow: hidden; margin-bottom: 1.5rem; }
+.d-info-row { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 1rem; border-bottom: 1px solid var(--border-light); font-size: 13px; }
+.d-info-row:nth-child(odd) { border-right: 1px solid var(--border-light); }
+.d-info-row:last-child, .d-info-row:nth-last-child(2):nth-child(odd) { border-bottom: none; }
+.d-info-row span:first-child { color: var(--text-muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+.d-info-row span:last-child { color: white; font-weight: 500; text-align: right; }
+.d-input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 1.25rem; }
+.d-input-group { display: flex; flex-direction: column; margin-bottom: 1.25rem; }
+.d-input-grid .d-input-group { margin-bottom: 0; }
+.d-input-group label { font-size: 0.8rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px; }
+.d-input-group input, .d-input-group select, .d-input-group textarea { width: 100%; padding: 0.875rem 1rem; border: 1px solid var(--border-light); border-radius: 10px; font-size: 0.95rem; font-family: var(--font-ui); background: var(--input-bg); color: white; outline: none;  }
+.d-input-group input:focus, .d-input-group select:focus, .d-input-group textarea:focus { border-color: var(--accent-orange); box-shadow: 0 0 0 2px var(--focus-ring); background: rgba(255,255,255,0.08); }
+.d-input-group select option { background: #0f172a; }
+.d-input-group textarea { resize: vertical; min-height: 120px; line-height: 1.6; }
+.d-highlight-panel { background: rgba(255,255,255,0.03); border: 1px solid var(--border-light); border-radius: 12px; padding: 1.25rem; margin: 1.25rem 0; }
+.d-long-label { color: white; font-size: 0.95rem; display: block; margin-bottom: 1rem; font-weight: 500; }
+.d-radio-group { display: flex; gap: 2rem; }
+.d-radio-label { display: flex; align-items: center; gap: 0.6rem; cursor: pointer; font-size: 0.95rem; font-weight: 500; color: var(--text-main); }
+.d-radio-label input { accent-color: var(--accent-orange); width: 1.1rem; height: 1.1rem; }
+.d-checkbox-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px,1fr)); gap: 0.75rem; margin-top: 0.75rem; }
+.d-checkbox-label { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.9rem; font-weight: 500; color: var(--text-main); }
+.d-checkbox-label input { accent-color: var(--accent-orange); width: 1.1rem; height: 1.1rem; }
+.d-toggle-container { margin: 1.25rem 0; }
+.d-toggle-label { cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem; }
+.d-toggle-text { color: var(--accent-orange); font-weight: 600; font-size: 0.9rem; }
+.d-action-row { display: flex; margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border-light); }
+.d-action-row.right { justify-content: flex-end; }
+.d-action-row.space-between { justify-content: space-between; }
+.d-btn-primary { font-size: 0.95rem; font-weight: 700; padding: 0.75rem 1.75rem; border-radius: 30px; cursor: pointer; border: none; font-family: var(--font-ui); background: var(--accent-orange); color: white;   }
+.d-btn-primary:hover { background: var(--accent-orange-hover);  }
+.d-btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+.d-btn-secondary { font-size: 0.95rem; font-weight: 600; padding: 0.75rem 1.75rem; border-radius: 30px; cursor: pointer; font-family: var(--font-ui); background: transparent; color: var(--text-muted); border: 1px solid var(--text-muted);  }
+.d-btn-secondary:hover { color: white; border-color: white; background: rgba(255,255,255,0.05); }
+.d-char-counter { text-align: right; font-size: 0.8rem; color: var(--text-muted); margin-top: 0.4rem; }
+.d-form-error { background: rgba(248,113,113,0.1); color: #f87171; border: 1px solid rgba(248,113,113,0.2); border-radius: 10px; padding: 0.75rem 1rem; font-size: 0.875rem; margin-bottom: 1rem; }
+
+/* Status phase */
+.d-status-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.75rem; }
+.d-status-card { position: relative; cursor: pointer; }
+.d-hidden-radio { opacity: 0; position: absolute; width: 0; height: 0; }
+.d-card-content { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; padding: 1rem 0.5rem; background: rgba(255,255,255,0.03); border: 1.5px solid var(--border-light); border-radius: 12px;  }
+.d-card-content:hover { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.3); }
+.d-hidden-radio:checked + .d-card-content { background: rgba(255,103,0,0.1); border-color: var(--accent-orange); box-shadow: 0 0 0 1px var(--accent-orange); }
+.d-status-icon { font-size: 1.5rem; }
+.d-status-label { font-size: 0.75rem; font-weight: 700; color: white; text-align: center; }
+.status-active  { color: #4ade80; }
+.status-warn    { color: #fbbf24; }
+.status-danger  { color: #f87171; }
+.status-neutral { color: var(--text-muted); }
+
+/* Paperwork phase */
+.d-paperwork-list { display: flex; flex-direction: column; gap: 8px; }
+.d-pw-item { display: flex; align-items: center; gap: 12px; padding: 1rem 1.25rem; border-radius: 10px; border: 1px solid; cursor: pointer;  }
+.d-pw-item.pw-complete { background: rgba(74,222,128,0.08); border-color: rgba(74,222,128,0.3); }
+.d-pw-item.pw-missing  { background: rgba(248,113,113,0.08); border-color: rgba(248,113,113,0.2); }
+.d-pw-item input { accent-color: var(--accent-orange); width: 1.1rem; height: 1.1rem; flex-shrink: 0; }
+.d-pw-info { display: flex; flex-direction: column; }
+.d-pw-label  { font-size: 13px; font-weight: 600; color: white; }
+.d-pw-status { font-size: 11px; margin-top: 2px; }
+.pw-complete .d-pw-status { color: #4ade80; }
+.pw-missing  .d-pw-status { color: #f87171; }
+
+/* Mobile */
 .mobile-topbar { display: none; position: fixed; top:0;left:0;right:0; z-index:200; background: rgba(2,6,23,0.95); backdrop-filter: blur(24px); border-bottom: 1px solid var(--border-light); padding: 0 1.25rem; height: 56px; align-items: center; justify-content: space-between; }
-.mobile-brand { display: flex; align-items: center; gap: 8px; color: white; font-size: 13px; font-weight: 700; letter-spacing: 1.5px; }
-.hamburger { background: none; border: none; color: var(--text-muted); font-size: 18px; cursor: pointer; }
+.mobile-brand  { display: flex; align-items: center; gap: 8px; color: white; font-size: 13px; font-weight: 700; letter-spacing: 1.5px; }
+.hamburger     { background: none; border: none; color: var(--text-muted); font-size: 18px; cursor: pointer; }
 .drawer-overlay { display: none; position: fixed; inset:0; z-index:99; background: rgba(2,6,23,0.7); backdrop-filter: blur(4px); }
 .drawer-overlay.visible { display: block; }
 @media (max-width: 768px) {
@@ -311,11 +1046,15 @@ body { font-family: var(--font-ui); background: var(--bg-dark); color: var(--tex
   .sidebar { transform: translateX(-100%); transition: transform 0.25s ease; top:0; z-index:300; }
   .sidebar.open { transform: translateX(0); }
   .main { margin-left: 0; padding-top: 56px; }
-  .topbar { top: 56px; flex-direction: column; height: auto; padding: 0.75rem 1rem; gap: 0.5rem; align-items: flex-start; }
-  .topbar-right { width: 100%; }
-  .att-list { padding: 0.75rem; }
-  .att-row { flex-wrap: wrap; }
-  .att-note { width: 100%; }
-  .btn-save-all { display: none; }
+  .topbar { top: 56px; }
+  .frow { grid-template-columns: 1fr; }
+  .d-input-grid { grid-template-columns: 1fr; }
+  .d-status-grid { grid-template-columns: repeat(3,1fr); }
+  .dossier-modal { max-width: 100%; border-radius: 16px 16px 0 0; margin-top: auto; }
+  .overlay { align-items: flex-end; padding: 0; }
+  .row-name { min-width: 120px; }
+  .row-badges { display: none; }
+  .d-info-grid { grid-template-columns: 1fr; }
+  .d-info-row:nth-child(odd) { border-right: none; }
 }
 </style>

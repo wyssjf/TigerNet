@@ -88,9 +88,9 @@
     position: fixed; inset: 0; z-index: -1;
     background: linear-gradient(-45deg, #020617, #0f172a, var(--primary-blue), #020617);
     background-size: 400% 400%;
-    animation: gradientBG 15s ease infinite;
+    
   }
-  @keyframes gradientBG { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+   50%{background-position:100% 50%} 100%{background-position:0% 50%} }
   .page { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 2rem 1rem; }
   .glass-card {
     background: var(--card-bg); width: 100%; max-width: 420px;
@@ -107,10 +107,10 @@
   .subtitle { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 2rem; }
   .input-group { display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 1.25rem; }
   label { font-size: 0.8rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
-  input { padding: 1rem; border: 1px solid var(--border-light); border-radius: 10px; font-size: 0.95rem; font-family: var(--font-ui); background: var(--input-bg); color: var(--text-main); outline: none; transition: all 0.2s; }
+  input { padding: 1rem; border: 1px solid var(--border-light); border-radius: 10px; font-size: 0.95rem; font-family: var(--font-ui); background: var(--input-bg); color: var(--text-main); outline: none;  }
   input:focus { border-color: var(--accent-orange); box-shadow: 0 0 0 2px var(--focus-ring); background: rgba(255,255,255,0.1); }
   .error-msg { color: #f87171; font-size: 0.85rem; min-height: 1.2rem; margin-bottom: 0.75rem; }
-  .btn-signin { width: 100%; padding: 1rem; background: var(--accent-orange); color: white; border: none; border-radius: 30px; font-size: 1rem; font-weight: 700; font-family: var(--font-ui); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem; transition: all 0.2s; box-shadow: 0 4px 15px rgba(255,103,0,0.3); }
-  .btn-signin:hover { background: var(--accent-orange-hover); transform: translateY(-2px); }
+  .btn-signin { width: 100%; padding: 1rem; background: var(--accent-orange); color: white; border: none; border-radius: 30px; font-size: 1rem; font-weight: 700; font-family: var(--font-ui); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem;   }
+  .btn-signin:hover { background: var(--accent-orange-hover);  }
   .btn-signin:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 </style>
