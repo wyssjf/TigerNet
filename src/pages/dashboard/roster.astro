@@ -287,6 +287,7 @@ const supabase = createClient(
 );
 
 const EV_COLOR = { Sprints:'ev-sprints', Distance:'ev-distance', Throws:'ev-throws' };
+const attState = {};
 
 // ── Constants (declared early so all functions can access them) ──────────────
 const PAPERWORK_FIELDS = [
@@ -381,7 +382,6 @@ function statusBadge(status) {
 }
 
 // Attendance state: athleteId -> current status or null
-const attState = {};
 
 function attClass(status) {
   return { Present:'att-present', Late:'att-late', Excused:'att-excused', Unexcused:'att-unexcused' }[status] || '';
