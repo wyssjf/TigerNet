@@ -91,49 +91,155 @@
   </main>
 </div>
 
-<!-- ADD MODAL -->
-<div class="overlay hidden" id="addOverlay">
-  <div class="modal">
+<!-- ADD / EDIT MODAL (shared) -->
+<div class="overlay hidden" id="athleteFormOverlay">
+  <div class="modal modal-form">
     <div class="modal-hd">
-      <div><div class="modal-title">Add Athlete</div><div class="modal-sub">Manually add to roster</div></div>
-      <button class="modal-x" onclick="closeOverlay('addOverlay')"><i class="fa-solid fa-xmark"></i></button>
+      <div><div class="modal-title" id="formModalTitle">Add Athlete</div><div class="modal-sub" id="formModalSub">Manually add to roster</div></div>
+      <button class="modal-x" onclick="closeAthleteForm()"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <div class="modal-body">
+
+      <div class="form-section-label">Athlete Details</div>
       <div class="frow">
-        <div class="fg"><label>First Name *</label><input type="text" id="a_fn" /></div>
-        <div class="fg"><label>Last Name *</label><input type="text" id="a_ln" /></div>
+        <div class="fg"><label>First Name *</label><input type="text" id="f_fn" /></div>
+        <div class="fg"><label>Last Name *</label><input type="text" id="f_ln" /></div>
       </div>
       <div class="frow">
         <div class="fg"><label>Grade *</label>
-          <select id="a_gr"><option value="">—</option><option>9</option><option>10</option><option>11</option><option>12</option></select>
+          <select id="f_gr">
+            <option value="">—</option>
+            <option value="9">9th Grade</option>
+            <option value="10">10th Grade</option>
+            <option value="11">11th Grade</option>
+            <option value="12">12th Grade</option>
+          </select>
         </div>
+        <div class="fg"><label>Birthday</label><input type="date" id="f_bday" /></div>
+      </div>
+      <div class="frow">
+        <div class="fg"><label>Athlete Email *</label><input type="email" id="f_em" placeholder="athlete@example.com" /></div>
+        <div class="fg"><label>Athlete Phone *</label><input type="tel" id="f_ph" placeholder="(555) 555-5555" /></div>
+      </div>
+      <div class="frow">
         <div class="fg"><label>Team *</label>
-          <select id="a_tm"><option value="">—</option><option>Boys</option><option>Girls</option></select>
+          <select id="f_tm"><option value="">—</option><option>Boys</option><option>Girls</option></select>
+        </div>
+        <div class="fg"><label>Athlete Type *</label>
+          <select id="f_type"><option value="New Athlete">New Athlete</option><option value="Returning Athlete">Returning Athlete</option></select>
         </div>
       </div>
+
+      <div class="form-section-label">Season &amp; Events</div>
       <div class="fg"><label>Season(s) *</label>
         <div class="check-row">
-          <label class="ck"><input type="checkbox" name="a_s" value="Cross Country" /> Cross Country</label>
-          <label class="ck"><input type="checkbox" name="a_s" value="Indoor Track & Field" /> Indoor T&F</label>
-          <label class="ck"><input type="checkbox" name="a_s" value="Outdoor Track & Field" /> Outdoor T&F</label>
+          <label class="ck"><input type="checkbox" name="f_s" value="Cross Country" /> Cross Country</label>
+          <label class="ck"><input type="checkbox" name="f_s" value="Indoor Track & Field" /> Indoor T&F</label>
+          <label class="ck"><input type="checkbox" name="f_s" value="Outdoor Track & Field" /> Outdoor T&F</label>
         </div>
       </div>
-      <div class="fg"><label>Event Group</label>
-        <select id="a_ev"><option value="">—</option><option>Sprints</option><option>Distance</option><option>Throws</option></select>
-      </div>
       <div class="frow">
-        <div class="fg"><label>Athlete Email *</label><input type="email" id="a_em" /></div>
-        <div class="fg"><label>Athlete Phone *</label><input type="tel" id="a_ph" /></div>
+        <div class="fg"><label>Event Group</label>
+          <select id="f_ev"><option value="">—</option><option>Sprints</option><option>Distance</option><option>Throws</option></select>
+        </div>
+        <div class="fg"><label>Sprint Add-ons</label>
+          <div class="check-row" style="margin-top:6px;">
+            <label class="ck"><input type="checkbox" name="f_sa" value="Hurdles" /> Hurdles</label>
+            <label class="ck"><input type="checkbox" name="f_sa" value="Jumps" /> Jumps</label>
+          </div>
+        </div>
       </div>
-      <div class="fg"><label>Parent Name *</label><input type="text" id="a_p1n" /></div>
+
+      <div class="form-section-label">Academic Background</div>
+      <div class="fg"><label>Middle School *</label>
+        <select id="f_ms">
+          <option value="">Select Middle School...</option>
+          <option value="Brookland Middle">Brookland Middle</option>
+          <option value="Elko Middle">Elko Middle</option>
+          <option value="Fairfield Middle">Fairfield Middle</option>
+          <option value="George H. Moody Middle">George H. Moody Middle</option>
+          <option value="Holman Middle">Holman Middle</option>
+          <option value="Hungary Creek Middle">Hungary Creek Middle</option>
+          <option value="L. Douglas Wilder Middle">L. Douglas Wilder Middle</option>
+          <option value="Pocohontas Middle">Pocohontas Middle</option>
+          <option value="Quioccasin Middle">Quioccasin Middle</option>
+          <option value="John Rolfe Middle">John Rolfe Middle</option>
+          <option value="Short Pump Middle">Short Pump Middle</option>
+          <option value="Tuckahoe Middle">Tuckahoe Middle</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div class="fg hidden" id="f_ms_other_wrap"><label>Other Middle School *</label><input type="text" id="f_ms_other" placeholder="School name" /></div>
       <div class="frow">
-        <div class="fg"><label>Parent Phone *</label><input type="tel" id="a_p1p" /></div>
-        <div class="fg"><label>Parent Email *</label><input type="email" id="a_p1e" /></div>
+        <div class="fg"><label>Specialty Center?</label>
+          <select id="f_spec"><option value="no">No</option><option value="yes">Yes</option></select>
+        </div>
+        <div class="fg hidden" id="f_spec_prog_wrap"><label>Program</label>
+          <select id="f_spec_prog">
+            <option value="">Select...</option>
+            <option value="Advance College Academy">Advance College Academy</option>
+            <option value="International Baccalaureate">International Baccalaureate</option>
+            <option value="Spanish Language Immersion">Spanish Language Immersion</option>
+          </select>
+        </div>
       </div>
-      <div class="form-error hidden" id="addError"></div>
+
+      <div class="form-section-label">Prior Activities</div>
+      <div class="fg"><label>Has participated in other activities this year?</label>
+        <select id="f_hact"><option value="no">No</option><option value="yes">Yes</option></select>
+      </div>
+      <div class="fg hidden" id="f_activities_wrap">
+        <label>Select all that apply</label>
+        <div class="activities-grid">
+          <label class="ck"><input type="checkbox" name="f_act" value="Basketball" /> Basketball</label>
+          <label class="ck"><input type="checkbox" name="f_act" value="Competition Cheer" /> Competition Cheer</label>
+          <label class="ck"><input type="checkbox" name="f_act" value="Dance Team" /> Dance Team</label>
+          <label class="ck"><input type="checkbox" name="f_act" value="Debate" /> Debate</label>
+          <label class="ck"><input type="checkbox" name="f_act" value="Field Hockey" /> Field Hockey</label>
+          <label class="ck"><input type="checkbox" name="f_act" value="Football" /> Football</label>
+          <label class="ck"><input type="checkbox" name="f_act" value="Forensics" /> Forensics</label>
+          <label class="ck"><input type="checkbox" name="f_act" value="Golf" /> Golf</label>
+          <label class="ck"><input type="checkbox" name="f_act" value="Gymnastics" /> Gymnastics</label>
+          <label class="ck"><input type="checkbox" name="f_act" value="JROTC" /> JROTC</label>
+          <label class="ck"><input type="checkbox" name="f_act" value="Marching Band" /> Marching Band</label>
+          <label class="ck"><input type="checkbox" name="f_act" value="Sideline Cheer" /> Sideline Cheer</label>
+          <label class="ck"><input type="checkbox" name="f_act" value="Step Team" /> Step Team</label>
+          <label class="ck"><input type="checkbox" name="f_act" value="Swim" /> Swim</label>
+          <label class="ck"><input type="checkbox" name="f_act" value="Volleyball" /> Volleyball</label>
+          <label class="ck"><input type="checkbox" name="f_act" value="Wrestling" /> Wrestling</label>
+        </div>
+      </div>
+
+      <div class="form-section-label">Parent / Guardian</div>
+      <div class="fg"><label>Parent / Guardian 1 Name *</label><input type="text" id="f_p1n" /></div>
+      <div class="frow">
+        <div class="fg"><label>Parent 1 Phone *</label><input type="tel" id="f_p1p" placeholder="(555) 555-5555" /></div>
+        <div class="fg"><label>Parent 1 Email *</label><input type="email" id="f_p1e" placeholder="parent@example.com" /></div>
+      </div>
+      <div class="fg">
+        <label class="ck" style="text-transform:none;letter-spacing:normal;font-weight:500;">
+          <input type="checkbox" id="f_add_p2" onchange="toggleP2()" /> Add second parent / guardian
+        </label>
+      </div>
+      <div class="hidden" id="f_p2_wrap">
+        <div class="fg"><label>Parent / Guardian 2 Name</label><input type="text" id="f_p2n" /></div>
+        <div class="frow">
+          <div class="fg"><label>Parent 2 Phone</label><input type="tel" id="f_p2p" placeholder="(555) 555-5555" /></div>
+          <div class="fg"><label>Parent 2 Email</label><input type="email" id="f_p2e" placeholder="parent@example.com" /></div>
+        </div>
+      </div>
+
+      <div class="form-section-label">Notes</div>
+      <div class="fg">
+        <label>Additional Information <span style="font-weight:400;color:var(--muted)">(optional, max 256 chars)</span></label>
+        <textarea id="f_notes" maxlength="256" rows="3" placeholder="Previous athletic experience, anything else we should know..."></textarea>
+        <div style="text-align:right;font-size:10px;color:var(--muted);margin-top:3px;"><span id="f_notes_count">0</span>/256</div>
+      </div>
+
+      <div class="form-error hidden" id="athleteFormError"></div>
       <div class="modal-actions">
-        <button class="btn-cancel" onclick="closeOverlay('addOverlay')">Cancel</button>
-        <button class="btn-primary" id="saveAddBtn"><i class="fa-solid fa-check"></i> Save Athlete</button>
+        <button class="btn-cancel" onclick="closeAthleteForm()">Cancel</button>
+        <button class="btn-primary" id="athleteFormSaveBtn"><i class="fa-solid fa-check"></i> Save Athlete</button>
       </div>
     </div>
   </div>
@@ -451,14 +557,8 @@ function buildDossierEdit(a) {
 window.switchToDossierEdit = () => {
   const a = allAthletes.find(x => x.id === currentAthleteId);
   if (!a) return;
-  document.getElementById('dossierContent').innerHTML = buildDossierEdit(a);
-  // Set grade and team selects correctly after render
-  const grSel = document.getElementById('e_gr');
-  const tmSel = document.getElementById('e_tm');
-  if (grSel) grSel.value = String(a.grade);
-  if (tmSel) tmSel.value = a.team;
-
-  document.getElementById('saveDossierBtn').addEventListener('click', saveDossier);
+  closeDossier();
+  openAthleteForm('edit', a);
 };
 
 window.switchToDossierView = (id) => {
@@ -538,49 +638,168 @@ async function saveDossier() {
 // ── Add athlete ───────────────────────────────────────────────────────────────
 window.closeOverlay = (id) => { document.getElementById(id).classList.add('hidden'); document.body.style.overflow = ''; };
 
-document.getElementById('addAthleteBtn').addEventListener('click', () => {
-  document.getElementById('addOverlay').classList.remove('hidden');
+// ── Unified athlete form (add + edit) ────────────────────────────────────────
+let formMode = 'add'; // 'add' or 'edit'
+
+function openAthleteForm(mode, athlete) {
+  formMode = mode;
+  const title = document.getElementById('formModalTitle');
+  const sub   = document.getElementById('formModalSub');
+  title.textContent = mode === 'add' ? 'Add Athlete' : 'Edit Athlete';
+  sub.textContent   = mode === 'add' ? 'Manually add to roster' : 'Update athlete information';
+  document.getElementById('athleteFormSaveBtn').innerHTML = mode === 'add'
+    ? '<i class="fa-solid fa-check"></i> Save Athlete'
+    : '<i class="fa-solid fa-floppy-disk"></i> Save Changes';
+
+  // Reset form
+  document.getElementById('athleteFormOverlay').querySelectorAll('input[type=text],input[type=email],input[type=tel],input[type=date],select,textarea').forEach(el => el.value = '');
+  document.querySelectorAll('input[name=f_s],input[name=f_sa],input[name=f_act]').forEach(c => c.checked = false);
+  document.getElementById('f_add_p2').checked = false;
+  document.getElementById('f_p2_wrap').classList.add('hidden');
+  document.getElementById('f_ms_other_wrap').classList.add('hidden');
+  document.getElementById('f_spec_prog_wrap').classList.add('hidden');
+  document.getElementById('f_activities_wrap').classList.add('hidden');
+  document.getElementById('f_notes_count').textContent = '0';
+  document.getElementById('athleteFormError').classList.add('hidden');
+
+  if (mode === 'edit' && athlete) {
+    document.getElementById('f_fn').value    = athlete.first_name || '';
+    document.getElementById('f_ln').value    = athlete.last_name  || '';
+    document.getElementById('f_gr').value    = String(athlete.grade || '');
+    document.getElementById('f_bday').value  = athlete.birthday   || '';
+    document.getElementById('f_em').value    = athlete.email      || '';
+    document.getElementById('f_ph').value    = athlete.phone      || '';
+    document.getElementById('f_tm').value    = athlete.team       || '';
+    document.getElementById('f_type').value  = athlete.athlete_type || 'New Athlete';
+    document.getElementById('f_ev').value    = athlete.event_group  || '';
+    document.getElementById('f_ms').value    = athlete.middle_school || '';
+    document.getElementById('f_spec').value  = athlete.is_specialty ? 'yes' : 'no';
+    document.getElementById('f_hact').value  = athlete.has_activities ? 'yes' : 'no';
+    document.getElementById('f_notes').value = athlete.notes || '';
+    document.getElementById('f_notes_count').textContent = (athlete.notes || '').length;
+    document.getElementById('f_p1n').value = athlete.parent1_name  || '';
+    document.getElementById('f_p1p').value = athlete.parent1_phone || '';
+    document.getElementById('f_p1e').value = athlete.parent1_email || '';
+
+    if (athlete.parent2_name) {
+      document.getElementById('f_add_p2').checked = true;
+      document.getElementById('f_p2_wrap').classList.remove('hidden');
+      document.getElementById('f_p2n').value = athlete.parent2_name  || '';
+      document.getElementById('f_p2p').value = athlete.parent2_phone || '';
+      document.getElementById('f_p2e').value = athlete.parent2_email || '';
+    }
+
+    (athlete.season || []).forEach(s => {
+      const cb = document.querySelector(`input[name=f_s][value="${s}"]`);
+      if (cb) cb.checked = true;
+    });
+    (athlete.sprint_addons || []).forEach(s => {
+      const cb = document.querySelector(`input[name=f_sa][value="${s}"]`);
+      if (cb) cb.checked = true;
+    });
+    (athlete.activities || []).forEach(a => {
+      const cb = document.querySelector(`input[name=f_act][value="${a}"]`);
+      if (cb) cb.checked = true;
+    });
+
+    if (athlete.middle_school === 'Other') document.getElementById('f_ms_other_wrap').classList.remove('hidden');
+    if (athlete.is_specialty)             document.getElementById('f_spec_prog_wrap').classList.remove('hidden');
+    if (athlete.has_activities)           document.getElementById('f_activities_wrap').classList.remove('hidden');
+    if (athlete.specialty_program)        document.getElementById('f_spec_prog').value = athlete.specialty_program;
+    if (athlete.other_middle_school)      document.getElementById('f_ms_other').value  = athlete.other_middle_school;
+  }
+
+  document.getElementById('athleteFormOverlay').classList.remove('hidden');
   document.body.style.overflow = 'hidden';
+}
+
+window.closeAthleteForm = () => { document.getElementById('athleteFormOverlay').classList.add('hidden'); document.body.style.overflow = ''; };
+window.toggleP2 = () => { document.getElementById('f_p2_wrap').classList.toggle('hidden', !document.getElementById('f_add_p2').checked); };
+
+// Conditional field toggles in the form
+document.getElementById('f_ms').addEventListener('change', e => {
+  document.getElementById('f_ms_other_wrap').classList.toggle('hidden', e.target.value !== 'Other');
+});
+document.getElementById('f_spec').addEventListener('change', e => {
+  document.getElementById('f_spec_prog_wrap').classList.toggle('hidden', e.target.value !== 'yes');
+});
+document.getElementById('f_hact').addEventListener('change', e => {
+  document.getElementById('f_activities_wrap').classList.toggle('hidden', e.target.value !== 'yes');
+});
+document.getElementById('f_notes').addEventListener('input', e => {
+  document.getElementById('f_notes_count').textContent = e.target.value.length;
 });
 
-document.getElementById('saveAddBtn').addEventListener('click', async () => {
-  const btn   = document.getElementById('saveAddBtn');
-  const errEl = document.getElementById('addError');
+document.getElementById('addAthleteBtn').addEventListener('click', () => openAthleteForm('add'));
+
+document.getElementById('athleteFormSaveBtn').addEventListener('click', async () => {
+  const btn   = document.getElementById('athleteFormSaveBtn');
+  const errEl = document.getElementById('athleteFormError');
   errEl.classList.add('hidden');
 
-  const fn  = document.getElementById('a_fn').value.trim();
-  const ln  = document.getElementById('a_ln').value.trim();
-  const gr  = parseInt(document.getElementById('a_gr').value);
-  const tm  = document.getElementById('a_tm').value;
-  const em  = document.getElementById('a_em').value.trim();
-  const ph  = document.getElementById('a_ph').value.trim();
-  const p1n = document.getElementById('a_p1n').value.trim();
-  const p1p = document.getElementById('a_p1p').value.trim();
-  const p1e = document.getElementById('a_p1e').value.trim();
-  const ev  = document.getElementById('a_ev').value || null;
-  const s   = [...document.querySelectorAll('input[name="a_s"]:checked')].map(i => i.value);
+  const fn   = document.getElementById('f_fn').value.trim();
+  const ln   = document.getElementById('f_ln').value.trim();
+  const gr   = parseInt(document.getElementById('f_gr').value);
+  const tm   = document.getElementById('f_tm').value;
+  const em   = document.getElementById('f_em').value.trim();
+  const ph   = document.getElementById('f_ph').value.trim();
+  const p1n  = document.getElementById('f_p1n').value.trim();
+  const p1p  = document.getElementById('f_p1p').value.trim();
+  const p1e  = document.getElementById('f_p1e').value.trim();
+  const ev   = document.getElementById('f_ev').value || null;
+  const s    = [...document.querySelectorAll('input[name=f_s]:checked')].map(i => i.value);
+  const ms   = document.getElementById('f_ms').value;
+  const mso  = document.getElementById('f_ms_other').value.trim();
+  const spec = document.getElementById('f_spec').value === 'yes';
+  const sp   = document.getElementById('f_spec_prog').value || null;
+  const hact = document.getElementById('f_hact').value === 'yes';
+  const acts = [...document.querySelectorAll('input[name=f_act]:checked')].map(i => i.value);
+  const sa   = [...document.querySelectorAll('input[name=f_sa]:checked')].map(i => i.value);
+  const bday = document.getElementById('f_bday').value || null;
+  const type = document.getElementById('f_type').value;
+  const notes = document.getElementById('f_notes').value.trim() || null;
+  const p2n  = document.getElementById('f_p2n').value.trim() || null;
+  const p2p  = document.getElementById('f_p2p').value.trim() || null;
+  const p2e  = document.getElementById('f_p2e').value.trim() || null;
 
-  if (!fn||!ln||!gr||!tm||!em||!ph||!p1n||!p1p||!p1e) {
-    errEl.textContent='Please fill in all required fields.';errEl.classList.remove('hidden');return;
+  if (!fn||!ln||!gr||!tm||!em||!ph||!p1n||!p1p||!p1e||!ms) {
+    errEl.textContent='Please fill in all required fields.'; errEl.classList.remove('hidden'); return;
   }
-  if (!s.length) { errEl.textContent='Select at least one season.';errEl.classList.remove('hidden');return; }
+  if (!s.length) { errEl.textContent='Select at least one season.'; errEl.classList.remove('hidden'); return; }
+  if (ms==='Other'&&!mso) { errEl.textContent='Please specify the middle school.'; errEl.classList.remove('hidden'); return; }
 
-  btn.disabled=true; btn.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+  btn.disabled=true;
+  btn.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
 
-  const { error } = await supabase.from('registrations').insert([{
-    athlete_type:'New Athlete', first_name:fn, last_name:ln, grade:gr, team:tm,
-    email:em, phone:ph, season:s, event_group:ev,
+  const record = {
+    athlete_type: type, first_name:fn, last_name:ln, grade:gr, team:tm,
+    email:em, phone:ph, season:s, event_group:ev, sprint_addons:sa,
+    birthday:bday, middle_school:ms, other_middle_school:mso||null,
+    is_specialty:spec, specialty_program:sp, has_activities:hact, activities:acts,
     parent1_name:p1n, parent1_phone:p1p, parent1_email:p1e,
-    middle_school:'Other', is_specialty:false, has_activities:false,
-  }]);
+    parent2_name:p2n, parent2_phone:p2p, parent2_email:p2e,
+    notes,
+  };
 
-  if (error) { errEl.textContent=error.message;errEl.classList.remove('hidden');btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-check"></i> Save Athlete';return; }
+  let error;
+  if (formMode === 'add') {
+    ({ error } = await supabase.from('registrations').insert([record]));
+  } else {
+    ({ error } = await supabase.from('registrations').update(record).eq('id', currentAthleteId));
+  }
+
+  if (error) {
+    errEl.textContent=error.message; errEl.classList.remove('hidden');
+    btn.disabled=false;
+    btn.innerHTML = formMode==='add' ? '<i class="fa-solid fa-check"></i> Save Athlete' : '<i class="fa-solid fa-floppy-disk"></i> Save Changes';
+    return;
+  }
 
   await loadRoster();
-  closeOverlay('addOverlay');
-  document.getElementById('addOverlay').querySelectorAll('input,select').forEach(el=>el.value='');
-  document.querySelectorAll('input[name="a_s"]').forEach(c=>c.checked=false);
-  btn.disabled=false; btn.innerHTML='<i class="fa-solid fa-check"></i> Save Athlete';
+  closeAthleteForm();
+  if (formMode==='edit') closeDossier();
+  btn.disabled=false;
+  btn.innerHTML = formMode==='add' ? '<i class="fa-solid fa-check"></i> Save Athlete' : '<i class="fa-solid fa-floppy-disk"></i> Save Changes';
 });
 
 // ── Export CSV ────────────────────────────────────────────────────────────────
@@ -910,4 +1129,25 @@ input:focus, select:focus { border-color: var(--orange); }
   .dossier-edit-cols { grid-template-columns: 1fr; gap: 1rem; }
   .frow { grid-template-columns: 1fr; }
 }
+
+  /* ── Unified form extras ────────────────────────────────────────────────── */
+  .modal-form { max-width: 620px; }
+  .form-section-label {
+    font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 1px; color: var(--orange);
+    padding: 0.75rem 0 0.4rem; margin-top: 0.5rem;
+    border-top: 1px solid var(--border);
+  }
+  .form-section-label:first-of-type { border-top: none; padding-top: 0; margin-top: 0; }
+  .activities-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 6px; margin-top: 6px;
+  }
+  textarea {
+    width: 100%; padding: 8px 10px; border: 1px solid var(--border);
+    border-radius: 6px; font-size: 12px; font-family: var(--font);
+    color: var(--text); resize: vertical; min-height: 72px; outline: none;
+    transition: border-color 0.12s;
+  }
+  textarea:focus { border-color: var(--orange); }
 </style>
