@@ -359,8 +359,8 @@ let currentAthleteId = null;
 let dossierPhase = 1;
 let dossierEditMode = false;
 
-const DOSSIER_PHASES = ['Contact','Academics','Athletics','Family','Status','Paperwork','Notes'];
-const DOSSIER_TOTAL = 7;
+const DOSSIER_PHASES = ['Contact','Academics','Athletics','Family','Status','Paperwork','Notes','Attendance'];
+const DOSSIER_TOTAL = 8;
 
 window.overlayBgClick = (e) => { if (e.target === document.getElementById('dossierOverlay')) closeDossier(); };
 window.closeDossier = () => { document.getElementById('dossierOverlay').classList.add('hidden'); document.body.style.overflow = ''; };
@@ -438,23 +438,6 @@ window.exitEditMode = () => {
 
 function buildReadOnlyView(a) {
   const seasons = (a.season||[]).join(', ') || '—';
-  const att = window._dossierAtt || {};
-
-  // Build 30-day attendance strip
-  const days = [];
-  for (let i = 29; i >= 0; i--) {
-    const d = new Date(); d.setDate(d.getDate() - i);
-    const key = d.toISOString().split('T')[0];
-    const status = att[key];
-    const colors = { Present:'#4ade80', Late:'#fbbf24', Excused:'#818cf8', Unexcused:'#f87171' };
-    const color = colors[status] || 'rgba(255,255,255,0.08)';
-    const label = d.toLocaleDateString('en-US', { month:'short', day:'numeric' });
-    days.push(`<div class="att-dot" style="background:${color}" title="${label}${status ? ': '+status : ': No record'}"></div>`);
-  }
-
-  // Attendance summary counts
-  const counts = { Present:0, Late:0, Excused:0, Unexcused:0 };
-  Object.values(att).forEach(s => { if (counts[s] !== undefined) counts[s]++; });
 
   const pw = PAPERWORK_FIELDS.map(f => `
     <div class="ro-pw-row">
@@ -465,7 +448,6 @@ function buildReadOnlyView(a) {
     </div>`).join('');
 
   return `<div class="ro-view">
-
     <div class="ro-section-grid">
       <div class="ro-section">
         <div class="ro-section-title">Contact</div>
@@ -475,7 +457,6 @@ function buildReadOnlyView(a) {
         <div class="ro-row"><span>Grade</span><span>${a.grade}</span></div>
         <div class="ro-row"><span>Team</span><span>${a.team}</span></div>
       </div>
-
       <div class="ro-section">
         <div class="ro-section-title">Athletics</div>
         <div class="ro-row"><span>Event</span><span>${a.event_group||'—'}</span></div>
@@ -484,7 +465,6 @@ function buildReadOnlyView(a) {
         <div class="ro-row"><span>Paperwork</span><span>${paperworkBadge(a.paperwork_status)}</span></div>
         ${a.status_notes ? `<div class="ro-row"><span>Note</span><span>${a.status_notes}</span></div>` : ''}
       </div>
-
       <div class="ro-section">
         <div class="ro-section-title">Parent / Guardian</div>
         <div class="ro-row"><span>Name</span><span>${a.parent1_name||'—'}</span></div>
@@ -495,26 +475,11 @@ function buildReadOnlyView(a) {
         <div class="ro-row"><span>Phone 2</span><span>${a.parent2_phone||'—'}</span></div>
         <div class="ro-row"><span>Email 2</span><span>${a.parent2_email||'—'}</span></div>` : ''}
       </div>
-
       <div class="ro-section">
         <div class="ro-section-title">Paperwork</div>
         <div class="ro-pw-list">${pw}</div>
       </div>
     </div>
-
-    <div class="ro-section" style="margin-top:0;">
-      <div class="ro-section-title" style="margin-bottom:0.75rem;">
-        Attendance — last 30 days
-        <span class="att-summary">
-          <span class="att-sum-item" style="color:#4ade80">${counts.Present}P</span>
-          <span class="att-sum-item" style="color:#fbbf24">${counts.Late}L</span>
-          <span class="att-sum-item" style="color:#818cf8">${counts.Excused}E</span>
-          <span class="att-sum-item" style="color:#f87171">${counts.Unexcused}U</span>
-        </span>
-      </div>
-      <div class="att-strip">${days.join('')}</div>
-    </div>
-
     ${a.notes ? `<div class="ro-section" style="margin-top:0;"><div class="ro-section-title">Notes</div><p class="ro-notes">${a.notes}</p></div>` : ''}
   </div>`;
 }
@@ -663,6 +628,26 @@ function buildPhase(a, phase) {
         }).join('')}
       </div>
       <div class="d-action-row space-between"><button class="d-btn-secondary" onclick="dossierPrev()">&larr; Back</button><button class="d-btn-primary" onclick="dossierNext()">Next: Notes &rarr;</button></div>
+    </div>`;
+  }
+
+  if (phase === 8) {
+    const att = window._dossierAtt || {};
+    const counts = { Present:0, Late:0, Excused:0, Unexcused:0 };
+    Object.values(att).forEach(s => { if (counts[s] !== undefined) counts[s]++; });
+    const absences = counts.Excused + counts.Unexcused;
+    const warnUnexcused = counts.Unexcused >= 5;
+    const warnAbsences  = absences >= 8;
+    return `<div class="d-phase">
+      <h2 class="d-step-title">Attendance</h2>
+      <div class="att-counts">
+        <div class="att-count-card present"><div class="att-count-num">${counts.Present}</div><div class="att-count-label">Present</div></div>
+        <div class="att-count-card late"><div class="att-count-num">${counts.Late}</div><div class="att-count-label">Late</div></div>
+        <div class="att-count-card excused"><div class="att-count-num">${counts.Excused}</div><div class="att-count-label">Excused</div></div>
+        <div class="att-count-card unexcused ${warnUnexcused ? 'att-warn' : ''}"><div class="att-count-num">${counts.Unexcused}</div><div class="att-count-label">Unexcused ${warnUnexcused ? '<i class="fa-solid fa-triangle-exclamation"></i>' : ''}</div></div>
+      </div>
+      ${warnUnexcused ? `<div class="att-alert"><i class="fa-solid fa-triangle-exclamation"></i> ${counts.Unexcused} unexcused absences — threshold is 5.</div>` : ''}
+      ${warnAbsences  ? `<div class="att-alert att-alert-yellow"><i class="fa-solid fa-triangle-exclamation"></i> ${absences} total absences (excused + unexcused) — threshold is 8.</div>` : ''}
     </div>`;
   }
 
@@ -1091,10 +1076,17 @@ background-position: 0% 50%; 50%{background-position:100% 50%} 100%{background-p
 .ro-pw-no  { color: #f87171; font-size: 11px; }
 
 /* Attendance strip */
-.att-strip { display: flex; gap: 4px; flex-wrap: wrap; }
-.att-dot { width: 18px; height: 18px; border-radius: 4px; cursor: default; }
-.att-summary { display: flex; gap: 8px; margin-left: auto; font-size: 11px; font-weight: 600; }
-.att-sum-item { }
+.att-counts { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; margin-bottom: 1.5rem; }
+.att-count-card { background: var(--input-bg); border: 1px solid var(--border-light); border-radius: 12px; padding: 1.25rem 0.75rem; text-align: center; }
+.att-count-card.att-warn { border-color: rgba(248,113,113,0.4); background: rgba(248,113,113,0.08); }
+.att-count-num { font-size: 2rem; font-weight: 800; color: white; line-height: 1; margin-bottom: 0.4rem; }
+.att-count-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; justify-content: center; gap: 5px; }
+.att-count-card.present   .att-count-label { color: #4ade80; }
+.att-count-card.late      .att-count-label { color: #fbbf24; }
+.att-count-card.excused   .att-count-label { color: #818cf8; }
+.att-count-card.unexcused .att-count-label { color: #f87171; }
+.att-alert { display: flex; align-items: center; gap: 8px; padding: 0.75rem 1rem; border-radius: 10px; font-size: 13px; font-weight: 500; margin-bottom: 0.75rem; background: rgba(248,113,113,0.1); border: 1px solid rgba(248,113,113,0.25); color: #f87171; }
+.att-alert.att-alert-yellow { background: rgba(251,191,36,0.1); border-color: rgba(251,191,36,0.25); color: #fbbf24; }
 .d-close-btn { flex-shrink: 0; width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--border-light); background: var(--input-bg); cursor: pointer; color: var(--text-muted); font-size: 13px; display: flex; align-items: center; justify-content: center; }
 .d-close-btn:hover { background: rgba(255,255,255,0.08); color: white; }
 .d-body { padding: 2rem; }
