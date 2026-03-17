@@ -193,6 +193,19 @@ const supabase = createClient(
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiZXdscnVkcGRxbXZkc2JsamVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM2ODkxNDQsImV4cCI6MjA4OTI2NTE0NH0.RYeII_T640_x4AVrThyYgy3nJcHfHc6iUVkWy2R9GgI'
 );
 
+const EV_COLOR = { Sprints:'ev-sprints', Distance:'ev-distance', Throws:'ev-throws' };
+
+// ── Constants (declared early so all functions can access them) ──────────────
+const PAPERWORK_FIELDS = [
+  { key:'physical_exam',       label:'Physical Exam' },
+  { key:'activities_contract', label:'Activities Contract' },
+  { key:'concussion_form',     label:'Concussion Form' },
+  { key:'heat_illness_form',   label:'Heat Illness Form' },
+  { key:'cardiac_arrest_form', label:'Cardiac Arrest Form' },
+  { key:'emergency_card',      label:'Emergency Card' },
+  { key:'team_contract',       label:'Team Contract' },
+];
+
 // ── Auth ────────────────────────────────────────────────────────────────────
 const { data: { session } } = await supabase.auth.getSession();
 if (!session) { window.location.href = '/dashboard'; return; }
@@ -262,8 +275,6 @@ function applyFilters() {
 }
 
 // ── Render ────────────────────────────────────────────────────────────────────
-const EV_COLOR = { Sprints:'ev-sprints', Distance:'ev-distance', Throws:'ev-throws' };
-
 function paperworkBadge(status) {
   if (status === 'No Physical')      return '<span class="badge badge-danger">No Physical</span>';
   if (status === 'Missing Docs')     return '<span class="badge badge-warn">Missing Docs</span>';
@@ -304,15 +315,7 @@ function renderTable(athletes) {
 }
 
 // ── Dossier modal ─────────────────────────────────────────────────────────────
-const PAPERWORK_FIELDS = [
-  { key:'physical_exam',       label:'Physical Exam' },
-  { key:'activities_contract', label:'Activities Contract' },
-  { key:'concussion_form',     label:'Concussion Form' },
-  { key:'heat_illness_form',   label:'Heat Illness Form' },
-  { key:'cardiac_arrest_form', label:'Cardiac Arrest Form' },
-  { key:'emergency_card',      label:'Emergency Card' },
-  { key:'team_contract',       label:'Team Contract' },
-];
+
 
 let currentAthleteId = null;
 
