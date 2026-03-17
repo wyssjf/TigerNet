@@ -936,8 +936,7 @@
   /* ── Layout ─────────────────────────────────────────────────────────────── */
   .layout {
     display: flex;
-    height: 100vh;
-    overflow: hidden;
+    min-height: 100vh;
   }
 
   /* ── Sidebar ────────────────────────────────────────────────────────────── */
@@ -1026,22 +1025,13 @@
   .main {
     margin-left: var(--sidebar-w);
     flex: 1;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
     max-width: calc(100vw - var(--sidebar-w));
   }
   .main-inner {
-    flex: 1;
-    overflow-y: auto;
     padding: 2rem 2.5rem;
-    display: flex;
-    flex-direction: column;
   }
   .table-wrap {
-    flex: 1;
-    overflow: auto;
-    min-height: 0;
+    overflow-x: auto;
   }
 
   .page-header {
@@ -1141,8 +1131,7 @@
     background: var(--white);
     border: 1px solid var(--border);
     border-radius: 12px;
-    overflow: auto;
-    min-height: 0;
+    overflow-x: auto;
   }
 
   .roster-table {
@@ -1528,8 +1517,8 @@
       max-width: 100vw;
     }
     .main-inner {
-      padding: 1.25rem;
-      padding-top: calc(56px + 1.25rem);
+      padding: 1rem;
+      padding-top: calc(56px + 1rem);
     }
 
     .page-header {
