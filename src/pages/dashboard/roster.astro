@@ -374,17 +374,21 @@ window.openDossier = async (id) => {
 };
 
 function dossierProgress() {
-  const pct = ((dossierPhase - 1) / (DOSSIER_TOTAL - 1)) * 100;
-  return `<div class="d-progress-bar"><div class="d-progress-fill" style="width:${pct}%"></div></div>
-    <div class="d-phase-indicators">${DOSSIER_PHASES.map((p,i) => `<span class="${i < dossierPhase ? 'active' : ''}">${p}</span>`).join('')}</div>`;
+  return `<div class="d-tab-bar">
+    ${DOSSIER_PHASES.map((p,i) => `<button class="d-tab ${i+1 === dossierPhase ? 'active' : ''}" onclick="goToPhase(${i+1})">${p}</button>`).join('')}
+  </div>`;
 }
 
 function dossierHeader(a) {
   return `<div class="d-header">
-    <div class="d-brand-badge">JRTXCTF // TIGER NET</div>
-    <div class="d-athlete-name">${a.first_name} ${a.last_name}</div>
+    <div class="d-header-top">
+      <div>
+        <div class="d-brand-badge">JRTXCTF // TIGER NET</div>
+        <div class="d-athlete-name">${a.first_name} ${a.last_name}</div>
+      </div>
+      <button class="d-close-btn" onclick="closeDossier()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
     ${dossierProgress()}
-    <button class="d-close-btn" onclick="closeDossier()"><i class="fa-solid fa-xmark"></i></button>
   </div>`;
 }
 
@@ -582,28 +586,19 @@ function buildPhase(a, phase) {
   return '';
 }
 
-window.dossierNext = () => {
-  if (dossierPhase < DOSSIER_TOTAL) {
-    dossierPhase++;
-    const a = allAthletes.find(x => x.id === currentAthleteId);
-    document.getElementById('dossierBody').innerHTML = buildPhase(a, dossierPhase);
-    document.querySelector('.d-progress-fill').style.width = `${((dossierPhase-1)/(DOSSIER_TOTAL-1))*100}%`;
-    document.querySelectorAll('.d-phase-indicators span').forEach((s,i) => s.classList.toggle('active', i < dossierPhase));
-    if (dossierPhase === 8) {
-      const ta = document.getElementById('d_notes');
-      if (ta) ta.addEventListener('input', () => { document.getElementById('d_notes_count').textContent = ta.value.length; });
-    }
+window.goToPhase = (phase) => {
+  dossierPhase = phase;
+  const a = allAthletes.find(x => x.id === currentAthleteId);
+  document.getElementById('dossierBody').innerHTML = buildPhase(a, dossierPhase);
+  document.querySelectorAll('.d-tab').forEach((t,i) => t.classList.toggle('active', i+1 === dossierPhase));
+  document.getElementById('dossierModal').scrollTop = 0;
+  if (dossierPhase === 8) {
+    const ta = document.getElementById('d_notes');
+    if (ta) ta.addEventListener('input', () => { document.getElementById('d_notes_count').textContent = ta.value.length; });
   }
 };
-window.dossierPrev = () => {
-  if (dossierPhase > 1) {
-    dossierPhase--;
-    const a = allAthletes.find(x => x.id === currentAthleteId);
-    document.getElementById('dossierBody').innerHTML = buildPhase(a, dossierPhase);
-    document.querySelector('.d-progress-fill').style.width = `${((dossierPhase-1)/(DOSSIER_TOTAL-1))*100}%`;
-    document.querySelectorAll('.d-phase-indicators span').forEach((s,i) => s.classList.toggle('active', i < dossierPhase));
-  }
-};
+window.dossierNext = () => { if (dossierPhase < DOSSIER_TOTAL) goToPhase(dossierPhase + 1); };
+window.dossierPrev = () => { if (dossierPhase > 1) goToPhase(dossierPhase - 1); };
 
 async function saveDossier() {
   const btn = document.getElementById('dossierSaveBtn');
@@ -960,14 +955,16 @@ background-position: 0% 50%; 50%{background-position:100% 50%} 100%{background-p
   width: 100%; max-width: 700px; max-height: 90vh; overflow-y: auto;
   
 }
-.d-header { padding: 2rem 2rem 1.5rem; text-align: center; border-bottom: 1px solid var(--border-light); position: relative; }
-.d-brand-badge { color: var(--accent-orange); font-size: 0.75rem; font-weight: 700; letter-spacing: 2px; margin-bottom: 0.5rem; }
-.d-athlete-name { font-size: 1.5rem; font-weight: 800; color: white; letter-spacing: -0.02em; margin-bottom: 1.5rem; }
-.d-progress-bar { height: 4px; background: rgba(255,255,255,0.08); border-radius: 999px; margin-bottom: 0.75rem; overflow: hidden; }
-.d-progress-fill { height: 100%; background: var(--accent-orange); border-radius: 999px;   }
-.d-phase-indicators { display: flex; justify-content: space-between; font-size: 0.65rem; font-weight: 600; color: rgba(255,255,255,0.3); text-transform: uppercase; letter-spacing: 1px; }
-.d-phase-indicators span.active { color: white; }
-.d-close-btn { position: absolute; top: 1.25rem; right: 1.25rem; width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--border-light); background: var(--input-bg); cursor: pointer; color: var(--text-muted); font-size: 13px; display: flex; align-items: center; justify-content: center; }
+.d-header { padding: 1.25rem 1.5rem 0; border-bottom: 1px solid var(--border-light); }
+.d-header-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 1rem; }
+.d-brand-badge { color: var(--accent-orange); font-size: 0.7rem; font-weight: 700; letter-spacing: 2px; margin-bottom: 0.3rem; }
+.d-athlete-name { font-size: 1.25rem; font-weight: 800; color: white; letter-spacing: -0.02em; }
+.d-tab-bar { display: flex; gap: 2px; overflow-x: auto; padding-bottom: 2px; }
+.d-tab-bar::-webkit-scrollbar { display: none; }
+.d-tab { flex-shrink: 0; padding: 0.45rem 0.85rem; border-radius: 8px; border: none; background: transparent; font-size: 12px; font-family: var(--font-ui); font-weight: 500; color: var(--text-muted); cursor: pointer; white-space: nowrap; }
+.d-tab:hover { background: rgba(255,255,255,0.06); color: white; }
+.d-tab.active { background: var(--accent-orange); color: white; font-weight: 600; }
+.d-close-btn { flex-shrink: 0; width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--border-light); background: var(--input-bg); cursor: pointer; color: var(--text-muted); font-size: 13px; display: flex; align-items: center; justify-content: center; }
 .d-close-btn:hover { background: rgba(255,255,255,0.08); color: white; }
 .d-body { padding: 2rem; }
 .d-phase {}
