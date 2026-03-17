@@ -1,6 +1,4 @@
----
-// src/pages/dashboard/roster.astro
----
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -32,11 +30,11 @@
     <div class="sb-content">
       <div class="sb-section">PROGRAM MANAGEMENT</div>
       <nav class="sb-nav">
-        <a href="/dashboard/roster" class="nav-item active">
+        <a href="#" class="nav-item active">
           <i class="fa-solid fa-users nav-icon"></i>
           <span>Roster</span>
         </a>
-        <a href="/dashboard/attendance" class="nav-item">
+        <a href="#" class="nav-item">
           <i class="fa-solid fa-calendar-check nav-icon"></i>
           <span>Attendance</span>
         </a>
@@ -45,10 +43,10 @@
 
     <div class="sb-foot">
       <div class="user-chip">
-        <div class="user-av" id="userAv">?</div>
+        <div class="user-av" id="userAv">CO</div>
         <div class="user-info">
           <span class="user-role">Administrator</span>
-          <span class="user-em" id="userEmail">Loading...</span>
+          <span class="user-em" id="userEmail">coach@jrtxctf.com</span>
         </div>
       </div>
       <button class="signout-btn" id="signoutBtn">
@@ -73,6 +71,7 @@
 
     <div class="content-wrapper">
       
+      <!-- Filter Bar -->
       <div class="filter-bar">
         <div class="filter-scroll-area">
           <div class="filter-group">
@@ -100,6 +99,7 @@
         </div>
       </div>
 
+      <!-- Athlete Horizontal List -->
       <div class="roster-list" id="rosterBody">
         <div class="loading-state">
           <div class="spinner-wrapper"><i class="fa-solid fa-circle-notch fa-spin"></i></div>
@@ -111,24 +111,20 @@
   </main>
 </div>
 
-<div class="overlay hidden" id="addOverlay">
-  </div>
-
+<!-- DOSSIER MODAL -->
 <div class="overlay hidden" id="dossierOverlay" onclick="overlayClick(event,'dossierOverlay')">
   <div class="modal modal-wide" id="dossierModal">
-    <div id="dossierContent"></div>
+    <div id="dossierContent">
+      <div class="empty-state" style="padding: 3rem;">
+        <i class="fa-regular fa-address-card"></i>
+        <p>Athlete Dossier Mockup<br><small>Click outside to close</small></p>
+      </div>
+    </div>
   </div>
 </div>
 
-<script type="module">
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-
-(async () => {
-
+<script>
 // MOCK DATA SETUP FOR DESIGN REVIEW
-document.getElementById('userEmail').textContent = "coach@jrtxctf.com";
-document.getElementById('userAv').textContent = "CO";
-
 let allAthletes = [
   { id: '1', first_name: 'Sarah', last_name: 'Jenkins', grade: 11, team: 'Girls', event_group: 'Distance', status: 'Active', paperwork_status: 'Paperwork Complete', email: 'sarah.j@student.com', phone: '(555) 123-4567', parent1_name: 'Robert Jenkins', parent1_phone: '(555) 987-6543', parent1_email: 'rob@parents.com', season: ['Cross Country', 'Indoor Track & Field'] },
   { id: '2', first_name: 'Marcus', last_name: 'Washington', grade: 12, team: 'Boys', event_group: 'Sprints', status: 'Active', paperwork_status: 'Missing Docs', email: 'm.wash@student.com', phone: '(555) 222-3333', parent1_name: 'Linda Washington', parent1_phone: '(555) 444-5555', parent1_email: 'linda@parents.com', season: ['Indoor Track & Field', 'Outdoor Track & Field'] },
@@ -140,11 +136,12 @@ let allAthletes = [
 
 let activeFilter = 'all';
 
-async function loadRoster() {
-  setTimeout(() => { applyFilters(); }, 500); 
+function loadRoster() {
+  // Simulate network delay for effect
+  setTimeout(() => { applyFilters(); }, 400); 
 }
 
-await loadRoster();
+loadRoster();
 
 // ── Drawer ───────────────────────────────────────────────────────────────────
 window.openDrawer  = () => { document.getElementById('sidebar').classList.add('open'); document.getElementById('drawerOverlay').classList.add('visible'); document.body.style.overflow='hidden'; };
@@ -181,22 +178,22 @@ function applyFilters() {
 
 // ── Render ────────────────────────────────────────────────────────────────────
 function paperworkBadge(status) {
-  if (status === 'No Physical')      return '<span class="status-badge danger"><i class="fa-solid fa-triangle-exclamation"></i> No Physical</span>';
-  if (status === 'Missing Docs')     return '<span class="status-badge warn"><i class="fa-solid fa-file-circle-xmark"></i> Missing Docs</span>';
-  if (status === 'Paperwork Complete') return '<span class="status-badge success"><i class="fa-solid fa-check-circle"></i> Complete</span>';
-  return '<span class="status-badge neutral">—</span>';
+  if (status === 'No Physical')      return '<span class="pw-badge outline-red">NO PHYSICAL</span>';
+  if (status === 'Missing Docs')     return '<span class="pw-badge outline-yellow">DOCS PENDING</span>';
+  if (status === 'Paperwork Complete') return '<span class="pw-badge solid-purple"><i class="fa-solid fa-shield"></i> CLEARED</span>';
+  return '<span class="pw-badge outline-gray">—</span>';
 }
 
 function statusBadge(status) {
   const map = { 
-    'Active': 'success', 
-    'Suspended': 'warn', 
-    'Ineligible': 'danger', 
-    'Quit': 'neutral', 
-    'Cut': 'neutral' 
+    'Active': { cls: 'green', icon: 'fa-circle-check' },
+    'Suspended': { cls: 'red', icon: 'fa-circle-xmark' },
+    'Ineligible': { cls: 'red', icon: 'fa-circle-xmark' },
+    'Quit': { cls: 'gray', icon: 'fa-circle-minus' },
+    'Cut': { cls: 'gray', icon: 'fa-circle-minus' }
   };
-  const cls = map[status] || 'neutral';
-  return `<span class="status-badge ${cls}">${status}</span>`;
+  const info = map[status] || { cls: 'gray', icon: 'fa-circle-question' };
+  return `<span class="ac-status ${info.cls}"><i class="fa-regular ${info.icon}"></i> ${status}</span>`;
 }
 
 function renderRoster(athletes) {
@@ -215,42 +212,44 @@ function renderRoster(athletes) {
 
   container.innerHTML = athletes.map(a => {
     const isInactive = ['Quit','Cut'].includes(a.status);
-    const evClass = a.event_group ? `ev-${a.event_group.toLowerCase()}` : 'ev-default';
     const groupName = a.event_group || 'Unassigned';
     
     return `
-      <div class="athlete-row ${isInactive ? 'inactive' : ''}" onclick="openDossier('${a.id}')">
-        
-        <div class="row-identity">
-          <div class="row-avatar ${evClass}">${a.first_name[0]}${a.last_name[0]}</div>
-          <div class="row-name-group">
-            <div class="row-name">${a.first_name} <strong>${a.last_name}</strong></div>
-            <div class="row-group ${evClass}-text">
-              <i class="fa-solid fa-running"></i> ${groupName}
-            </div>
+      <div class="athlete-card ${isInactive ? 'inactive' : ''}">
+        <div class="ac-top" onclick="openDossier('${a.id}')">
+          <h3 class="ac-name">${a.first_name} ${a.last_name}</h3>
+          <div class="ac-meta">
+            ${statusBadge(a.status || 'Active')}
+            <span class="ac-divider">|</span>
+            <span class="ac-group">${groupName}</span>
+            <span class="ac-divider">|</span>
+            ${paperworkBadge(a.paperwork_status)}
           </div>
         </div>
-        
-        <div class="row-statuses">
-          ${statusBadge(a.status || 'Active')}
-          ${paperworkBadge(a.paperwork_status)}
-          <i class="fa-solid fa-chevron-right row-chevron"></i>
+        <div class="ac-actions">
+          <button class="att-btn" title="Present"><i class="fa-solid fa-check"></i></button>
+          <button class="att-btn" title="Late">L</button>
+          <button class="att-btn" title="Absent"><i class="fa-solid fa-xmark"></i></button>
+          <button class="att-btn" title="Excused">E</button>
         </div>
-
       </div>
     `;
   }).join('');
 }
 
-// ── Dossier Placeholder (From previous steps) ─────────────────────────────────
-window.openDossier = async (id) => {
-  alert("Opening dossier for ID: " + id);
+// ── Dossier Placeholder ─────────────────────────────────
+window.openDossier = (id) => {
+  document.getElementById('dossierOverlay').classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
 };
 
-})(); // end IIFE
+window.overlayClick = (e, id) => {
+  if (e.target === document.getElementById(id)) {
+    document.getElementById(id).classList.add('hidden');
+    document.body.style.overflow = '';
+  }
+};
 </script>
-</body>
-</html>
 
 <style>
 :root {
@@ -409,131 +408,123 @@ body {
 .search-wrap i { font-size: 13px; color: var(--text-light); }
 .search-wrap input { border: none; outline: none; font-size: 14px; font-family: inherit; color: var(--text-main); background: transparent; width: 100%; }
 
-/* ── HORIZONTAL ATHLETE LIST ────────────────────────────────────────────── */
+/* ── HORIZONTAL ATHLETE CARDS (IMAGE MATCH) ────────────────────────────── */
 .roster-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 16px;
 }
 
-.athlete-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: var(--bg-surface);
-  border: 1px solid var(--border-light);
+.athlete-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
   border-radius: 12px;
-  padding: 14px 20px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.02);
-  cursor: pointer;
+  padding: 16px 20px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+  display: flex;
+  flex-direction: column;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.athlete-row:hover {
+.athlete-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 12px -4px rgba(0,0,0,0.08);
   border-color: var(--border-medium);
 }
 
-.athlete-row.inactive {
+.athlete-card.inactive {
   opacity: 0.6;
   background: #f8fafc;
 }
-.athlete-row.inactive:hover {
-  opacity: 1;
+.athlete-card.inactive:hover { opacity: 1; }
+
+.ac-top {
+  cursor: pointer;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #f1f5f9;
+  margin-bottom: 16px;
 }
 
-/* Left Side: Identity */
-.row-identity {
+.ac-name {
+  font-size: 20px;
+  font-weight: 800;
+  color: #0f172a;
+  margin-bottom: 6px;
+}
+
+.ac-meta {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
-.row-avatar {
-  width: 44px;
-  height: 44px;
-  border-radius: 10px;
+.ac-status {
   display: flex;
   align-items: center;
-  justify-content: center;
-  font-size: 14px;
-  font-weight: 700;
-  font-family: var(--font-sans);
-}
-
-.row-name-group {
-  display: flex;
-  flex-direction: column;
   gap: 4px;
-}
-
-.row-name {
-  font-size: 16px;
-  font-weight: 500;
-  color: var(--text-main);
-  white-space: nowrap;
-}
-.row-name strong {
-  font-weight: 700;
-}
-
-.row-group {
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
 }
 
-/* Right Side: Statuses */
-.row-statuses {
-  display: flex;
-  align-items: center;
-  gap: 16px;
+.ac-status.green { color: #10b981; }
+.ac-status.red { color: #ef4444; }
+.ac-status.gray { color: #64748b; }
+
+.ac-divider { color: #cbd5e1; font-weight: 300; font-size: 14px; }
+
+.ac-group {
+  font-size: 12px;
+  font-weight: 600;
+  color: #475569;
 }
 
-.status-badge {
+.pw-badge {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 10px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.2px;
-  white-space: nowrap;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
-.status-badge.success { background: #dcfce7; color: #166534; }
-.status-badge.warn    { background: #ffedd5; color: #9a3412; }
-.status-badge.danger  { background: #fee2e2; color: #991b1b; }
-.status-badge.neutral { background: #f1f5f9; color: #475569; }
+.pw-badge.solid-purple { background: #5b58ed; color: #ffffff; border: 1px solid #5b58ed; }
+.pw-badge.outline-yellow { background: transparent; color: #d97706; border: 1px solid #f59e0b; }
+.pw-badge.outline-red { background: transparent; color: #dc2626; border: 1px solid #ef4444; }
+.pw-badge.outline-gray { background: transparent; color: #64748b; border: 1px solid #cbd5e1; }
 
-.row-chevron {
-  color: var(--text-light);
-  font-size: 14px;
-  margin-left: 8px;
-  transition: transform 0.2s, color 0.2s;
+.ac-actions {
+  display: flex;
+  gap: 12px;
 }
 
-.athlete-row:hover .row-chevron {
+.att-btn {
+  flex: 1;
+  height: 40px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  color: #334155;
+  font-size: 16px;
+  font-weight: 800;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.att-btn:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
   color: var(--primary);
-  transform: translateX(4px);
 }
-
-/* Event Colors */
-.ev-sprints  { background: var(--c-sprints-bg);  color: var(--c-sprints-txt); }
-.ev-distance { background: var(--c-distance-bg); color: var(--c-distance-txt); }
-.ev-throws   { background: var(--c-throws-bg);   color: var(--c-throws-txt); }
-.ev-default  { background: var(--c-default-bg);  color: var(--c-default-txt); }
-
-.ev-sprints-text  { color: var(--c-sprints-txt); }
-.ev-distance-text { color: var(--c-distance-txt); }
-.ev-throws-text   { color: var(--c-throws-txt); }
-.ev-default-text  { color: var(--c-default-txt); }
 
 /* Loading / Empty States */
 .loading-state, .empty-state {
@@ -546,6 +537,24 @@ body {
 }
 .spinner-wrapper { font-size: 24px; color: var(--primary); margin-bottom: 1rem; }
 .empty-state i { font-size: 32px; margin-bottom: 1rem; opacity: 0.5; }
+
+/* Modals */
+.overlay { 
+  position: fixed; inset: 0; background: rgba(15, 23, 42, 0.4); 
+  backdrop-filter: blur(8px); z-index: 200; 
+  display: flex; align-items: center; justify-content: center; padding: 1.5rem; 
+  animation: fadeIn 0.2s ease-out;
+}
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.overlay.hidden { display: none; }
+
+.modal { 
+  background: var(--bg-surface); border-radius: 16px; width: 100%; max-width: 560px; 
+  max-height: 90vh; display: flex; flex-direction: column;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); overflow: hidden;
+  animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
 /* ── Mobile ─────────────────────────────────────────────────────────────── */
 .mobile-topbar { display: none; position: fixed; top: 0; left: 0; right: 0; z-index: 200; background: var(--bg-surface); border-bottom: 1px solid var(--border-light); padding: 0 1.25rem; height: 60px; align-items: center; justify-content: space-between; }
